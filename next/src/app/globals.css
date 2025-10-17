@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
   width: 8px;
 }
 
@@ -15,7 +15,7 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(45deg, #be185d, #9d174d);
-}
+} */
 
 html {
   scroll-behavior: smooth;
@@ -121,6 +121,15 @@ body {
   }
 }
 
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
@@ -152,6 +161,10 @@ body {
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient-shift 4s ease infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
 }
 
 .particle {

@@ -14,8 +14,8 @@ export default function Navbar() {
     { name: "Games", href: "/games" },
     { name: "Projects", href: "/projects" },
     { name: "Blog", href: "/blog" },
-    { name: "Store", href: "/store" },
     { name: "Team", href: "/team" },
+    { name: "Sign In", href: "/auth/sign-in" },
     // { name: "Contact", href: "/contact" },
   ];
 
@@ -43,12 +43,12 @@ export default function Navbar() {
   };
 
   return (
-    <>
+    <div className="z-999">
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`fixed top-0 left-0 w-full px-4 lg:px-8 py-3 lg:py-4 flex items-center justify-between z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 w-full px-4 lg:px-8 py-3 lg:py-4 flex items-center justify-between z-999 transition-all duration-500 ${
           scrolled
             ? "bg-black/90 backdrop-blur-xl shadow-2xl border-b border-pink-500/20"
             : "bg-transparent"
@@ -268,6 +268,6 @@ export default function Navbar() {
           </>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
