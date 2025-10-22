@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
 import { Types } from "mongoose";
-import { EUserRole } from "./domain.types";
+import { EFeaturedType, EProjectPortfolio, EUserRole } from "./domain.types";
 import { APIControl, EmptyObject } from "./index.types";
 
 export enum ESECs {
@@ -12,6 +12,7 @@ export enum ESECs {
     INVALID_CREDENTIALS,
     INVALID_JWT,
     INVALID_OTP,
+    UNAUTHORIZED,
 
     TOO_MANY_REQUESTS,
     FORBIDDEN,
@@ -19,6 +20,15 @@ export enum ESECs {
     TEAM_NOT_FOUND,
     TEAM_NAME_TAKEN,
     NOT_TEAM_MEMBER,
+
+    PROJECT_NOT_FOUND,
+
+    BLOG_NOT_FOUND,
+    SLUG_ALREADY_IN_USE,
+    SLUG_NOT_FOUND,
+
+    FEATURED_NOT_FOUND,
+    ALREADY_FEATURED,
 }
 
 export namespace SDIn {
@@ -34,13 +44,13 @@ export namespace SDIn {
 
         export type SignUp =
             | ({
-                target: APIControl.Auth.SignUp.REQUEST;
+                target: APIControl.Auth.SignUp.Target.REQUEST;
             } & SignUpRequest)
             | ({
-                target: APIControl.Auth.SignUp.RESEND_OTP;
+                target: APIControl.Auth.SignUp.Target.RESEND_OTP;
             } & SignUpRequestResendOTP)
             | ({
-                target: APIControl.Auth.SignUp.VERIFY;
+                target: APIControl.Auth.SignUp.Target.VERIFY;
             } & SignUpVerify);
 
         export type SignUpRequest = {
@@ -65,11 +75,13 @@ export namespace SDIn {
     }
 
     export namespace Team {
-        export type Get = {
-            _id: Types.ObjectId;
-        }
-
-        export type GetAll = EmptyObject;
+        export type Get =
+            ({
+                target: APIControl.Team.Get.Target.ONE,
+                _id: Types.ObjectId
+            }) | ({
+                target: APIControl.Team.Get.Target.ALL
+            });
 
         export type Create = {
             name: string,
@@ -93,16 +105,111 @@ export namespace SDIn {
         }
     }
 
+    export namespace Project {
+        export type Get = {
+            target: APIControl.Project.Get.Target,
+            portfolio?: APIControl.Project.Get.Portfolio,
+        };
+
+        export type Create = {
+            portfolio: EProjectPortfolio;
+            title: string;
+            description: string;
+            tags: string[];
+            // TODO: Add the ability to have multiple authors.
+            // authors: Types.ObjectId[];
+            links: {
+                text: string;
+                url: string;
+            }[];
+        };
+
+        export type Update = {
+            _id: Types.ObjectId;
+            portfolio: EProjectPortfolio;
+            title?: string;
+            description?: string;
+            tags?: {
+                tag: string;
+            }[];
+            // TODO: Add the ability to have multiple authors.
+            // authors: Types.ObjectId[];
+            links?: {
+                text: string;
+                url: string;
+            }[];
+            coverImgMediaKey?: string | null;
+            media?: Types.ObjectId[];
+        };
+
+        export type Remove = {
+            _id: Types.ObjectId,
+        };
+    }
+
+    export namespace Blog {
+        export type Get =
+            | ({
+                target: APIControl.Blog.Get.Target.ALL | APIControl.Blog.Get.Target.MY
+            })
+            | ({
+                target: APIControl.Blog.Get.Target.BY_SLUG,
+                slug: string;
+            });
+
+        export type Create = {
+            title: string;
+            slug: string;
+            content: string;
+            tags: string[];
+            // TODO: Add the ability to have multiple authors.
+            // authors: Types.ObjectId[];
+        };
+
+        export type Update = {
+            _id: Types.ObjectId;
+            title?: string;
+            slug?: string;
+            content?: string;
+            tags?: string[];
+            // TODO: Add the ability to have multiple authors.
+            // authors: Types.ObjectId[];
+            coverImgMediaKey?: string | null;
+        };
+
+        export type Remove = {
+            _id: Types.ObjectId,
+        };
+    }
+
+    export namespace Featured {
+        export type Get = {
+            target: APIControl.Featured.Get.Target
+        }
+
+        export type GetGames = EmptyObject;
+        export type GetProjects = EmptyObject;
+
+        export type Create = {
+            contentType: EFeaturedType;
+            contentId: Types.ObjectId;
+        }
+
+        export type Remove = {
+            _id: Types.ObjectId,
+        };
+    }
+
     export namespace User {
         export type Get =
             | ({
-                target: APIControl.User.Get.RESTRICTED
+                target: APIControl.User.Get.Target.RESTRICTED
             } & GetRestricted)
             | ({
-                target: APIControl.User.Get.UNRESTRICTED
+                target: APIControl.User.Get.Target.UNRESTRICTED
             } & GetUnrestricted)
             | ({
-                target: APIControl.User.Get.ALL
+                target: APIControl.User.Get.Target.ALL
             } & GetAll);
 
         export type GetRestricted = {
@@ -126,7 +233,9 @@ export namespace SDIn {
             roles: EUserRole[],
         };
 
-        export type Remove = Get;
+        export type Remove = {
+            _id: Types.ObjectId,
+        };
     }
 }
 
@@ -170,11 +279,21 @@ export namespace SDOut {
     }
 
     export namespace Team {
-        export type Get = {
+        export type Get = GetOne | GetAll;
+
+        export type GetOne = {
             _id: string;
             name: string;
             description: string;
-            members: string[];
+            members: {
+                _id: string;
+                name: string;
+                links: {
+                    label: string;
+                    url: string;
+                }[];
+                profileImgMediaKey: string | null;
+            }[];
             coverImageMediaKey: string | null;
             createdAt: Date;
             updatedAt: Date;
@@ -185,11 +304,94 @@ export namespace SDOut {
             name: string;
             description: string;
             coverImageMediaKey: string | null;
+            createdAt: Date;
+            updatedAt: Date;
         }[];
 
         export type Create = EmptyObject;
         export type Update = EmptyObject;
         export type AddMembers = EmptyObject;
+        export type Remove = EmptyObject;
+    }
+
+    export namespace Project {
+        export type Get = {
+            _id: string;
+            portfolio: string;
+            title: string;
+            description: string;
+            tags: string[];
+            authors: {
+                _id: string;
+                name: string;
+            }[];
+            links: {
+                text: string;
+                url: string;
+            }[];
+            coverImgMediaKey: string | null;
+            media: string[];
+            createdAt: Date;
+            updatedAt: Date;
+        }[];
+
+        export type Create = EmptyObject;
+        export type Update = EmptyObject;
+        export type Remove = EmptyObject;
+    }
+
+    export namespace Blog {
+        export type Get = GetList | GetBySlug;
+
+        export type GetList = {
+            _id: string;
+            title: string;
+            slug: string;
+            tags: string[];
+            authors: {
+                _id: string;
+                name: string;
+            }[];
+            coverImgMediaKey: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+        }[];
+
+        export type GetMy = GetList;
+
+        export type GetBySlug = {
+            _id: string;
+            title: string;
+            content: string;
+            slug: string;
+            tags: string[];
+            authors: {
+                _id: string;
+                name: string;
+            }[];
+            coverImgMediaKey: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+
+        export type Create = EmptyObject;
+        export type Update = EmptyObject;
+        export type Remove = EmptyObject;
+    }
+
+    export namespace Featured {
+        export type Get = {
+            _id: string;
+            title: string;
+            tags: string[];
+            links: {
+                text: string;
+                url: string;
+            }[];
+            coverImgMediaKey: string | null;
+        }[];
+
+        export type Create = EmptyObject;
         export type Remove = EmptyObject;
     }
 

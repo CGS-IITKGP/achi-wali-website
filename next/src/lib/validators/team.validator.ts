@@ -5,17 +5,17 @@ import { APIControl } from "../types/api.types";
 const teamValidator = {
     get: z.object({
         target: z.enum([
-            APIControl.Team.Get.ONE,
-            APIControl.Team.Get.ALL,
+            APIControl.Team.Get.Target.ONE,
+            APIControl.Team.Get.Target.ALL,
         ]),
         _id: allIbDField._id.optional(),
     }).refine((data) => {
-        if (data.target === APIControl.Team.Get.ONE && !data._id) {
+        if (data.target === APIControl.Team.Get.Target.ONE && !data._id) {
             return false;
         }
         return true;
     }, {
-        message: 'Missing required fields based on target',
+        message: 'Missing required fields or invalid _id.',
         path: ['_id'],
     }),
     create: z.object({

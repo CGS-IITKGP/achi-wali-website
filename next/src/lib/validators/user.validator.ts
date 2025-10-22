@@ -4,13 +4,13 @@ import { APIControl } from "../types/api.types";
 
 const userValidator = {
     get: z.object({
-        target: z.enum(APIControl.User.Get),
+        target: z.enum(APIControl.User.Get.Target),
         _id: allIbDField._id.optional(),
     }).refine((data) => {
-        if (data.target === APIControl.User.Get.RESTRICTED && !data._id) {
+        if (data.target === APIControl.User.Get.Target.RESTRICTED && !data._id) {
             return false;
         }
-        if (data.target === APIControl.User.Get.UNRESTRICTED && !data._id) {
+        if (data.target === APIControl.User.Get.Target.UNRESTRICTED && !data._id) {
             return false;
         }
         return true;

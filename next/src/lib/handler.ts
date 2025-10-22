@@ -36,7 +36,10 @@ function createHandler<
         let data: IbD;
         const responseHandler = new ResponseHandler();
 
-        const defaultDataUnifier = (_req: NextRequest, parsedBody: object): IbD => {
+        const defaultDataUnifier = (
+            _req: NextRequest,
+            parsedBody: object,
+        ): IbD => {
             return parsedBody as IbD;
         }
         const defaultOnSuccess = (sData: SDOut) => {
@@ -84,7 +87,7 @@ function createHandler<
                 }
                 else {
                     const service = config.service as ServiceSignature<SDIn, SDOut, false>;
-                    serviceResponse = await service(data as unknown as SDIn, null);
+                    serviceResponse = await service(data as unknown as SDIn, session);
                 }
 
                 if (!serviceResponse.success) {
@@ -145,24 +148,34 @@ const serviceErrorCodeHandler = (
     switch (errorCode) {
         case ESECs.USER_NOT_FOUND:
         case ESECs.SIGNUP_REQUEST_NOT_FOUND:
+        case ESECs.TEAM_NOT_FOUND:
+        case ESECs.PROJECT_NOT_FOUND:
+        case ESECs.BLOG_NOT_FOUND:
+        case ESECs.SLUG_NOT_FOUND:
+        case ESECs.FEATURED_NOT_FOUND:
             return responseHandler.sendFailed(FailedResponseCodeEnum.NOT_FOUND, errorMessage);
 
         case ESECs.INVALID_CREDENTIALS:
         case ESECs.INVALID_JWT:
         case ESECs.INVALID_OTP:
+        case ESECs.UNAUTHORIZED:
             return responseHandler.sendFailed(FailedResponseCodeEnum.UNAUTHORIZED, errorMessage);
 
-        case ESECs.EMAIL_TAKEN:
-            return responseHandler.sendFailed(FailedResponseCodeEnum.CONFLICT, errorMessage);
-
         case ESECs.FORBIDDEN:
+        case ESECs.NOT_TEAM_MEMBER:
             return responseHandler.sendFailed(FailedResponseCodeEnum.FORBIDDEN, errorMessage);
+
+        case ESECs.EMAIL_TAKEN:
+        case ESECs.TEAM_NAME_TAKEN:
+        case ESECs.SLUG_ALREADY_IN_USE:
+        case ESECs.ALREADY_FEATURED:
+            return responseHandler.sendFailed(FailedResponseCodeEnum.CONFLICT, errorMessage);
 
         case ESECs.TOO_MANY_REQUESTS:
             return responseHandler.sendFailed(FailedResponseCodeEnum.TOO_MANY_REQUESTS, errorMessage);
 
         default:
-            log(ELogLevel.ERROR, `Unhandled ESECs code in ServiceErrorCodeHandler: ${errorCode}`);
+            log(ELogLevel.ERROR, `Unhandled ESECs code in ServiceErrorCodeHandler: ${ESECs[errorCode]} (${errorCode})`);
             throw new AppError("Unhandled service client error code.", { errorCode });
     }
 };

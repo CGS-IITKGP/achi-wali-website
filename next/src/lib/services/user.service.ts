@@ -47,15 +47,15 @@ const get: ServiceSignature<
     SDOut.User.Get,
     true
 > = async (data, session) => {
-    if (data.target === APIControl.User.Get.RESTRICTED) {
+    if (data.target === APIControl.User.Get.Target.RESTRICTED) {
         return getRestricted(data, session);
     }
 
-    if (data.target === APIControl.User.Get.UNRESTRICTED) {
+    if (data.target === APIControl.User.Get.Target.UNRESTRICTED) {
         return getUnrestricted(data, session);
     }
 
-    if (data.target === APIControl.User.Get.ALL) {
+    if (data.target === APIControl.User.Get.Target.ALL) {
         return getAll(data, session);
     }
 

@@ -10,19 +10,19 @@ const authValidator = {
     }),
     signOut: z.object({}),
     signUp: z.object({
-        target: z.enum(APIControl.Auth.SignUp),
+        target: z.enum(APIControl.Auth.SignUp.Target),
         name: z.string().optional(),
         email: allIbDField.email,
         password: allIbDField.password.optional(),
         otp: allIbDField.otp.optional(),
     }).refine((data) => {
-        if (data.target === APIControl.Auth.SignUp.REQUEST && !data.name) {
+        if (data.target === APIControl.Auth.SignUp.Target.REQUEST && !data.name) {
             return false;
         }
-        if (data.target === APIControl.Auth.SignUp.RESEND_OTP && !data.otp) {
+        if (data.target === APIControl.Auth.SignUp.Target.RESEND_OTP && !data.otp) {
             return false;
         }
-        if (data.target === APIControl.Auth.SignUp.VERIFY && !data.otp) {
+        if (data.target === APIControl.Auth.SignUp.Target.VERIFY && !data.otp) {
             return false;
         }
         return true;
