@@ -45,7 +45,7 @@ export type ServiceSignature<
     SDIn,
     SDOut,
     RequireSession extends boolean = false,
-> = (data: SDIn, session: RequireSession extends true ? ISession : null)
+> = (data: SDIn, session: RequireSession extends true ? ISession : ISession | null)
         => Promise<IServiceResolve<SDOut>>;
 
 export type ControllerConfig<IbD> = {

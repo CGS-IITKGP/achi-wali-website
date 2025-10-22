@@ -98,15 +98,15 @@ const signUp: ServiceSignature<
     SDOut.Auth.SignUp,
     false
 > = async (data) => {
-    if (data.target === APIControl.Auth.SignUp.REQUEST) {
+    if (data.target === APIControl.Auth.SignUp.Target.REQUEST) {
         return signUpRequest(data, null);
     }
 
-    if (data.target === APIControl.Auth.SignUp.RESEND_OTP) {
+    if (data.target === APIControl.Auth.SignUp.Target.RESEND_OTP) {
         return signUpRequestResendOTP(data, null);
     }
 
-    if (data.target === APIControl.Auth.SignUp.VERIFY) {
+    if (data.target === APIControl.Auth.SignUp.Target.VERIFY) {
         return signUpVerify(data, null);
     }
 

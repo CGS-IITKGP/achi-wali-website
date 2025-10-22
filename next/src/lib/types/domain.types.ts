@@ -47,8 +47,31 @@ export interface ITeam {
     updatedAt: Date;
 }
 
+export interface ITeamExportable extends Omit<ITeam, "members"> {
+    members: {
+        _id: Types.ObjectId;
+        name: string;
+        links: {
+            label: string;
+            url: string;
+        }[];
+        profileImgMediaKey: string | null;
+    }[];
+}
+
+export interface ITeamOfListExportable extends Omit<ITeam, "member"> {
+    useEslint: never;
+}
+
+export enum EProjectPortfolio {
+    GAME = "GAME",
+    GRAPHICS = "GRAPHICS",
+    RND = "RND",
+}
+
 export interface IProject {
     _id: Types.ObjectId;
+    portfolio: EProjectPortfolio;
     title: string;
     description: string;
     tags: string[];
@@ -63,6 +86,13 @@ export interface IProject {
     updatedAt: Date;
 }
 
+export interface IProjectExportable extends Omit<IProject, 'authors'> {
+    authors: {
+        _id: Types.ObjectId;
+        name: string;
+    }[];
+}
+
 export interface IBlog {
     _id: Types.ObjectId;
     title: string;
@@ -73,6 +103,17 @@ export interface IBlog {
     coverImgMediaKey: string | null;
     createdAt: Date;
     updatedAt: Date;
+}
+
+export interface IBlogExportable extends Omit<IBlog, 'authors'> {
+    authors: {
+        _id: Types.ObjectId;
+        name: string;
+    }[];
+}
+
+export interface IBlogOfListExportable extends Omit<IBlogExportable, "content"> {
+    useEslint: never;
 }
 
 export enum EMediaTypes {
@@ -87,6 +128,19 @@ export interface IMedia {
     url: string;
     altText: string;
     uploadedBy: Types.ObjectId;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export enum EFeaturedType {
+    PROJECT = "PROJECT",
+    GAME = "GAME",
+}
+
+export interface IFeatured {
+    _id: Types.ObjectId;
+    contentType: EFeaturedType;
+    contentId: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }

@@ -1,8 +1,13 @@
 import { Schema, model, models } from 'mongoose';
-import { IProject } from '@/lib/types/index.types';
+import { EProjectPortfolio, IProject } from '@/lib/types/index.types';
 
 
 const ProjectSchema = new Schema<IProject>({
+    portfolio: {
+        type: Schema.Types.String,
+        enum: Object.values(EProjectPortfolio),
+        required: true,
+    },
     title: {
         type: Schema.Types.String,
         required: true,

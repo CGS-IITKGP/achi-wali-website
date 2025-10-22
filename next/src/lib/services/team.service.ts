@@ -6,8 +6,10 @@ import {
     EUserRole,
     SDOut,
     SDIn,
+    APIControl,
 } from "@/lib/types/index.types";
 import { withSession } from "../database/db";
+import AppError from "../utils/error";
 
 
 const get: ServiceSignature<
@@ -15,47 +17,50 @@ const get: ServiceSignature<
     SDOut.Team.Get,
     false
 > = async (data) => {
-    const team = await teamRepository.findById(data._id);
-    if (!team) {
+    if (data.target === APIControl.Team.Get.Target.ONE) {
+        const team = await teamRepository.findExportable({
+            teamId: data._id
+        });
+        if (!team) {
+            return {
+                success: false,
+                errorCode: ESECs.TEAM_NOT_FOUND,
+                errorMessage: "Cannot find the team."
+            };
+        }
+
         return {
-            success: false,
-            errorCode: ESECs.TEAM_NOT_FOUND,
-            errorMessage: "Team not found.",
+            success: true,
+            data: {
+                ...team,
+                _id: team._id.toHexString(),
+                members: team.members.map(member => {
+                    return {
+                        ...member,
+                        _id: member._id.toHexString(),
+                    }
+                })
+            }
         };
     }
+    else if (data.target === APIControl.Team.Get.Target.ALL) {
+        const teams = await teamRepository.findAllOfListExportable();
 
-    return {
-        success: true,
-        data: {
-            _id: team._id.toHexString(),
-            name: team.name,
-            description: team.description,
-            members: team.members.map(_id => _id.toHexString()),
-            coverImageMediaKey: team.coverImageMediaKey,
-            createdAt: team.createdAt,
-            updatedAt: team.updatedAt,
+        return {
+            success: true,
+            data: teams.map(team => {
+                return {
+                    ...team,
+                    _id: team._id.toHexString(),
+                }
+            })
         }
-    };
-};
+    }
 
-const getAll: ServiceSignature<
-    SDIn.Team.GetAll,
-    SDOut.Team.GetAll,
-    false
-> = async () => {
-    const teams = await teamRepository.findAll({});
-
-    return {
-        success: true,
-        data: teams.map(team => {
-            return {
-                _id: team._id.toHexString(),
-                name: team.name,
-                description: team.description,
-                coverImageMediaKey: team.coverImageMediaKey,
-            }
-        }),
-    };
+    throw new AppError(
+        "APIControl.Team.Get is something other than ONE and ALL",
+        { data }
+    );
 };
 
 const create: ServiceSignature<
@@ -231,7 +236,6 @@ const remove: ServiceSignature<
 
 const teamServices = {
     get,
-    getAll,
     create,
     update,
     addMembers,
