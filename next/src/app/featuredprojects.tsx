@@ -7,10 +7,14 @@ import {
   ChevronRight,
   ExternalLink,
   Github,
+  FileText,
+  Gamepad,
+  Image,
+  FlaskConical,
 } from "lucide-react";
-
-import { Project } from "./gamelist";
-import projects from "./gamelist";
+import { IRecentFeaturedContent } from "./types/domain.types";
+import { prettySafeImage } from "./utils/pretty";
+import Link from "next/link";
 
 const AnimatedBackground = React.memo(() => {
   return (
@@ -41,13 +45,27 @@ const AnimatedBackground = React.memo(() => {
 
 AnimatedBackground.displayName = "AnimatedBackground";
 
-const ProjectCard = React.memo<{
-  project: Project;
+const getIconByType = (type: "BLOG" | "GAME" | "GRAPHICS" | "RND") => {
+  if (type === "BLOG") {
+    return <FileText className="w-6 h-6" />;
+  } else if (type === "GAME") {
+    return <Gamepad className="w-6 h-6" />;
+  } else if (type === "GRAPHICS") {
+    return <Image className="w-6 h-6" />;
+  } else if (type === "RND") {
+    return <FlaskConical className="w-6 h-6" />;
+  } else {
+    return null;
+  }
+};
+
+const ContentCard = React.memo<{
+  content: IRecentFeaturedContent;
   index: number;
   activeIndex: number;
   totalProjects: number;
   onClick: () => void;
-}>(({ project, index, activeIndex, totalProjects, onClick }) => {
+}>(({ content, index, activeIndex, totalProjects, onClick }) => {
   const position = useMemo(() => {
     const angle = ((index - activeIndex) * 360) / totalProjects;
     const radius = 300;
@@ -99,7 +117,7 @@ const ProjectCard = React.memo<{
             : "shadow-md shadow-black/10"
         }
         transition-shadow duration-300
-        bg-gradient-to-br ${project.gradient}
+        bg-gradient-to-br from-pink-600 via-violet-500 to-purple-600
         border border-pink-300/10
       `}
       >
@@ -110,32 +128,28 @@ const ProjectCard = React.memo<{
         >
           <div className="relative h-40 overflow-hidden">
             <img
-              src={project.image}
-              alt={project.title}
+              src={prettySafeImage(content.coverImgMediaKey)}
+              alt={content.title}
               className="w-full h-full object-cover"
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
             <div className="absolute top-3 left-3 flex items-center space-x-2 bg-pink-500/80 rounded-full px-2 py-1">
-              {project.icon}
+              {getIconByType(content.type)}
               <span className="text-white text-xs font-medium">
-                {project.category}
+                {content.type}
               </span>
             </div>
           </div>
 
           <div className="flex-1 p-4 flex flex-col">
             <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">
-              {project.title}
+              {content.title}
             </h3>
 
-            <p className="text-pink-100 text-sm mb-3 line-clamp-2 flex-grow">
-              {project.description}
-            </p>
-
             <div className="flex flex-wrap gap-1 mb-3">
-              {project.technologies.slice(0, 3).map((tech, techIndex) => (
+              {content.tags.slice(0, 3).map((tech, techIndex) => (
                 <span
                   key={techIndex}
                   className="px-2 py-1 bg-pink-500/20 rounded text-xs text-pink-200 border border-pink-400/20"
@@ -143,22 +157,46 @@ const ProjectCard = React.memo<{
                   {tech}
                 </span>
               ))}
-              {project.technologies.length > 3 && (
+              {content.tags.length > 3 && (
                 <span className="px-2 py-1 bg-pink-500/20 rounded text-xs text-pink-200 border border-pink-400/20">
-                  +{project.technologies.length - 3}
+                  +{content.tags.length - 3}
                 </span>
               )}
             </div>
 
             <div className="flex space-x-2">
-              <button className="flex-1 bg-pink-500/70 hover:bg-pink-500/90 text-white px-3 py-2 rounded text-sm transition-colors duration-200 flex items-center justify-center space-x-1">
-                <ExternalLink className="w-3 h-3" />
-                <span>Demo</span>
-              </button>
+              {content.type === "BLOG" ? (
+                <Link
+                  href={content.readUrl || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 bg-pink-500/70 hover:bg-pink-500/90 text-white px-3 py-2 rounded text-sm transition-colors duration-200 flex items-center justify-center space-x-1"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  <span>Read Blog</span>
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href={content.liveDemoLink || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 bg-pink-500/70 hover:bg-pink-500/90 text-white px-3 py-2 rounded text-sm transition-colors duration-200 flex items-center justify-center space-x-1"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    <span>Live Demo</span>
+                  </Link>
 
-              <button className="bg-black/40 hover:bg-black/60 text-white px-3 py-2 rounded text-sm transition-colors duration-200 flex items-center justify-center">
-                <Github className="w-3 h-3" />
-              </button>
+                  <Link
+                    href={content.githubLink || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-black/40 hover:bg-black/60 text-white px-3 py-2 rounded text-sm transition-colors duration-200 flex items-center justify-center"
+                  >
+                    <Github className="w-3 h-3" />
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -167,9 +205,13 @@ const ProjectCard = React.memo<{
   );
 });
 
-ProjectCard.displayName = "ProjectCard";
+ContentCard.displayName = "ProjectCard";
 
-const FeaturedProjects: React.FC = () => {
+interface FeaturedContentProps {
+  featured: IRecentFeaturedContent[];
+}
+
+const FeaturedContent = ({ featured }: FeaturedContentProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
 
@@ -177,25 +219,25 @@ const FeaturedProjects: React.FC = () => {
     if (!isAutoRotating) return;
 
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % projects.length);
+      setActiveIndex((prev) => (prev + 1) % featured.length);
     }, 5000);
 
     return () => clearInterval(interval);
   }, [isAutoRotating]);
 
-  const nextProject = useCallback(() => {
+  const nextContent = useCallback(() => {
     setIsAutoRotating(false);
-    setActiveIndex((prev) => (prev + 1) % projects.length);
+    setActiveIndex((prev) => (prev + 1) % featured.length);
     setTimeout(() => setIsAutoRotating(true), 8000);
   }, []);
 
-  const prevProject = useCallback(() => {
+  const prevContent = useCallback(() => {
     setIsAutoRotating(false);
-    setActiveIndex((prev) => (prev - 1 + projects.length) % projects.length);
+    setActiveIndex((prev) => (prev - 1 + featured.length) % featured.length);
     setTimeout(() => setIsAutoRotating(true), 8000);
   }, []);
 
-  const selectProject = useCallback((index: number) => {
+  const selectContent = useCallback((index: number) => {
     setIsAutoRotating(false);
     setActiveIndex(index);
     setTimeout(() => setIsAutoRotating(true), 8000);
@@ -205,7 +247,7 @@ const FeaturedProjects: React.FC = () => {
     <section className="relative min-h-screen overflow-hidden">
       <AnimatedBackground />
 
-      <div className="relative z-10 container mx-auto px-4 py-16">
+      <div className="relative z-0 container mx-auto px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -213,7 +255,7 @@ const FeaturedProjects: React.FC = () => {
           className="text-center mb-12"
         >
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-pink-400 via-pink-500 to-purple-600 bg-clip-text text-transparent mb-4">
-            Featured Projects
+            Featured
           </h1>
           <p className="text-lg text-pink-200 max-w-2xl mx-auto">
             Explore cutting-edge technologies and innovative solutions
@@ -223,36 +265,36 @@ const FeaturedProjects: React.FC = () => {
         <div
           className="relative h-[500px] flex items-center justify-center"
           style={{
-            perspective: 1200, // reliable perspective
+            perspective: 1200,
             WebkitPerspective: 1200,
-            transformStyle: "preserve-3d", // ensure 3D children render correctly
+            transformStyle: "preserve-3d",
           }}
         >
-          {projects.map((project, index) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
+          {featured.map((content, index) => (
+            <ContentCard
+              key={content._id}
+              content={content}
               index={index}
               activeIndex={activeIndex}
-              totalProjects={projects.length}
-              onClick={() => selectProject(index)}
+              totalProjects={featured.length}
+              onClick={() => selectContent(index)}
             />
           ))}
         </div>
 
         <div className="flex justify-center items-center space-x-6 mt-8">
           <button
-            onClick={prevProject}
+            onClick={prevContent}
             className="p-3 bg-pink-500/20 hover:bg-pink-500/30 rounded-full text-pink-300 hover:text-white transition-all duration-200 border border-pink-400/20"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
 
           <div className="flex space-x-2">
-            {projects.map((_, index) => (
+            {featured.map((_, index) => (
               <button
                 key={index}
-                onClick={() => selectProject(index)}
+                onClick={() => selectContent(index)}
                 className={`w-2 h-2 rounded-full transition-all duration-200 ${
                   index === activeIndex
                     ? "bg-pink-500 shadow-sm shadow-pink-500/50"
@@ -263,7 +305,7 @@ const FeaturedProjects: React.FC = () => {
           </div>
 
           <button
-            onClick={nextProject}
+            onClick={nextContent}
             className="p-3 bg-pink-500/20 hover:bg-pink-500/30 rounded-full text-pink-300 hover:text-white transition-all duration-200 border border-pink-400/20"
           >
             <ChevronRight className="w-5 h-5" />
@@ -274,4 +316,4 @@ const FeaturedProjects: React.FC = () => {
   );
 };
 
-export default FeaturedProjects;
+export default FeaturedContent;

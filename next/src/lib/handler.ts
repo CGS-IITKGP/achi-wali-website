@@ -50,8 +50,8 @@ function createHandler<
         }
 
         try {
+            session = await authService.extractSession(req);
             if (requireAuth) {
-                session = await authService.extractSession(req);
                 if (!session) {
                     return responseHandler.sendFailed(
                         FailedResponseCodeEnum.UNAUTHORIZED,

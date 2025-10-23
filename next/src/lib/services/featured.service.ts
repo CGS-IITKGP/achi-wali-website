@@ -6,42 +6,150 @@ import {
     SDOut,
     SDIn,
     APIControl,
+    EFeaturedType,
+    IRecentFeaturedContent,
 } from "@/lib/types/index.types";
 import AppError from "../utils/error";
 import projectRepository from "../database/repos/project.repo";
+import blogRepository from "../database/repos/blog.repo";
+import { Types } from "mongoose";
 
 const get: ServiceSignature<
     SDIn.Featured.Get,
     SDOut.Featured.Get,
     false
 > = async (data, session) => {
+    if (data.target === APIControl.Featured.Get.Target.RECENT) {
+        return await getRecent({}, null);
+    }
+
     const featured = await featuredRepository.findAll({
-        contentType: APIControl.Featured.Get.Target
+        contentType: data.target.toUpperCase()
     });
 
-    const featuredContents = await projectRepository.findAllExportable({
+    const contentIds = featured.map(featured => featured.contentId);
+
+    if (data.target === APIControl.Featured.Get.Target.BLOG) {
+        const featuredBlogs = await blogRepository.findAllOfListExportable({
+            _id: {
+                $in: contentIds
+            }
+        });
+
+        return {
+            success: true,
+            data: featuredBlogs.map(blog => {
+                return {
+                    ...blog,
+                    _id: blog._id.toHexString(),
+                    authors: blog.authors.map(author => {
+                        return {
+                            ...author,
+                            _id: author._id.toHexString(),
+                        }
+                    })
+                }
+            })
+        };
+    }
+    else if (data.target === APIControl.Featured.Get.Target.GAME ||
+        data.target === APIControl.Featured.Get.Target.GRAPHICS ||
+        data.target === APIControl.Featured.Get.Target.RND
+    ) {
+        const featuredProject = await projectRepository.findAllExportable({
+            _id: {
+                $in: featured.map(featured => featured.contentId)
+            }
+        });
+
+        return {
+            success: true,
+            data: featuredProject.map(project => {
+                return {
+                    ...project,
+                    _id: project._id.toHexString(),
+                    authors: project.authors.map(author => {
+                        return {
+                            ...author,
+                            _id: author._id.toHexString(),
+                        }
+                    })
+                }
+            }),
+        };
+    }
+
+    throw new AppError(
+        "APIControl.Featured.Get.TARGET is something other than BLOG, GAME, GRAPHICS, AND RND",
+        { data, session }
+    );
+};
+
+const getRecent: ServiceSignature<
+    SDIn.Featured.GetRecent,
+    SDOut.Featured.GetRecent,
+    false
+> = async (_data, _session) => {
+    const recentFeatured = await featuredRepository.findRecent(5);
+
+    const featuredBlogsId: Types.ObjectId[] = [];
+    const featuredProjectsId: Types.ObjectId[] = [];
+
+    recentFeatured.map(content => {
+        content.contentType === EFeaturedType.BLOG
+            ? featuredBlogsId.push(content.contentId)
+            : featuredProjectsId.push(content.contentId);
+    });
+
+    const recentFeaturedContent: IRecentFeaturedContent[] = [];
+
+    const featuredBlogs = await blogRepository.findAllOfListExportable({
         _id: {
-            $in: featured.map(featured => featured.contentId)
+            $in: featuredBlogsId
         }
+    });
+
+    featuredBlogs.forEach(blog => {
+        recentFeaturedContent.push({
+            _id: blog._id,
+            type: "BLOG",
+            title: blog.title,
+            tags: blog.tags,
+            coverImgMediaKey: blog.coverImgMediaKey,
+            readUrl: "/blog/" + blog.slug
+        });
+    });
+
+    const featuredProject = await projectRepository.findAll({
+        _id: {
+            $in: featuredProjectsId
+        }
+    });
+
+    featuredProject.forEach(project => {
+        const githubLink = project.links?.find(link => link.text.toLowerCase() === "github");
+        const liveDemoLink = project.links?.find(link => link.text.toLowerCase() === "live-demo");
+
+        recentFeaturedContent.push({
+            _id: project._id,
+            type: project.portfolio,
+            title: project.title,
+            tags: project.tags,
+            coverImgMediaKey: project.coverImgMediaKey,
+            githubLink: githubLink ? githubLink.url : null,
+            liveDemoLink: liveDemoLink ? liveDemoLink.url : null
+        });
     });
 
     return {
         success: true,
-        data: featuredContents.map(featureContent => {
+        data: recentFeaturedContent.map(content => {
             return {
-                _id: featureContent._id.toHexString(),
-                title: featureContent.title,
-                tags: featureContent.tags,
-                links: featureContent.links,
-                coverImgMediaKey: featureContent.coverImgMediaKey,
+                ...content,
+                _id: content._id.toHexString()
             }
-        }),
-    };
-
-    throw new AppError(
-        "APIControl.Featured.Get is something other than GAME and PROJECT",
-        { data, session }
-    );
+        })
+    }
 };
 
 const create: ServiceSignature<

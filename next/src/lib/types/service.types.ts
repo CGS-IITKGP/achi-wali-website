@@ -110,7 +110,7 @@ export namespace SDIn {
     export namespace Project {
         export type Get = {
             target: APIControl.Project.Get.Target,
-            portfolio?: APIControl.Project.Get.Portfolio,
+            portfolio: APIControl.Project.Get.Portfolio,
         };
 
         export type Create = {
@@ -189,8 +189,7 @@ export namespace SDIn {
             target: APIControl.Featured.Get.Target
         }
 
-        export type GetGames = EmptyObject;
-        export type GetProjects = EmptyObject;
+        export type GetRecent = EmptyObject;
 
         export type Create = {
             contentType: EFeaturedType;
@@ -402,16 +401,52 @@ export namespace SDOut {
     }
 
     export namespace Featured {
-        export type Get = {
+        export type Get = GetBlog | GetProject | GetRecent;
+
+        export type GetBlog = {
             _id: string;
             title: string;
+            slug: string;
             tags: string[];
+            authors: {
+                _id: string;
+                name: string;
+            }[];
+            coverImgMediaKey: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+        }[];
+
+        export type GetProject = {
+            _id: string;
+            portfolio: string;
+            title: string;
+            description: string;
+            tags: string[];
+            authors: {
+                _id: string;
+                name: string;
+            }[];
             links: {
                 text: string;
                 url: string;
             }[];
             coverImgMediaKey: string | null;
+            createdAt: Date;
+            updatedAt: Date;
         }[];
+
+        export type GetRecent = ({
+            _id: string;
+            type: "BLOG" | "GAME" | "GRAPHICS" | "RND";
+            title: string;
+            coverImgMediaKey: string | null;
+            tags: string[];
+        } & (
+                { type: "BLOG"; readUrl: string } |
+                { type: "GAME" | "GRAPHICS" | "RND"; liveDemoLink: string | null; githubLink: string | null }
+            ))[];
+
 
         export type Create = EmptyObject;
         export type Remove = EmptyObject;
@@ -426,7 +461,7 @@ export namespace SDOut {
 
         export type Sign = {
             signature: string;
-            timestamp: number;
+            timestamp: string;
             folder: string;
             cloudName: string;
             apiKey: string;
@@ -475,74 +510,74 @@ export namespace SDOut {
 }
 
 export namespace SECs {
-  export namespace Misc {
-    export type Health = never;
-  }
+    export namespace Misc {
+        export type Health = never;
+    }
 
-  // Auth
-  export type AuthMe = never;
+    // Auth
+    export type AuthMe = never;
 
-  export type AuthSignIn = ESECs.USER_NOT_FOUND | ESECs.INVALID_CREDENTIALS;
+    export type AuthSignIn = ESECs.USER_NOT_FOUND | ESECs.INVALID_CREDENTIALS;
 
-  export type AuthSignOut = never;
+    export type AuthSignOut = never;
 
-  export type AuthSignUpRequest = ESECs.EMAIL_TAKEN;
+    export type AuthSignUpRequest = ESECs.EMAIL_TAKEN;
 
-  export type AuthSignUpRequestResendOTP =
-    | ESECs.SIGNUP_REQUEST_NOT_FOUND
-    | ESECs.TOO_MANY_REQUESTS;
+    export type AuthSignUpRequestResendOTP =
+        | ESECs.SIGNUP_REQUEST_NOT_FOUND
+        | ESECs.TOO_MANY_REQUESTS;
 
-  export type AuthSignUpVerify =
-    | ESECs.SIGNUP_REQUEST_NOT_FOUND
-    | ESECs.INVALID_OTP;
+    export type AuthSignUpVerify =
+        | ESECs.SIGNUP_REQUEST_NOT_FOUND
+        | ESECs.INVALID_OTP;
 
-  export type AuthChangePassword = ESECs.INVALID_CREDENTIALS;
+    export type AuthChangePassword = ESECs.INVALID_CREDENTIALS;
 
-  export type AuthExtractSession = ESECs.INVALID_JWT;
+    export type AuthExtractSession = ESECs.INVALID_JWT;
 
-  // Team
-  export type TeamGet = ESECs.TEAM_NOT_FOUND;
-  export type TeamGetAll = never;
-  export type TeamCreate = ESECs.TEAM_NAME_TAKEN | ESECs.FORBIDDEN;
-  export type TeamUpdate =
-    | ESECs.TEAM_NOT_FOUND
-    | ESECs.TEAM_NAME_TAKEN
-    | ESECs.FORBIDDEN;
-  export type TeamAddMembers =
-    | ESECs.TEAM_NOT_FOUND
-    | ESECs.USER_NOT_FOUND
-    | ESECs.FORBIDDEN;
-  export type TeamRemove = ESECs.TEAM_NOT_FOUND | ESECs.FORBIDDEN;
+    // Team
+    export type TeamGet = ESECs.TEAM_NOT_FOUND;
+    export type TeamGetAll = never;
+    export type TeamCreate = ESECs.TEAM_NAME_TAKEN | ESECs.FORBIDDEN;
+    export type TeamUpdate =
+        | ESECs.TEAM_NOT_FOUND
+        | ESECs.TEAM_NAME_TAKEN
+        | ESECs.FORBIDDEN;
+    export type TeamAddMembers =
+        | ESECs.TEAM_NOT_FOUND
+        | ESECs.USER_NOT_FOUND
+        | ESECs.FORBIDDEN;
+    export type TeamRemove = ESECs.TEAM_NOT_FOUND | ESECs.FORBIDDEN;
 
-  export type GetAll = never;
+    export type GetAll = never;
 
-  export type Create = ESECs.TEAM_NAME_TAKEN | ESECs.FORBIDDEN;
+    export type Create = ESECs.TEAM_NAME_TAKEN | ESECs.FORBIDDEN;
 
-  export type Update =
-    | ESECs.TEAM_NOT_FOUND
-    | ESECs.TEAM_NAME_TAKEN
-    | ESECs.FORBIDDEN;
+    export type Update =
+        | ESECs.TEAM_NOT_FOUND
+        | ESECs.TEAM_NAME_TAKEN
+        | ESECs.FORBIDDEN;
 
-  export type AddMembers =
-    | ESECs.TEAM_NOT_FOUND
-    | ESECs.USER_NOT_FOUND
-    | ESECs.FORBIDDEN;
+    export type AddMembers =
+        | ESECs.TEAM_NOT_FOUND
+        | ESECs.USER_NOT_FOUND
+        | ESECs.FORBIDDEN;
 
-  export type Remove = ESECs.TEAM_NOT_FOUND | ESECs.FORBIDDEN;
+    export type Remove = ESECs.TEAM_NOT_FOUND | ESECs.FORBIDDEN;
 }
 
 export namespace User {
-  export type Get = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
+    export type Get = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
 
-  export type GetUnrestricted = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
+    export type GetUnrestricted = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
 
-  export type GetAll = ESECs.FORBIDDEN;
+    export type GetAll = ESECs.FORBIDDEN;
 
-  export type Update = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
+    export type Update = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
 
-  export type UpdateRoles = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
+    export type UpdateRoles = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
 
-  export type Remove = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
+    export type Remove = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
 }
 
 /* eslint-enable @typescript-eslint/no-namespace */

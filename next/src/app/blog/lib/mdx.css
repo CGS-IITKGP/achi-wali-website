@@ -2,189 +2,193 @@
 
 /* Medium-inspired typography with pink-black theme */
 @layer base {
-    /* Medium-style headings */
-    h1 {
-        @apply text-3xl md:text-4xl font-bold text-white mt-12 mb-6 leading-tight tracking-tight;
-        font-family: 'sohne', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
-    
-    h2 {
-        @apply text-2xl md:text-3xl font-bold text-white mt-10 mb-5 leading-tight;
-        font-family: 'sohne', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
-    
-    h3 {
-        @apply text-xl md:text-2xl font-semibold text-white mt-8 mb-4 leading-snug;
-        font-family: 'sohne', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
-    
-    h4 {
-        @apply text-lg md:text-xl font-semibold text-gray-100 mt-6 mb-3 leading-snug;
-    }
-    
-    h5 {
-        @apply text-base md:text-lg font-semibold text-gray-200 mt-6 mb-3;
-    }
-    
-    h6 {
-        @apply text-sm md:text-base font-semibold text-gray-300 mt-4 mb-2 uppercase tracking-wider;
-    }
+  /* Medium-style headings */
+  h1 {
+    @apply text-3xl md:text-4xl font-bold text-white mt-12 mb-6 leading-tight tracking-tight;
+    font-family: "sohne", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
 
-    /* Medium-style paragraphs */
-    p {
-        @apply text-lg md:text-xl text-gray-200 leading-relaxed mb-6 font-light;
-        font-family: 'source-serif-pro', Georgia, Cambria, "Times New Roman", Times, serif;
-        line-height: 1.6;
-        letter-spacing: -0.003em;
-    }
+  h2 {
+    @apply text-2xl md:text-3xl font-bold text-white mt-10 mb-5 leading-tight;
+    font-family: "sohne", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
 
-    /* Medium-style links */
-    a {
-        @apply text-pink-400 hover:text-pink-300 transition-colors duration-200 relative;
-        text-decoration: none;
-        border-bottom: 1px solid rgba(236, 72, 153, 0.3);
-    }
-    
-    a:hover {
-        border-bottom-color: rgba(236, 72, 153, 0.6);
-    }
+  h3 {
+    @apply text-xl md:text-2xl font-semibold text-white mt-8 mb-4 leading-snug;
+    font-family: "sohne", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
 
-    /* Medium-style blockquotes */
-    blockquote {
-        @apply text-xl md:text-2xl italic text-gray-300 my-8 px-6 py-4 border-l-4 border-pink-500 bg-gray-900/30 rounded-r-lg;
-        font-family: 'source-serif-pro', Georgia, Cambria, "Times New Roman", Times, serif;
-        line-height: 1.5;
-    }
+  h4 {
+    @apply text-lg md:text-xl font-semibold text-gray-100 mt-6 mb-3 leading-snug;
+  }
 
-    /* Lists */
-    ul {
-        @apply my-6 space-y-2 text-lg text-gray-200;
-    }
-    
-    ol {
-        @apply my-6 space-y-2 text-lg text-gray-200;
-    }
-    
-    li {
-        @apply leading-relaxed mb-2;
-        font-family: 'source-serif-pro', Georgia, Cambria, "Times New Roman", Times, serif;
-    }
-    
-    ul li {
-        @apply relative pl-6;
-    }
-    
-    ul li::before {
-        content: '•';
-        @apply absolute left-0 text-pink-400 font-bold;
-    }
-    
-    ol {
-        counter-reset: list-counter;
-    }
-    
-    ol li {
-        @apply relative pl-8;
-        counter-increment: list-counter;
-    }
-    
-    ol li::before {
-        content: counter(list-counter) '.';
-        @apply absolute left-0 text-pink-400 font-semibold;
-    }
+  h5 {
+    @apply text-base md:text-lg font-semibold text-gray-200 mt-6 mb-3;
+  }
 
-    li ul, li ol {
-        @apply pl-6 mt-3 mb-0;
-    }
+  h6 {
+    @apply text-sm md:text-base font-semibold text-gray-300 mt-4 mb-2 uppercase tracking-wider;
+  }
 
-    /* Code blocks - Medium style */
-    pre {
-        @apply p-6 rounded-xl bg-gray-900 border border-gray-700 my-8 overflow-x-auto shadow-2xl;
-        font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-    }
-    
-    code {
-        @apply bg-gray-800/60 text-pink-300 px-2 py-1 rounded-md font-mono text-sm font-medium;
-        font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-    }
-    
-    pre code {
-        @apply bg-transparent p-0 text-gray-100 text-sm leading-relaxed;
-        font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-    }
+  /* Medium-style paragraphs */
+  p {
+    @apply text-lg md:text-xl text-gray-200 leading-relaxed mb-6 font-light;
+    font-family: "source-serif-pro", Georgia, Cambria, "Times New Roman", Times,
+      serif;
+    line-height: 1.6;
+    letter-spacing: -0.003em;
+  }
 
-    /* Horizontal rules */
-    hr {
-        @apply my-12 border-0 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent;
-    }
+  /* Medium-style links */
+  a {
+    @apply text-pink-400 hover:text-pink-300 transition-colors duration-200 relative;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(236, 72, 153, 0.3);
+  }
 
-    /* Images - Medium style */
-    img {
-        @apply w-full h-auto rounded-2xl my-10 shadow-2xl hover:shadow-pink-900/20 transition-shadow duration-500;
-        max-width: 100%;
-    }
+  a:hover {
+    border-bottom-color: rgba(236, 72, 153, 0.6);
+  }
 
-    /* Tables */
-    table {
-        @apply w-full border-collapse my-8 text-gray-200 bg-gray-900/50 rounded-xl overflow-hidden;
-    }
-    
-    th {
-        @apply bg-pink-900/50 text-pink-100 p-4 text-left font-semibold border-b border-pink-700/30;
-    }
-    
-    td {
-        @apply border-b border-gray-700/50 p-4 text-gray-200;
-    }
-    
-    tr:hover {
-        @apply bg-gray-800/30;
-    }
+  /* Medium-style blockquotes */
+  blockquote {
+    @apply text-xl md:text-2xl italic text-gray-300 my-8 px-6 py-4 border-l-4 border-pink-500 bg-gray-900/30 rounded-r-lg;
+    font-family: "source-serif-pro", Georgia, Cambria, "Times New Roman", Times,
+      serif;
+    line-height: 1.5;
+  }
 
-    /* Text formatting */
-    strong {
-        @apply font-bold text-white;
-    }
-    
-    em {
-        @apply italic text-gray-100;
-    }
+  /* Lists */
+  ul {
+    @apply my-6 space-y-2 text-lg text-gray-200;
+  }
 
-    /* Figures */
-    figure {
-        @apply my-10;
-    }
-    
-    figcaption {
-        @apply text-center text-sm text-gray-400 mt-4 italic font-light;
-        font-family: 'sohne', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
+  ol {
+    @apply my-6 space-y-2 text-lg text-gray-200;
+  }
 
-    /* Medium-style pull quotes */
-    .pullquote {
-        @apply text-2xl md:text-3xl font-bold text-pink-300 text-center my-12 px-8 py-6;
-        font-family: 'sohne', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        line-height: 1.3;
-    }
+  li {
+    @apply leading-relaxed mb-2;
+    font-family: "source-serif-pro", Georgia, Cambria, "Times New Roman", Times,
+      serif;
+  }
 
-    /* Medium-style drop caps */
-    .drop-cap::first-letter {
-        @apply float-left text-6xl md:text-7xl font-bold text-pink-400 leading-none mr-2 mt-1;
-        font-family: 'sohne', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
+  ul li {
+    @apply relative pl-6;
+  }
 
-    /* Highlight text */
-    mark {
-        @apply bg-pink-500/20 text-pink-200 px-1 rounded;
-    }
+  ul li::before {
+    content: "•";
+    @apply absolute left-0 text-pink-400 font-bold;
+  }
 
-    /* Medium-style dividers */
-    .divider {
-        @apply flex items-center justify-center my-12;
-    }
-    
-    .divider::before {
-        content: '* * *';
-        @apply text-pink-400 text-2xl font-light tracking-widest;
-    }
+  ol {
+    counter-reset: list-counter;
+  }
+
+  ol li {
+    @apply relative pl-8;
+    counter-increment: list-counter;
+  }
+
+  ol li::before {
+    content: counter(list-counter) ".";
+    @apply absolute left-0 text-pink-400 font-semibold;
+  }
+
+  li ul,
+  li ol {
+    @apply pl-6 mt-3 mb-0;
+  }
+
+  /* Code blocks - Medium style */
+  pre {
+    @apply p-6 rounded-xl bg-gray-900 border border-gray-700 my-8 overflow-x-auto shadow-2xl;
+    font-family: "Menlo", "Monaco", "Courier New", monospace;
+  }
+
+  code {
+    @apply bg-gray-800/60 text-pink-300 px-2 py-1 rounded-md font-mono text-sm font-medium;
+    font-family: "Menlo", "Monaco", "Courier New", monospace;
+  }
+
+  pre code {
+    @apply bg-transparent p-0 text-gray-100 text-sm leading-relaxed;
+    font-family: "Menlo", "Monaco", "Courier New", monospace;
+  }
+
+  /* Horizontal rules */
+  hr {
+    @apply my-12 border-0 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent;
+  }
+
+  /* Images - Medium style */
+  img {
+    @apply w-full h-auto rounded-2xl my-10 shadow-2xl hover:shadow-pink-900/20 transition-shadow duration-500;
+    max-width: 100%;
+  }
+
+  /* Tables */
+  table {
+    @apply w-full border-collapse my-8 text-gray-200 bg-gray-900/50 rounded-xl overflow-hidden;
+  }
+
+  th {
+    @apply bg-pink-900/50 text-pink-100 p-4 text-left font-semibold border-b border-pink-700/30;
+  }
+
+  td {
+    @apply border-b border-gray-700/50 p-4 text-gray-200;
+  }
+
+  tr:hover {
+    @apply bg-gray-800/30;
+  }
+
+  /* Text formatting */
+  strong {
+    @apply font-bold text-white;
+  }
+
+  em {
+    @apply italic text-gray-100;
+  }
+
+  /* Figures */
+  figure {
+    @apply my-10;
+  }
+
+  figcaption {
+    @apply text-center text-sm text-gray-400 mt-4 italic font-light;
+    font-family: "sohne", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  /* Medium-style pull quotes */
+  .pullquote {
+    @apply text-2xl md:text-3xl font-bold text-pink-300 text-center my-12 px-8 py-6;
+    font-family: "sohne", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    line-height: 1.3;
+  }
+
+  /* Medium-style drop caps */
+  .drop-cap::first-letter {
+    @apply float-left text-6xl md:text-7xl font-bold text-pink-400 leading-none mr-2 mt-1;
+    font-family: "sohne", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  /* Highlight text */
+  mark {
+    @apply bg-pink-500/20 text-pink-200 px-1 rounded;
+  }
+
+  /* Medium-style dividers */
+  .divider {
+    @apply flex items-center justify-center my-12;
+  }
+
+  .divider::before {
+    content: "* * *";
+    @apply text-pink-400 text-2xl font-light tracking-widest;
+  }
 }

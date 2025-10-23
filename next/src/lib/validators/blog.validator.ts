@@ -21,16 +21,16 @@ const blogValidator = {
     }),
     create: z.object({
         title: allIbDField.shortString,
-        slug: allIbDField.shortString,
+        slug: allIbDField.slug,
         content: allIbDField.bigString,
-        tags: z.array(allIbDField.shortString),
+        tags: allIbDField.tags,
     }),
     update: z.object({
         _id: allIbDField._id,
         title: allIbDField.shortString.optional(),
-        slug: allIbDField.shortString.optional(),
+        slug: allIbDField.slug.optional(),
         content: allIbDField.longString.optional(),
-        tags: z.array(allIbDField.shortString).optional(),
+        tags: allIbDField.tags,
         coverImgMediaKey: allIbDField.mediaKey.optional(),
     }),
     remove: z.object({

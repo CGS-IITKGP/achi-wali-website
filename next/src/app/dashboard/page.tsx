@@ -1,11 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Righteous, Roboto } from "next/font/google";
 import api from "../axiosApi";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/authContext";
 import { useRouter } from "next/navigation";
+import {
+  IBlogOfList,
+  IMedia,
+  IMediaSignedToken,
+  IProject,
+} from "../types/domain.types";
+import { prettyDate, prettyDescription } from "../utils/pretty";
+// import { HandMetal } from "lucide-react";
 
 const heading_font = Righteous({
   subsets: ["latin"],
@@ -21,21 +29,62 @@ type ActiveSection = "blog" | "projects" | "profile" | "assets" | "settings";
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("profile");
   const [showNewPostModal, setShowNewPostModal] = useState(false);
+  const [showBlogUpdateModal, setShowBlogUpdateModal] = useState<{
+    show: boolean;
+    id: string | null;
+  }>({
+    show: false,
+    id: null,
+  });
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+  const [showNewAssetModal, setShowNewAssetModal] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [newPostData, setNewPostData] = useState({
     title: "",
+    slug: "",
     content: "",
     tags: "",
-    category: "Unity",
   });
-  const [newProjectData, setNewProjectData] = useState({
+  const [blogUpdate, setBlogUpdate] = useState<{
+    coverImgMediaKey: string;
+  }>({
+    coverImgMediaKey: "",
+  });
+  const [newProjectData, setNewProjectData] = useState<{
+    name: string;
+    portfolio: "GAME" | "GRAPHICS" | "RND";
+    description: string;
+    tags: string;
+    links: {
+      text: string;
+      url: string;
+    }[];
+  }>({
     name: "",
+    portfolio: "GAME",
     description: "",
-    technology: "Unity",
-    type: "Game",
-    repository: "",
-    status: "Planning",
+    tags: "",
+    links: [{ text: "", url: "" }],
+  });
+  const [newAssetData, setNewAssetData] = useState<{
+    name: string;
+    file: File | null;
+  }>({
+    name: "",
+    file: null,
+  });
+
+  const [blogs, setBlogs] = useState<IBlogOfList[]>([]);
+  const [projects, setProjects] = useState<IProject[]>([]);
+  const [assets, setAssets] = useState<IMedia[]>([]);
+  const [statistics, setStatistics] = useState<{
+    countBlogs: number;
+    countProjects: number;
+    countAssets: number;
+  }>({
+    countBlogs: -1,
+    countProjects: -1,
+    countAssets: -1,
   });
 
   const menuItems = [
@@ -89,12 +138,172 @@ export default function Dashboard() {
   const { user, refreshUser } = useAuth();
   const router = useRouter();
 
-  const handleNewPostSubmit = (e: React.FormEvent) => {
+  const fetchBlogs = async () => {
+    const apiResponse = await api("GET", "/blog", {
+      query: {
+        target: "my",
+      },
+    });
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+      setBlogs([]);
+      setStatistics((prev) => {
+        return {
+          ...prev,
+          countProjects: -1,
+        };
+      });
+    } else {
+      setBlogs((apiResponse.data as IBlogOfList[]) ?? []);
+      setStatistics((prev) => {
+        return {
+          ...prev,
+          countBlogs: (apiResponse.data as IBlogOfList[])?.length ?? 0,
+        };
+      });
+    }
+  };
+
+  const fetchProjects = async () => {
+    const apiResponse = await api("GET", "/project", {
+      query: {
+        target: "my",
+        portfolio: "any",
+      },
+    });
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+      setProjects([]);
+      setStatistics((prev) => {
+        return {
+          ...prev,
+          countProjects: -1,
+        };
+      });
+    } else {
+      setProjects((apiResponse.data as IProject[]) ?? []);
+      setStatistics((prev) => {
+        return {
+          ...prev,
+          countProjects: (apiResponse.data as IProject[])?.length ?? 0,
+        };
+      });
+    }
+  };
+
+  const fetchAssets = async () => {
+    const apiResponse = await api("GET", "/media");
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+      setAssets([]);
+      setStatistics((prev) => {
+        return {
+          ...prev,
+          countProjects: -1,
+        };
+      });
+    } else {
+      setAssets((apiResponse.data as IMedia[]) ?? []);
+      setStatistics((prev) => {
+        return {
+          ...prev,
+          countAssets: (apiResponse.data as IMedia[])?.length ?? 0,
+        };
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchBlogs();
+    fetchProjects();
+    fetchAssets();
+  }, []);
+
+  const handleNewPostSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("New post data:", newPostData);
-    // Here you would typically send the data to your API
-    setShowNewPostModal(false);
-    setNewPostData({ title: "", content: "", tags: "", category: "Unity" });
+
+    if (newPostData.slug.includes(" ")) {
+      toast.error("Slug must be url friendly.");
+      return;
+    }
+
+    const apiResponse = await api("POST", "/blog", {
+      body: {
+        title: newPostData.title,
+        slug: newPostData.slug,
+        content: newPostData.content,
+        tags: newPostData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0),
+      },
+    });
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      fetchBlogs();
+      setShowNewPostModal(false);
+      setNewPostData({ title: "", slug: "", content: "", tags: "" });
+      toast.success("Added a new blog.");
+    }
+  };
+
+  const handleBlogUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (showBlogUpdateModal.id === null) return;
+
+    if (blogUpdate.coverImgMediaKey.split("/").length !== 3) {
+      toast.error("Invalid media key");
+      return;
+    }
+
+    const apiResponse = await api("PATCH", `/blog/${showBlogUpdateModal.id}`, {
+      body: {
+        coverImgMediaKey: blogUpdate.coverImgMediaKey,
+      },
+    });
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      fetchBlogs();
+      setShowBlogUpdateModal({
+        show: false,
+        id: null,
+      });
+      setBlogUpdate({ coverImgMediaKey: "" });
+      toast.success("Updated cover image.");
+    }
+  };
+
+  const handlePostDelete = async (id: string) => {
+    const apiResponse = await api("DELETE", `/blog/${id}`);
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      fetchBlogs();
+      setShowNewPostModal(false);
+      setNewPostData({ title: "", slug: "", content: "", tags: "" });
+      toast.success("Removed blog.");
+    }
   };
 
   const handleInputChange = (
@@ -106,19 +315,72 @@ export default function Dashboard() {
     setNewPostData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleNewProjectSubmit = (e: React.FormEvent) => {
+  const handleBlogUpdateInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+
+    setBlogUpdate((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleNewProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("New project data:", newProjectData);
-    // Here you would typically send the data to your API
-    setShowNewProjectModal(false);
-    setNewProjectData({
-      name: "",
-      description: "",
-      technology: "Unity",
-      type: "Game",
-      repository: "",
-      status: "Planning",
+
+    const apiResponse = await api("POST", "/project", {
+      body: {
+        title: newProjectData.name,
+        portfolio: newProjectData.portfolio,
+        description: newProjectData.description,
+        tags: newProjectData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0),
+        links: newProjectData.links.filter(
+          (link) => link.text.trim() !== "" && link.url.trim() !== ""
+        ),
+      },
     });
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      fetchProjects();
+      setShowNewProjectModal(false);
+      setNewProjectData({
+        name: "",
+        portfolio: "GAME",
+        description: "",
+        tags: "",
+        links: [{ text: "", url: "" }],
+      });
+      toast.success("Added a new project.");
+    }
+  };
+
+  const handleProjectDelete = async (id: string) => {
+    const apiResponse = await api("DELETE", `/project/${id}`);
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      fetchProjects();
+      setShowNewPostModal(false);
+      setNewProjectData({
+        name: "",
+        portfolio: "GAME",
+        description: "",
+        tags: "",
+        links: [{ text: "", url: "" }],
+      });
+      toast.success("Removed project.");
+    }
   };
 
   const handleSignOut = async () => {
@@ -142,7 +404,142 @@ export default function Dashboard() {
     >
   ) => {
     const { name, value } = e.target;
-    setNewProjectData((prev) => ({ ...prev, [name]: value }));
+    setNewProjectData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleLinkChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    const newLinks = newProjectData.links.map((link, i) => {
+      if (i === index) {
+        return { ...link, [name]: value };
+      }
+      return link;
+    });
+    setNewProjectData((prev) => ({ ...prev, links: newLinks }));
+  };
+
+  const addLinkField = () => {
+    setNewProjectData((prev) => ({
+      ...prev,
+      links: [...prev.links, { text: "", url: "" }],
+    }));
+  };
+
+  const removeLinkField = (index: number) => {
+    setNewProjectData((prev) => ({
+      ...prev,
+      links: prev.links.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleAssetFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files ? e.target.files[0] : null;
+
+    setNewAssetData((prev) => ({
+      ...prev,
+      file: file,
+    }));
+  };
+
+  const handleAssetInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewAssetData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleNewAssetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!newAssetData.file) {
+      toast.error("Please select an image file.");
+      return;
+    }
+
+    if (!new RegExp("^[A-Za-z0-9-._~]*$").test(newAssetData.name)) {
+      toast.error("Name of the asset must be url safe.");
+      return;
+    }
+
+    const apiResponse = await api("POST", "/media/sign", {
+      body: {
+        publicId: newAssetData.name,
+      },
+    });
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error while signing.");
+      return;
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+      console.log(apiResponse.statusCode + ": " + apiResponse.message);
+      return;
+    }
+
+    const signedToken = apiResponse.data as IMediaSignedToken;
+
+    const formData = new FormData();
+    formData.append("file", newAssetData.file);
+    formData.append("api_key", signedToken.apiKey);
+    formData.append("folder", signedToken.folder);
+    formData.append("public_id", newAssetData.name);
+    formData.append("timestamp", signedToken.timestamp);
+    formData.append("signature", signedToken.signature);
+
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${signedToken.cloudName}/image/upload`;
+
+    const cloudinaryResponse = await fetch(cloudinaryUrl, {
+      method: "POST",
+      body: formData,
+    });
+
+    const cloudinaryData = await cloudinaryResponse.json();
+
+    if (cloudinaryData.error) {
+      toast.error(cloudinaryData.error.message || "Cloudinary upload failed.");
+      console.log(cloudinaryData.error.message || "Cloudinary upload failed.");
+      return;
+    }
+
+    const apiResponse2 = await api("POST", "/media", {
+      body: {
+        publicId: cloudinaryData.public_id,
+        url: cloudinaryData.secure_url,
+      },
+    });
+
+    if (apiResponse2.action === null) {
+      toast.error("Server Error while adding new asset");
+    } else if (apiResponse2.action === false) {
+      toast.error(apiResponse2.statusCode + ": " + apiResponse2.message);
+      console.log(apiResponse2.statusCode + ": " + apiResponse2.message);
+    } else {
+      fetchAssets();
+      setShowNewAssetModal(false);
+      setNewAssetData({
+        name: "",
+        file: null,
+      });
+      toast.success("Added new asset.");
+    }
+  };
+
+  const copyAssetKey = async (assetKey: string) => {
+    try {
+      await navigator.clipboard.writeText(assetKey);
+
+      toast.success("Copied media key", { position: "bottom-right" });
+    } catch (err) {
+      console.error("Failed to copy asset key:", err);
+      toast.error("Failed to copy key. Please check browser permissions.");
+    }
   };
 
   const renderContent = () => {
@@ -165,7 +562,7 @@ export default function Dashboard() {
                   {user?.name ?? "Loading..."}
                 </h2>
                 <p className={`text-gray-400 ${paragraph_font.className}`}>
-                  Game Developer
+                  {user?.team.name}
                 </p>
                 <p
                   className={`text-gray-500 text-sm ${paragraph_font.className}`}
@@ -232,7 +629,9 @@ export default function Dashboard() {
                     <span
                       className={`text-pink-400 font-semibold ${paragraph_font.className}`}
                     >
-                      12
+                      {statistics.countProjects === -1
+                        ? "Loading"
+                        : statistics.countProjects}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -244,7 +643,9 @@ export default function Dashboard() {
                     <span
                       className={`text-pink-400 font-semibold ${paragraph_font.className}`}
                     >
-                      8
+                      {statistics.countBlogs === -1
+                        ? "Loading"
+                        : statistics.countBlogs}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -256,7 +657,9 @@ export default function Dashboard() {
                     <span
                       className={`text-pink-400 font-semibold ${paragraph_font.className}`}
                     >
-                      45
+                      {statistics.countAssets === -1
+                        ? "Loading"
+                        : statistics.countAssets}
                     </span>
                   </div>
                 </div>
@@ -283,9 +686,9 @@ export default function Dashboard() {
             </div>
 
             <div className="grid gap-4">
-              {[1, 2, 3].map((post) => (
+              {blogs.map((blog) => (
                 <div
-                  key={post}
+                  key={blog._id}
                   className="glass rounded-xl p-6 hover:bg-white/15 transition-all duration-300 group"
                 >
                   <div className="flex justify-between items-start">
@@ -293,24 +696,37 @@ export default function Dashboard() {
                       <h3
                         className={`text-lg text-white mb-2 group-hover:text-pink-400 transition-colors ${heading_font.className}`}
                       >
-                        Understanding Game Physics in Unity {post}
+                        {blog.title}
                       </h3>
-                      <p
-                        className={`text-gray-400 mb-3 ${paragraph_font.className}`}
-                      >
-                        A comprehensive guide to implementing realistic physics
-                        in your Unity games...
-                      </p>
                       <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>Published: Oct {post}, 2025</span>
-                        <span>Views: {200 * post}</span>
-                        <span className="px-2 py-1 bg-pink-500/20 text-pink-400 rounded">
-                          Unity
+                        <span>
+                          Published:{" "}
+                          {new Date(blog.createdAt)
+                            .toDateString()
+                            .split(" ")
+                            .slice(1)
+                            .join(" ")}
                         </span>
+                        {blog.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-1 bg-pink-500/20 text-pink-400 rounded"
+                          >
+                            {tag.toLocaleLowerCase()}
+                          </span>
+                        ))}
                       </div>
                     </div>
                     <div className="flex space-x-2">
-                      <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                      <button
+                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                        onClick={() => {
+                          setShowBlogUpdateModal({
+                            id: blog._id,
+                            show: true,
+                          });
+                        }}
+                      >
                         <svg
                           className="w-4 h-4 text-gray-400 hover:text-white"
                           fill="currentColor"
@@ -319,7 +735,10 @@ export default function Dashboard() {
                           <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
                         </svg>
                       </button>
-                      <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                      <button
+                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                        onClick={() => handlePostDelete(blog._id)}
+                      >
                         <svg
                           className="w-4 h-4 text-gray-400 hover:text-red-400"
                           fill="currentColor"
@@ -352,9 +771,9 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5, 6].map((project) => (
+              {projects.map((project) => (
                 <div
-                  key={project}
+                  key={project._id}
                   className="glass rounded-xl p-6 hover:scale-105 transition-all duration-300 group"
                 >
                   <div className="w-full h-32 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-lg mb-4 flex items-center justify-center">
@@ -366,27 +785,53 @@ export default function Dashboard() {
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                     </svg>
                   </div>
-                  <h3
-                    className={`text-lg text-white mb-2 group-hover:text-pink-400 transition-colors ${heading_font.className}`}
-                  >
-                    Project Alpha {project}
-                  </h3>
+
+                  <div className="flex justify-between items-start mb-2">
+                    <h3
+                      className={`text-lg text-white group-hover:text-pink-400 transition-colors ${heading_font.className}`}
+                    >
+                      {project.title}
+                    </h3>
+
+                    <div className="flex space-x-2 shrink-0 ml-4">
+                      <button
+                        className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                        onClick={() => {}}
+                      >
+                        <svg
+                          className="w-4 h-4 text-gray-400 hover:text-white"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+                        </svg>
+                      </button>
+
+                      <button
+                        className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                        onClick={() => handleProjectDelete(project._id)}
+                      >
+                        <svg
+                          className="w-4 h-4 text-gray-400 hover:text-red-400"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
                   <p
                     className={`text-gray-400 text-sm mb-3 ${paragraph_font.className}`}
                   >
-                    A cutting-edge game built with Unity and modern graphics
-                    techniques.
+                    {prettyDescription(project.description)}
                   </p>
                   <div className="flex items-center justify-between">
                     <span
-                      className={`text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded ${paragraph_font.className}`}
-                    >
-                      Active
-                    </span>
-                    <span
                       className={`text-gray-500 text-sm ${paragraph_font.className}`}
                     >
-                      {project * 2} days ago
+                      {prettyDate(project.createdAt)}
                     </span>
                   </div>
                 </div>
@@ -402,35 +847,32 @@ export default function Dashboard() {
               <h2 className={`text-2xl text-white ${heading_font.className}`}>
                 Assets
               </h2>
-              <button className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-transform duration-200">
+              <button
+                onClick={() => setShowNewAssetModal(true)}
+                className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-transform duration-200"
+              >
                 Upload Asset
               </button>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((asset) => (
+              {assets.map((asset) => (
                 <div
-                  key={asset}
-                  className="glass rounded-xl p-4 hover:scale-105 transition-all duration-300 group"
+                  key={asset._id}
+                  onClick={() => copyAssetKey(asset.key)}
+                  className="glass rounded-xl p-4 hover:scale-105 transition-all duration-300 group flex flex-col items-center justify-between cursor-pointer" // Added cursor-pointer for visual feedback
                 >
-                  <div className="w-full h-20 bg-gradient-to-r from-pink-500/10 to-purple-500/10 rounded-lg mb-3 flex items-center justify-center">
-                    <svg
-                      className="w-8 h-8 text-gray-400 group-hover:text-pink-400 transition-colors"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                    </svg>
+                  <div className="w-40 h-40 rounded-lg mb-3 flex items-center justify-center overflow-hidden bg-white/5">
+                    <img
+                      src={asset.url}
+                      alt={asset.key.substring(asset.key.lastIndexOf("/") + 1)}
+                      className="max-w-full max-h-full object-contain"
+                    />
                   </div>
                   <p
-                    className={`text-white text-sm text-center truncate ${paragraph_font.className}`}
+                    className={`text-white text-sm text-center truncate w-full ${paragraph_font.className}`}
                   >
-                    asset_{asset}.png
-                  </p>
-                  <p
-                    className={`text-gray-500 text-xs text-center ${paragraph_font.className}`}
-                  >
-                    {Math.floor(Math.random() * 500 + 100)}KB
+                    {asset.key.substring(asset.key.lastIndexOf("/") + 1)}
                   </p>
                 </div>
               ))}
@@ -732,27 +1174,22 @@ export default function Dashboard() {
                 />
               </div>
 
-              {/* Category Field */}
+              {/* Slug Field */}
               <div>
                 <label
                   className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
                 >
-                  Category
+                  Slug
                 </label>
-                <select
-                  name="category"
-                  value={newPostData.category}
+                <input
+                  type="text"
+                  name="slug"
+                  value={newPostData.slug}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                >
-                  <option value="Unity">Unity</option>
-                  <option value="Unreal Engine">Unreal Engine</option>
-                  <option value="Game Design">Game Design</option>
-                  <option value="Programming">Programming</option>
-                  <option value="Art & Animation">Art & Animation</option>
-                  <option value="Tutorial">Tutorial</option>
-                  <option value="News">News</option>
-                </select>
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                  placeholder="Enter your post slug...."
+                  required
+                />
               </div>
 
               {/* Tags Field */}
@@ -831,6 +1268,89 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Blog Update Modal */}
+      {showBlogUpdateModal.show && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <form onSubmit={handleBlogUpdateSubmit}>
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-white/10">
+                <h2 className={`text-xl text-white ${heading_font.className}`}>
+                  Update Cover Image Key
+                </h2>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowBlogUpdateModal((prev) => {
+                      return {
+                        show: false,
+                        id: prev.id,
+                      };
+                    })
+                  }
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6 text-gray-400 hover:text-white"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Modal Content - Single Field */}
+              <div className="p-6 space-y-6">
+                {/* Cover Image Media Key Field */}
+                <div>
+                  <label
+                    className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
+                  >
+                    Cover Image Media Key (e.g., user-assets/user-id/asset-name)
+                  </label>
+                  <input
+                    type="text"
+                    name="coverImgMediaKey"
+                    value={blogUpdate.coverImgMediaKey}
+                    onChange={handleBlogUpdateInputChange}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                    placeholder="Paste the asset key here..."
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-4 p-6 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowBlogUpdateModal((prev) => {
+                      return {
+                        show: false,
+                        id: null,
+                      };
+                    })
+                  }
+                  className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-all duration-200 relative overflow-hidden group"
+                >
+                  {/* Button Shimmer Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                  <span className="relative z-10">Save Key</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* New Project Modal */}
       {showNewProjectModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -874,104 +1394,51 @@ export default function Dashboard() {
                 />
               </div>
 
-              {/* Project Type and Technology Row */}
+              {/* Portfolio & Tags Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Project Type Field */}
+                {/* Portfolio Field (Replaced Project Type/Technology) */}
                 <div>
                   <label
                     className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
                   >
-                    Project Type
+                    Portfolio Type
                   </label>
                   <select
-                    name="type"
-                    value={newProjectData.type}
+                    name="portfolio"
+                    value={newProjectData.portfolio}
                     onChange={handleProjectInputChange}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                    required
                   >
-                    <option value="Game">Game</option>
-                    <option value="Web Application">Web Application</option>
-                    <option value="Mobile App">Mobile App</option>
-                    <option value="Tool/Utility">Tool/Utility</option>
-                    <option value="Library/Framework">Library/Framework</option>
-                    <option value="Research">Research</option>
-                    <option value="Other">Other</option>
+                    <option value="" disabled>
+                      Select a portfolio...
+                    </option>
+                    <option value="GAME">GAME</option>
+                    <option value="GRAPHICS">GRAPHICS</option>
+                    <option value="RND">RND</option>
                   </select>
                 </div>
 
-                {/* Technology Field */}
+                {/* Tags Field (Replaced Technology) */}
                 <div>
                   <label
                     className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
                   >
-                    Primary Technology
-                  </label>
-                  <select
-                    name="technology"
-                    value={newProjectData.technology}
-                    onChange={handleProjectInputChange}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                  >
-                    <option value="Unity">Unity</option>
-                    <option value="Unreal Engine">Unreal Engine</option>
-                    <option value="React">React</option>
-                    <option value="Next.js">Next.js</option>
-                    <option value="Node.js">Node.js</option>
-                    <option value="Python">Python</option>
-                    <option value="C++">C++</option>
-                    <option value="C#">C#</option>
-                    <option value="JavaScript">JavaScript</option>
-                    <option value="TypeScript">TypeScript</option>
-                    <option value="Godot">Godot</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Status and Repository Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Status Field */}
-                <div>
-                  <label
-                    className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                  >
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    value={newProjectData.status}
-                    onChange={handleProjectInputChange}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                  >
-                    <option value="Planning">Planning</option>
-                    <option value="In Development">In Development</option>
-                    <option value="Testing">Testing</option>
-                    <option value="Completed">Completed</option>
-                    <option value="On Hold">On Hold</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
-                </div>
-
-                {/* Repository Field */}
-                <div>
-                  <label
-                    className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                  >
-                    Repository URL{" "}
-                    <span className="text-gray-500">(optional)</span>
+                    Tags
                   </label>
                   <input
-                    type="url"
-                    name="repository"
-                    value={newProjectData.repository}
+                    type="text"
+                    name="tags"
+                    value={newProjectData.tags}
                     onChange={handleProjectInputChange}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                    placeholder="https://github.com/username/project-name"
+                    placeholder="e.g., Unreal Engine, C++, Multiplayer (one line)"
+                    required
                   />
                 </div>
               </div>
 
-              {/* Description Field */}
+              {/* Description Field (Unchanged) */}
               <div>
                 <label
                   className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
@@ -1001,6 +1468,80 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* Dynamic Links Section (NEW) */}
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-4">
+                  <label
+                    className={`block text-gray-300 text-sm font-medium ${paragraph_font.className}`}
+                  >
+                    Project Links{" "}
+                    <span className="text-neutral-500">
+                      (use "live-demo" and "github" for advanced cards.)
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addLinkField}
+                    className="text-pink-400 hover:text-pink-300 text-sm flex items-center transition-colors"
+                  >
+                    <svg
+                      className="w-5 h-5 mr-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    Add Link
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {newProjectData.links.map((link, index) => (
+                    <div key={index} className="flex gap-4 items-center">
+                      <input
+                        type="text"
+                        name="text"
+                        value={link.text}
+                        onChange={(e) => handleLinkChange(index, e)}
+                        className="w-1/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                        placeholder="Link Text (e.g., Live Demo)"
+                        required
+                      />
+                      <input
+                        type="url"
+                        name="url"
+                        value={link.url}
+                        onChange={(e) => handleLinkChange(index, e)}
+                        className="w-2/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                        placeholder="Link URL (https://...)"
+                        required
+                      />
+                      {newProjectData.links.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeLinkField(index)}
+                          className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Action Buttons */}
               <div className="flex justify-end space-x-4 pt-4 border-t border-white/10">
                 <button
@@ -1023,6 +1564,106 @@ export default function Dashboard() {
                   {/* Button Shimmer Effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                   <span className="relative z-10">Create Project</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* New Asset Modal */}
+      {showNewAssetModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <h2 className={`text-2xl text-white ${heading_font.className}`}>
+                Upload New Asset
+              </h2>
+              <button
+                onClick={() => setShowNewAssetModal(false)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <svg
+                  className="w-6 h-6 text-gray-400 hover:text-white"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <form onSubmit={handleNewAssetSubmit} className="p-6 space-y-6">
+              {/* Asset Name Field */}
+              <div>
+                <label
+                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
+                  htmlFor="asset-name"
+                >
+                  Asset Name
+                </label>
+                <input
+                  id="asset-name"
+                  type="text"
+                  name="name"
+                  value={newAssetData.name} // Assumes newAssetData.name state
+                  onChange={handleAssetInputChange} // Assumes handler for text inputs
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                  placeholder="Enter a name for your asset..."
+                  required
+                />
+              </div>
+
+              {/* File Upload Field (Image Only) */}
+              <div>
+                <label
+                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
+                  htmlFor="asset-file"
+                >
+                  Image File
+                </label>
+                <input
+                  id="asset-file"
+                  type="file"
+                  name="file"
+                  accept="image/*" // Restricts to image types
+                  onChange={handleAssetFileChange} // Assumes handler for file input
+                  className="block w-full text-sm text-gray-400
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-sm file:font-semibold
+              file:bg-pink-500/10 file:text-pink-400
+              hover:file:bg-pink-500/20
+              transition-all duration-300"
+                  required
+                />
+                {newAssetData.file && (
+                  <p
+                    className={`mt-2 text-xs text-gray-400 ${paragraph_font.className}`}
+                  >
+                    Selected: {newAssetData.file.name}
+                  </p>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-4 pt-4 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowNewAssetModal(false)}
+                  className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-all duration-200 relative overflow-hidden group"
+                >
+                  {/* Button Shimmer Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                  <span className="relative z-10">Upload Asset</span>
                 </button>
               </div>
             </form>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -43,7 +44,7 @@ export default function Navbar() {
   };
 
   return (
-    <div className="z-999">
+    <div className="z-50">
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}

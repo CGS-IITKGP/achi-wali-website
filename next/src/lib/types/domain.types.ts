@@ -126,8 +126,10 @@ export interface IMedia {
 }
 
 export enum EFeaturedType {
-    PROJECT = "PROJECT",
+    BLOG = "BLOG",
     GAME = "GAME",
+    GRAPHICS = "GRAPHICS",
+    RND = "RND"
 }
 
 export interface IFeatured {
@@ -137,3 +139,18 @@ export interface IFeatured {
     createdAt: Date;
     updatedAt: Date;
 }
+
+export type IRecentFeaturedContent = {
+    _id: Types.ObjectId;
+    type: "BLOG" | "GAME" | "GRAPHICS" | "RND",
+    title: string;
+    coverImgMediaKey: string | null;
+    tags: string[];
+} & ({
+    type: "BLOG",
+    readUrl: string;
+} | {
+    type: "GAME" | "GRAPHICS" | "RND",
+    liveDemoLink: string | null;
+    githubLink: string | null;
+});

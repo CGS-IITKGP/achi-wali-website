@@ -1,6 +1,6 @@
 import createHandler from '@/lib/handler';
 import blogValidator from '@/lib/validators/blog.validator';
-import blogService from '@/lib/services/project.service';
+import blogService from '@/lib/services/blog.service';
 
 const PATCH = createHandler({
     validationSchema: blogValidator.update,

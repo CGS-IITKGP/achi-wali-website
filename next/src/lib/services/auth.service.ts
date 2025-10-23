@@ -50,6 +50,7 @@ const me: ServiceSignature<
             ...user,
             _id: user._id.toHexString(),
             passwordHash: undefined,
+            teamId: undefined,
             team: {
                 _id: user.teamId?.toHexString() ?? null,
                 name: teamName,
@@ -244,7 +245,13 @@ const signUpVerify: ServiceSignature<
         name: request.name,
         email: request.email,
         passwordHash: request.passwordHash,
-        roles: [EUserRole.GUEST],
+        roles: [
+            EUserRole.GUEST,
+            // TODO: REMOVE THIS.
+            // NOTE: Until we have an admin panel,
+            // let all users be a member.
+            EUserRole.MEMBER
+        ],
     });
 
     await signUpRequestRepository.removeById(request._id);

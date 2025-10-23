@@ -38,6 +38,7 @@ export namespace APIControl {
             }
 
             export enum Portfolio {
+                ANY = "any",
                 GAME = "game",
                 GRAPHICS = "graphics",
                 RND = "rnd",
@@ -58,6 +59,8 @@ export namespace APIControl {
     export namespace Featured {
         export namespace Get {
             export enum Target {
+                RECENT = "recent",
+                BLOG = "blog",
                 GAME = "game",
                 GRAPHICS = "graphics",
                 RND = "rnd"

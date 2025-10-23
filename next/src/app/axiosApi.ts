@@ -1,7 +1,7 @@
 import { IResponse } from "./types/response.types";
 import axios from "axios";
 
-const API_BASE_URL = "/api/";
+const API_BASE_URL = "http://localhost:3000/api/";
 
 const axiosInstance = axios.create({
     validateStatus: () => true,
@@ -17,9 +17,9 @@ const api = async (
         body?: object;
         query?: object;
     } = {
-        body: {},
-        query: {},
-    }
+            body: {},
+            query: {},
+        }
 ): Promise<IResponse> => {
     data.body = data.body ?? {};
     data.query = data.query ?? {};

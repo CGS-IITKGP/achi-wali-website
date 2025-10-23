@@ -76,7 +76,7 @@ class ResponseHandler {
             action: this.action,
         };
 
-        if (this.action === true && this.data && Object.keys(this.data).length > 0) {
+        if (this.action === true && this.data !== undefined) {
             payload.data = this.data;
         }
 

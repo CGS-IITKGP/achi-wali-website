@@ -5,7 +5,7 @@ import { APIControl } from '@/lib/types/api.types';
 
 const GET = createServiceOnlyHandler({
     validationSchema: teamValidator.get,
-    dataUnifier: (_req, _parsedData, _params) => {
+    dataUnifier: (_req, _parsedData) => {
         return {
             target: APIControl.Team.Get.Target.ALL
         }

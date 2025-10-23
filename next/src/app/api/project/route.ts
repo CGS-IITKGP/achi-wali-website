@@ -10,8 +10,8 @@ const GET = createHandler({
         const portfolio = searchParams.get("portfolio");
 
         return {
-            target,
-            portfolio
+            target: target ?? "all",
+            portfolio: portfolio ?? "any"
         }
     },
     requireAuth: false,

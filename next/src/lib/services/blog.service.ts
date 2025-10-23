@@ -51,7 +51,11 @@ const get: ServiceSignature<
             }
         }
 
-        blogs = await blogRepository.findAllOfListExportable({ _id: session.userId });
+        blogs = await blogRepository.findAllOfListExportable({
+            authors: {
+                $in: [session.userId]
+            },
+        });
     }
     else if (data.target === APIControl.Blog.Get.Target.ALL) {
         blogs = await blogRepository.findAllOfListExportable();

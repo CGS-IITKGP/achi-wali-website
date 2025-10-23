@@ -1,11 +1,10 @@
-import {
-  Righteous,
-  Roboto,
-} from "next/font/google";
+import { Righteous, Roboto } from "next/font/google";
 
 import Navbar from "./components/navbar";
-import FeaturedProjects from "./featuredprojects";
+import FeaturedContent from "./featuredprojects";
 import Footer from "./footer";
+import api from "./axiosApi";
+import { IRecentFeaturedContent } from "./types/domain.types";
 
 // import LandingVideoMP4 from "./landingvideo.mp4";
 
@@ -18,7 +17,31 @@ const paragraph_font = Roboto({
   subsets: ["latin"],
 });
 
-export default function Home() {
+const fetchRecentFeatured = async () => {
+  const apiResponse = await api("GET", "/featured", {
+    query: {
+      target: "recent",
+    },
+  });
+
+  if (apiResponse.action === true) {
+    return apiResponse.data as IRecentFeaturedContent[];
+  } else if (apiResponse.action === null) {
+    console.log(
+      "Internal Server Error while fetching featured graphics projects."
+    );
+  } else if (apiResponse.action === false) {
+    console.error(
+      "API response error while fetching featured graphics projects.",
+      apiResponse
+    );
+  }
+  return [];
+};
+
+export default async function Home() {
+  const recentFeatured = await fetchRecentFeatured();
+
   return (
     <div className="bg-gradient-to-tr from-neutral-900 to-gray-950">
       {/* <div className="w-full h-screen grid grid-cols-2 text-white">
@@ -174,7 +197,7 @@ export default function Home() {
         </p>
       </section>
 
-      <FeaturedProjects />
+      <FeaturedContent featured={recentFeatured} />
       {/* <FeaturedProjects2 /> */}
 
       <Footer />

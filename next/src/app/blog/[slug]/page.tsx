@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
-import { getAllPosts, getPost } from "../lib/mdx";
 import "../lib/mdx.css";
-
+import { remark } from "remark";
 import Link from "next/link";
-
-export async function generateStaticParams() {
-  const posts = getAllPosts();
-  return posts.map((post) => ({ slug: post.slug }));
-}
+import api from "@/app/axiosApi";
+import { IBlog } from "@/app/types/domain.types";
+import remarkRehype from "remark-rehype";
+import rehypeStringify from "rehype-stringify";
+import rehypePrettyCode from "rehype-pretty-code";
+import { prettyDate } from "@/app/utils/pretty";
 
 interface BlogPostPageProps {
   params: {
@@ -15,11 +15,34 @@ interface BlogPostPageProps {
   };
 }
 
-export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const { content, metadata } = await getPost((await params).slug);
-  const post = { content, metadata };
+const fetchBlog = async (slug: string): Promise<IBlog> => {
+  const apiResponse = await api("GET", `/blog/view/${slug}`);
 
-  if (!post) return notFound();
+  if (apiResponse.action === null || apiResponse.action === false) {
+    notFound();
+  } else {
+    const content = (apiResponse.data as IBlog).content;
+    const processedContent = await remark()
+      .use(remarkRehype)
+      .use(rehypePrettyCode, {
+        theme: "github-dark",
+        keepBackground: false,
+      })
+      .use(rehypeStringify)
+      .process(content);
+
+    const html = processedContent.toString();
+    return {
+      ...(apiResponse.data as IBlog),
+      content: html,
+    };
+  }
+};
+
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const blog = await fetchBlog((await params).slug);
+
+  if (!blog) return notFound();
 
   return (
     <main className="min-h-screen bg-black">
@@ -110,32 +133,31 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <header className="mb-12">
-          <div className="mb-6">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-pink-500/10 text-pink-400 border border-pink-500/20">
-              Technology
-            </span>
-          </div>
-
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8 leading-tight tracking-tight">
-            {post.metadata.title}
+            {blog.title}
           </h1>
 
           <p className="text-xl md:text-2xl text-gray-400 mb-8 leading-relaxed font-light">
-            {post.metadata.description ||
-              "Exploring the latest in technology and innovation"}
+            {"Exploring the latest in technology and innovation"}
           </p>
 
           <div className="flex items-center justify-between flex-wrap gap-4 py-6 border-t border-b border-gray-800">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">CGS</span>
+                <span className="text-white font-bold text-lg">
+                  {blog.authors[0].name
+                    .split(" ")
+                    .map((token) => token[0])
+                    .join(".")}
+                  .
+                </span>
               </div>
               <div>
                 <div className="text-white font-medium">
-                  Computer Graphics Society
+                  {blog.authors[0].name}
                 </div>
                 <div className="text-gray-400 text-sm flex items-center space-x-4">
-                  <span>{post.metadata.date}</span>
+                  <span>{prettyDate(blog.createdAt)}</span>
                   <span>·</span>
                   <span>5 min read</span>
                   <span>·</span>
@@ -220,23 +242,22 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
         </header>
 
-        <article className="prose prose-xl prose-invert max-w-none">
-          {post.content}
-        </article>
+        <article
+          className="prose prose-xl prose-invert max-w-none"
+          dangerouslySetInnerHTML={{ __html: blog.content }}
+        />
 
         <footer className="mt-16 pt-8 border-t border-gray-800">
           <div className="mb-8">
             <div className="flex flex-wrap gap-2">
-              {["React", "Next.js", "Technology", "Web Development"].map(
-                (tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer"
-                  >
-                    {tag}
-                  </span>
-                )
-              )}
+              {blog.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer"
+                >
+                  {tag}
+                </span>
+              ))}
             </div>
           </div>
 

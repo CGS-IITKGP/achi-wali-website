@@ -7,6 +7,7 @@ import {
     SDIn,
     IProjectExportable,
     APIControl,
+    EProjectPortfolio,
 } from "@/lib/types/index.types";
 import AppError from "../utils/error";
 
@@ -27,13 +28,14 @@ const get: ServiceSignature<
         }
 
         projects = await projectRepository.findAllExportable({
-            _id: session.userId,
-            portfolio: data.portfolio
+            authors: {
+                $in: [session.userId]
+            },
         });
     }
     else if (data.target === APIControl.Project.Get.Target.ALL) {
         projects = await projectRepository.findAllExportable({
-            portfolio: data.portfolio
+            portfolio: data.portfolio?.toUpperCase()
         });
     }
     else {

@@ -39,22 +39,23 @@ const sign: ServiceSignature<
     const timestamp = Math.round(new Date().getTime() / 1000);
     const folder = "user-assets/" + session.userId.toHexString();
 
+    // Note: These should be alphabetically sorted for signature to match.
     const paramsToSign = {
-        timestamp,
         folder,
-        publicId: data.publicId
+        public_id: data.publicId,
+        timestamp: timestamp,
     };
 
     const signature = cloudinary.utils.api_sign_request(
         paramsToSign,
-        process.env.CLOUDINARY_API_SECRET!
+        getEnvVariable("CLOUDINARY_API_SECRET", true)
     );
 
     return {
         success: true,
         data: {
             signature,
-            timestamp,
+            timestamp: timestamp.toString(),
             folder,
             cloudName: getEnvVariable("CLOUDINARY_CLOUD_NAME", true),
             apiKey: getEnvVariable("CLOUDINARY_API_KEY", true)
