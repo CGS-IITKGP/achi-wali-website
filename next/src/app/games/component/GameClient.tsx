@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Play,
-  ExternalLink,
   Github,
   Gamepad2,
 } from "lucide-react";
