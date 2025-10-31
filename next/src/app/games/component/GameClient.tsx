@@ -481,14 +481,20 @@ export default function GameClient({
                       whileTap={{ scale: 0.9 }}
                       className="w-12 h-12 bg-pink-500/90 hover:bg-pink-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
                     >
-                      <Play className="w-5 h-5" />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="w-12 h-12 bg-gray-800/90 hover:bg-gray-700 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300"
-                    >
-                      <ExternalLink className="w-5 h-5" />
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => {
+                          const liveLink =
+                            game.links?.find(
+                              (link) => link.text === "live-demo"
+                            )?.url || "#";
+                          if (liveLink !== "#") window.open(liveLink, "_blank");
+                        }}
+                        className="w-12 h-12 bg-pink-500/90 hover:bg-pink-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
+                      >
+                        <Play className="w-5 h-5" />
+                      </motion.button>
                     </motion.button>
                   </div>
                 </div>
@@ -550,17 +556,18 @@ export default function GameClient({
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
+                      onClick={() => {
+                          const liveLink =
+                            game.links?.find(
+                              (link) => link.text === "github"
+                            )?.url || "#";
+                          if (liveLink !== "#") window.open(liveLink, "_blank");
+                        }}
                       className="w-8 h-8 bg-gray-800/60 hover:bg-pink-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-pink-300 transition-all duration-300"
                     >
                       <Github className="w-4 h-4" />
                     </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="w-8 h-8 bg-gray-800/60 hover:bg-pink-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-pink-300 transition-all duration-300"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </motion.button>
+            
                   </div>
                 </div>
               </div>
