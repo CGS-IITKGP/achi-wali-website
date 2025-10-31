@@ -9,6 +9,7 @@ const featuredValidator = {
     create: z.object({
         contentType: z.enum(EFeaturedType),
         contentId: allIbDField._id,
+        isHighlight: allIbDField.boolean,
     }),
     remove: z.object({
         _id: allIbDField._id,

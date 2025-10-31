@@ -105,9 +105,9 @@ const create: ServiceSignature<
     };
 };
 
-const addMembers: ServiceSignature<
-    SDIn.Team.AddMembers,
-    SDOut.Team.AddMembers,
+const editMembers: ServiceSignature<
+    SDIn.Team.EditMembers,
+    SDOut.Team.EditMembers,
     true
 > = async (data, session) => {
     if (!session.userRoles.includes(EUserRole.ADMIN)) {
@@ -128,31 +128,20 @@ const addMembers: ServiceSignature<
     }
 
     await withSession(async (dbSession) => {
-        await teamRepository.updateById(
-            data._id,
-            {
-                $addToSet: {
-                    members: {
-                        $each: data.memberIds,
-                    },
-                },
-            },
-            dbSession
-        );
+        const teamUpdate =
+            data.action === APIControl.Team.EditMembers.Target.ADD
+                ? { $addToSet: { members: { $each: data.memberIds } } }
+                : { $pull: { members: { $in: data.memberIds } } };
 
-        await userRepository.updateMany(
-            {
-                _id: {
-                    $in: data.memberIds,
-                },
-            },
-            {
-                $set: {
-                    teamId: data._id,
-                },
-            },
-            dbSession
-        );
+        const userUpdate =
+            data.action === APIControl.Team.EditMembers.Target.ADD
+                ? { $set: { teamId: data._id } }
+                : { $unset: { teamId: "" } };
+
+        await Promise.all([
+            teamRepository.updateById(data._id, teamUpdate, dbSession),
+            userRepository.updateMany({ _id: { $in: data.memberIds } }, userUpdate, dbSession),
+        ]);
     });
 
     return {
@@ -242,7 +231,7 @@ const teamServices = {
     get,
     create,
     update,
-    addMembers,
+    addMembers: editMembers,
     remove
 };
 

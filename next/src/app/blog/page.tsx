@@ -185,12 +185,12 @@ export default async function Blog() {
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
                               <span className="text-white font-semibold">
-                                {prettyShortName(blog.authors[0].name)}
+                                {prettyShortName(blog.author.name)}
                               </span>
                             </div>
                             <div>
                               <div className="text-white font-medium">
-                                {blog.authors[0].name}
+                                {blog.author.name}
                               </div>
                             </div>
                           </div>

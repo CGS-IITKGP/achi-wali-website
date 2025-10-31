@@ -3,7 +3,7 @@ import userValidator from '@/lib/validators/user.validator';
 import userService from '@/lib/services/user.service';
 
 const PATCH = createServiceOnlyHandler({
-    validationSchema: userValidator.updateRoles,
+    validationSchema: userValidator.updateAssignment,
     requireAuth: true,
     options: {
         service: userService.updateRoles,

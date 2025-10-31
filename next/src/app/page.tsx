@@ -20,7 +20,7 @@ const paragraph_font = Roboto({
 const fetchRecentFeatured = async () => {
   const apiResponse = await api("GET", "/featured", {
     query: {
-      target: "recent",
+      target: "highlight",
     },
   });
 

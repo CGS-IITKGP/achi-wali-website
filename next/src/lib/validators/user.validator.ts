@@ -20,13 +20,13 @@ const userValidator = {
     }),
     update: z.object({
         name: allIbDField.shortString.optional(),
-        profileImgMediaKey: allIbDField.mediaKey.optional(),
         phoneNumber: allIbDField.phoneNumber.optional(),
         links: z.array(allIbDField.link).optional(),
     }),
-    updateRoles: z.object({
+    updateAssignment: z.object({
         _id: allIbDField._id,
-        roles: allIbDField.roles,
+        roles: allIbDField.roles.optional(),
+        designation: allIbDField.designation.optional(),
     }),
     remove: z.object({
         _id: allIbDField._id,

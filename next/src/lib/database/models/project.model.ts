@@ -22,7 +22,12 @@ const ProjectSchema = new Schema<IProject>({
         type: Schema.Types.String,
         trim: true,
     }],
-    authors: [{
+    author: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
+    collaborators: [{
         type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,

@@ -19,6 +19,7 @@ import {
     SDOut,
     SDIn,
     APIControl,
+    EUserDesignation,
 } from "@/lib/types/index.types";
 import { SESSION_COOKIE_NAME } from "@/lib/config/constants";
 import AppError from "../utils/error";
@@ -86,6 +87,7 @@ const signIn: ServiceSignature<
 
     const token = await generateJWToken({
         _id: user._id.toString(),
+        roles: user.roles,
     });
 
     return {
@@ -252,6 +254,7 @@ const signUpVerify: ServiceSignature<
             // let all users be a member.
             EUserRole.MEMBER
         ],
+        designation: EUserDesignation.NONE
     });
 
     await signUpRequestRepository.removeById(request._id);

@@ -145,7 +145,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-lg">
-                  {blog.authors[0].name
+                  {blog.author.name
                     .split(" ")
                     .map((token) => token[0])
                     .join(".")}
@@ -153,9 +153,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 </span>
               </div>
               <div>
-                <div className="text-white font-medium">
-                  {blog.authors[0].name}
-                </div>
+                <div className="text-white font-medium">{blog.author.name}</div>
                 <div className="text-gray-400 text-sm flex items-center space-x-4">
                   <span>{prettyDate(blog.createdAt)}</span>
                   <span>·</span>

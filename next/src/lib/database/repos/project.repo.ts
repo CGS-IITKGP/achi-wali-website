@@ -7,10 +7,10 @@ import { ClientSession, FilterQuery } from "mongoose";
 
 class ProjectRepository extends GenericRepository<
     IProject,
-    Pick<IProject, "portfolio" | "title" | "description" | "tags" | "authors"
+    Pick<IProject, "portfolio" | "title" | "description" | "tags" | "author"
         | "links" | "coverImgMediaKey" | "media"
     >,
-    Pick<IProject, "portfolio" | "title" | "description" | "tags" | "authors"
+    Pick<IProject, "portfolio" | "title" | "description" | "tags" | "collaborators"
         | "links" | "coverImgMediaKey" | "media"
     >
 > {
@@ -24,7 +24,7 @@ class ProjectRepository extends GenericRepository<
 
         try {
             return await this.model.find(filter).populate({
-                path: "authors",
+                path: "author",
                 select: "name",
             }).session(session || null).lean<IProjectExportable[]>().exec();
         } catch (error) {

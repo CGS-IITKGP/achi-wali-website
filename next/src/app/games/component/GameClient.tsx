@@ -542,7 +542,7 @@ export default function GameClient({
                     </div> */}
                     <div className="flex items-center gap-1">
                       <RxAvatar className="w-4 h-4" />
-                      <span>{game.authors?.[0]?.name || "Anonymous"}</span>
+                      <span>{game.author?.name || "Anonymous"}</span>
                     </div>
                   </div>
 

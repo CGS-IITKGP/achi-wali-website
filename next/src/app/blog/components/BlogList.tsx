@@ -136,11 +136,11 @@ export default function BlogList({ posts }: BlogListProps) {
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
                             <span className="text-white text-md font-semibold">
-                              {prettyShortName(blog.authors[0].name)}
+                              {prettyShortName(blog.author.name)}
                             </span>
                           </div>
                           <span className="text-gray-400 text-sm">
-                            {blog.authors[0].name}
+                            {blog.author.name}
                           </span>
                         </div>
                       </div>

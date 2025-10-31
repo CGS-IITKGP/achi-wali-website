@@ -15,6 +15,10 @@ const get: ServiceSignature<
     SDOut.Blog.Get,
     false
 > = async (data, session) => {
+    if (data.target === APIControl.Blog.Get.Target.ALL_AS_LIST) {
+        return await getAsList({}, null);
+    }
+
     if (data.target === APIControl.Blog.Get.Target.BY_SLUG) {
         const blog = await blogRepository.findExportable({ slug: data.slug });
         if (!blog) {
@@ -30,12 +34,16 @@ const get: ServiceSignature<
             data: {
                 ...blog,
                 _id: blog._id.toHexString(),
-                authors: blog.authors.map(author => {
+                author: {
+                    ...blog.author,
+                    _id: blog.author._id.toHexString(),
+                },
+                collaborators: blog.collaborators.map(collaborator => {
                     return {
-                        ...author,
-                        _id: author._id.toHexString(),
+                        ...collaborator,
+                        _id: collaborator._id.toHexString(),
                     }
-                }),
+                })
             }
         }
     }
@@ -52,9 +60,7 @@ const get: ServiceSignature<
         }
 
         blogs = await blogRepository.findAllOfListExportable({
-            authors: {
-                $in: [session.userId]
-            },
+            author: session.userId
         });
     }
     else if (data.target === APIControl.Blog.Get.Target.ALL) {
@@ -73,16 +79,39 @@ const get: ServiceSignature<
             return {
                 ...blog,
                 _id: blog._id.toHexString(),
-                authors: blog.authors.map(author => {
+                author: {
+                    ...blog.author,
+                    _id: blog.author._id.toHexString(),
+                },
+                collaborators: blog.collaborators.map(collaborator => {
                     return {
-                        ...author,
-                        _id: author._id.toHexString(),
+                        ...collaborator,
+                        _id: collaborator._id.toHexString(),
                     }
-                }),
+                })
             }
         })
     }
 };
+
+const getAsList: ServiceSignature<
+    SDIn.Blog.GetAsList,
+    SDOut.Blog.GetAsList,
+    false
+> = async (_data, _session) => {
+    const blogs = await blogRepository.findAllExportable();
+
+    return {
+        success: true,
+        data: blogs.map((blog) => {
+            return {
+                _id: blog._id.toHexString(),
+                title: blog.title
+            };
+        }),
+    };
+};
+
 
 const create: ServiceSignature<
     SDIn.Blog.Create,
@@ -111,7 +140,7 @@ const create: ServiceSignature<
         slug: data.slug,
         content: data.content,
         tags: data.tags,
-        authors: [session.userId],
+        author: session.userId,
         coverImgMediaKey: null,
     });
 
@@ -126,8 +155,8 @@ const update: ServiceSignature<
     SDOut.Blog.Update,
     true
 > = async (data, session) => {
-    const project = await blogRepository.findById(data._id);
-    if (!project) {
+    const blog = await blogRepository.findById(data._id);
+    if (!blog) {
         return {
             success: false,
             errorCode: ESECs.PROJECT_NOT_FOUND,
@@ -136,7 +165,7 @@ const update: ServiceSignature<
     }
 
     if (!session.userRoles.includes(EUserRole.ADMIN) &&
-        !project.authors.some(id => id.toHexString() === session.userId.toHexString())) {
+        !(blog.author._id.toHexString() === session.userId.toHexString())) {
         return {
             success: false,
             errorCode: ESECs.FORBIDDEN,
@@ -169,7 +198,7 @@ const remove: ServiceSignature<
     }
 
     if (!session.userRoles.includes(EUserRole.ADMIN) &&
-        !blog.authors.some(id => id.toHexString() === session.userId.toHexString())) {
+        !(blog.author._id.toHexString() === session.userId.toHexString())) {
         return {
             success: false,
             errorCode: ESECs.FORBIDDEN,
