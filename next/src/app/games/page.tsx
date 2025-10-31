@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Navbar from "../components/navbar";
 import Footer from "../footer";
 import GameClient from "./component/GameClient";

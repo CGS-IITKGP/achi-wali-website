@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { IProject } from "@/app/types/index.types";
 import ProjectsClient from "./components/ProjectClient";
 import Navbar from "../components/navbar";

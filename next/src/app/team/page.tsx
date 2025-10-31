@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Navbar from "../components/navbar";
 import TeamJPG from "../assets/team.jpg";
 import TeamCard from "./TeamCard";

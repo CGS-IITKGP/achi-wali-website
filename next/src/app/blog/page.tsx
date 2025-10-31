@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import React from "react";
 import { ArrowRight, Calendar, Clock, Star } from "lucide-react";
 import Link from "next/link";

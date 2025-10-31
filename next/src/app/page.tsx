@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Righteous, Roboto } from "next/font/google";
 
 import Navbar from "./components/navbar";
