@@ -8,6 +8,7 @@ import { righteousFont, robotoFont } from "../../fonts";
 import { ExternalLink, Github } from "lucide-react";
 // import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import { FiMousePointer } from "react-icons/fi";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { IProject } from "@/app/types/domain.types";
 import { prettySafeImage } from "@/app/utils/pretty";
 
@@ -137,7 +138,8 @@ export default function ProjectsClient({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <div className="grid grid-cols-2 gap-2 sm:gap-2 lg:flex lg:min-w-xl lg:overflow-x-hidden lg:justify-evenly relative z-10">
+              {/* 🌐 Desktop Navbar */}
+              <div className="hidden lg:flex lg:min-w-xl lg:overflow-x-hidden lg:justify-evenly relative z-10">
                 {featuredProjects.map((proj, index) => (
                   <motion.button
                     key={proj._id || index}
@@ -152,7 +154,7 @@ export default function ProjectsClient({
                     {currentIndex === index && (
                       <motion.div
                         layoutId="activeProjectTab"
-                        className="absolute inset-0  bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 rounded-full -z-10 shadow-[0_0_25px_-5px_rgba(236,72,153,0.6)] animate-gradient"
+                        className="absolute inset-0 bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 rounded-full -z-10 shadow-[0_0_25px_-5px_rgba(236,72,153,0.6)] animate-gradient"
                         transition={{
                           type: "spring",
                           bounce: 0.25,
@@ -163,6 +165,63 @@ export default function ProjectsClient({
                   </motion.button>
                 ))}
               </div>
+
+              <div className="flex items-center justify-between gap-4 w-full lg:hidden bg-transparent border-none p-0">
+                <motion.button
+                  aria-label="Previous project"
+                  whileHover={{ scale: 1.08, x: -2 }}
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() =>
+                    setCurrentIndex(
+                      (prev) =>
+                        (prev - 1 + featuredProjects.length) %
+                        featuredProjects.length
+                    )
+                  }
+                  className="flex-shrink-0 p-2 sm:p-3 rounded-full
+               bg-gray-900/70 border border-fuchsia-500/20 backdrop-blur-sm
+               shadow-sm hover:shadow-[0_0_18px_rgba(236,72,153,0.35)]
+               text-fuchsia-300 hover:text-white transition-all duration-200"
+                >
+                  <FaChevronLeft size={18} />
+                </motion.button>
+
+                <motion.div
+                  key={currentIndex}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.22 }}
+                  className="px-3 sm:px-5 py-2 w-[90%] rounded-xl flex-0 flex-grow-0
+               min-w-[160px] sm:min-w-[200px]  text-center"
+                >
+                  <h2
+                    className={`text-sm  sm:text-base font-semibold 
+                 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-purple-400
+                 bg-clip-text text-transparent ${righteousFont.className}`}
+                  >
+                    {featuredProjects[currentIndex]?.title ||
+                      "Untitled Project"}
+                  </h2>
+                </motion.div>
+
+                <motion.button
+                  aria-label="Next project"
+                  whileHover={{ scale: 1.08, x: 2 }}
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() =>
+                    setCurrentIndex(
+                      (prev) => (prev + 1) % featuredProjects.length
+                    )
+                  }
+                  className="flex-shrink-0 p-2 sm:p-3 rounded-full
+               bg-gray-900/70 border border-fuchsia-500/20 backdrop-blur-sm
+               shadow-sm hover:shadow-[0_0_18px_rgba(236,72,153,0.35)]
+               text-fuchsia-300 hover:text-white transition-all duration-200"
+                >
+                  <FaChevronRight size={18} />
+                </motion.button>
+              </div>
+
               <motion.div
                 key={currentIndex}
                 className="absolute bottom-[-15px] left-5 right-4 sm:left-8 sm:right-8 h-1 rounded-full overflow-hidden bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 shadow-[0_0_20px_5px_rgba(236,72,153,0.7)]"
