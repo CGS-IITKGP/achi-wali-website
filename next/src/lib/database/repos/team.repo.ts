@@ -30,13 +30,29 @@ class TeamRepository extends GenericRepository<
         }
     }
 
+    async findAllExportable(filter: FilterQuery<ITeam> = {}, session?: ClientSession):
+        Promise<ITeamExportable[]> {
+        await this.ensureDbConnection();
+
+        try {
+            return await this.model.find(filter).populate({
+                path: "members",
+                select: "name links profileImgMediaKey",
+            }).session(session || null).lean<ITeamExportable[]>().exec();
+        } catch (error) {
+            throw new AppError('Failed to find document.', {
+                error
+            });
+        }
+    }
+
     async findAllOfListExportable(filter: FilterQuery<ITeam> = {}, session?: ClientSession):
         Promise<ITeamOfListExportable[]> {
         await this.ensureDbConnection();
 
         try {
             return await this.model.find(filter).populate({
-                path: "authors",
+                path: "members",
                 select: "name links profileImgMediaKey",
             }).session(session || null).lean<ITeamOfListExportable[]>().exec();
         } catch (error) {

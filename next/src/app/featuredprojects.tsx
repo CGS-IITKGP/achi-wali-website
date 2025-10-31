@@ -65,7 +65,7 @@ const ContentCard = React.memo<{
   activeIndex: number;
   totalProjects: number;
   onClick: () => void;
-}>(({ content, index, activeIndex, totalProjects, onClick }) => {
+ }>(({ content, index, activeIndex, totalProjects, onClick }) => {
   const position = useMemo(() => {
     const angle = ((index - activeIndex) * 360) / totalProjects;
     const radius = 300;
@@ -110,7 +110,7 @@ const ContentCard = React.memo<{
     >
       <div
         className={`
-        relative w-72 h-80 rounded-xl overflow-hidden
+        relative w-[260px] xs:w-[280px] sm:w-72 h-[320px] xs:h-[360px] sm:h-80 rounded-xl overflow-hidden
         ${
           isActive
             ? "shadow-xl shadow-pink-500/20"
@@ -126,7 +126,7 @@ const ContentCard = React.memo<{
             isActive ? "bg-black/80" : "bg-black/30"
           } flex flex-col transition-colors duration-300`}
         >
-          <div className="relative h-40 overflow-hidden">
+          <div className="relative h-36 xs:h-44 sm:h-40 overflow-hidden">
             <img
               src={prettySafeImage(content.coverImgMediaKey)}
               alt={content.title}
@@ -135,24 +135,24 @@ const ContentCard = React.memo<{
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
-            <div className="absolute top-3 left-3 flex items-center space-x-2 bg-pink-500/80 rounded-full px-2 py-1">
+            <div className="absolute top-2 xs:top-3 left-2 xs:left-3 flex items-center space-x-1.5 xs:space-x-2 bg-pink-500/80 rounded-full px-1.5 xs:px-2 py-0.5 xs:py-1">
               {getIconByType(content.type)}
-              <span className="text-white text-xs font-medium">
+              <span className="text-white text-[10px] xs:text-xs font-medium">
                 {content.type}
               </span>
             </div>
           </div>
 
-          <div className="flex-1 p-4 flex flex-col">
-            <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">
+          <div className="flex-1 p-4 sm:p-4 flex flex-col">
+            <h3 className="text-base sm:text-lg font-bold text-white mb-2 sm:mb-2 line-clamp-2">
               {content.title}
             </h3>
 
-            <div className="flex flex-wrap gap-1 mb-3">
+            <div className="flex flex-wrap gap-1 mb-2 xs:mb-3">
               {content.tags.slice(0, 3).map((tech, techIndex) => (
                 <span
                   key={techIndex}
-                  className="px-2 py-1 bg-pink-500/20 rounded text-xs text-pink-200 border border-pink-400/20"
+                  className="px-1.5 xs:px-2 py-0.5 sm:py-1 bg-pink-500/20 rounded text-[9px] xs:text-[10px] sm:text-xs text-pink-200 border border-pink-400/20"
                 >
                   {tech}
                 </span>

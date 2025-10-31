@@ -1,5 +1,5 @@
 import { Schema, model, models } from 'mongoose';
-import { IUser, EUserRole } from '@/lib/types/index.types';
+import { IUser, EUserRole, EUserDesignation } from '@/lib/types/index.types';
 
 
 const UserSchema = new Schema<IUser>({
@@ -51,6 +51,12 @@ const UserSchema = new Schema<IUser>({
         default: [EUserRole.GUEST],
         required: true,
     }],
+    designation: {
+        type: Schema.Types.String,
+        enum: Object.values(EUserDesignation),
+        default: EUserDesignation.NONE,
+        required: true,
+    },
 }, {
     timestamps: true,
 });

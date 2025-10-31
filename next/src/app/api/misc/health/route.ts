@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/database/db';
 import { verifySMTPConnection } from '@/lib/utils/email';

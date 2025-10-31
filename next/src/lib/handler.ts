@@ -153,6 +153,7 @@ const serviceErrorCodeHandler = (
         case ESECs.BLOG_NOT_FOUND:
         case ESECs.SLUG_NOT_FOUND:
         case ESECs.FEATURED_NOT_FOUND:
+        case ESECs.MEDIA_NOT_FOUND:
             return responseHandler.sendFailed(FailedResponseCodeEnum.NOT_FOUND, errorMessage);
 
         case ESECs.INVALID_CREDENTIALS:
@@ -169,6 +170,7 @@ const serviceErrorCodeHandler = (
         case ESECs.TEAM_NAME_TAKEN:
         case ESECs.SLUG_ALREADY_IN_USE:
         case ESECs.ALREADY_FEATURED:
+        case ESECs.MEDIA_PUBLIC_ID_ALREADY_EXISTS:
             return responseHandler.sendFailed(FailedResponseCodeEnum.CONFLICT, errorMessage);
 
         case ESECs.TOO_MANY_REQUESTS:

@@ -19,6 +19,7 @@ import {
     SDOut,
     SDIn,
     APIControl,
+    EUserDesignation,
 } from "@/lib/types/index.types";
 import { SESSION_COOKIE_NAME } from "@/lib/config/constants";
 import AppError from "../utils/error";
@@ -86,6 +87,7 @@ const signIn: ServiceSignature<
 
     const token = await generateJWToken({
         _id: user._id.toString(),
+        roles: user.roles,
     });
 
     return {
@@ -241,7 +243,7 @@ const signUpVerify: ServiceSignature<
         };
     }
 
-    await userRepository.insert({
+    const newUser = await userRepository.insert({
         name: request.name,
         email: request.email,
         passwordHash: request.passwordHash,
@@ -252,9 +254,14 @@ const signUpVerify: ServiceSignature<
             // let all users be a member.
             EUserRole.MEMBER
         ],
+        designation: EUserDesignation.NONE
     });
 
     await signUpRequestRepository.removeById(request._id);
+
+    await userRepository.updateById(newUser._id, {
+        profileImgMediaKey: `user-assets/${newUser._id.toHexString()}/profileImage`
+    });
 
     return {
         success: true,

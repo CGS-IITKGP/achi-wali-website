@@ -7,10 +7,10 @@ import { ClientSession, FilterQuery } from "mongoose";
 
 class BlogRepository extends GenericRepository<
     IBlog,
-    Pick<IBlog, "title" | "slug" | "content" | "tags" | "authors"
+    Pick<IBlog, "title" | "slug" | "content" | "tags" | "author"
         | "coverImgMediaKey"
     >,
-    Pick<IBlog, "title" | "slug" | "content" | "tags" | "authors"
+    Pick<IBlog, "title" | "slug" | "content" | "tags" | "collaborators"
         | "coverImgMediaKey"
     >
 > {
@@ -24,7 +24,7 @@ class BlogRepository extends GenericRepository<
 
         try {
             return await this.model.find(filter).select('-content').populate({
-                path: "authors",
+                path: "author",
                 select: "name",
             }).session(session || null).lean<IBlogOfListExportable[]>().exec();
         } catch (error) {
@@ -40,7 +40,7 @@ class BlogRepository extends GenericRepository<
 
         try {
             return await this.model.findOne(filter).populate({
-                path: "authors",
+                path: "author",
                 select: "name",
             }).session(session || null).lean<IBlogExportable>().exec();
         } catch (error) {
@@ -56,7 +56,7 @@ class BlogRepository extends GenericRepository<
 
         try {
             return await this.model.find(filter).populate({
-                path: "authors",
+                path: "author",
                 select: "name",
             }).session(session || null).lean<IBlogExportable[]>().exec();
         } catch (error) {

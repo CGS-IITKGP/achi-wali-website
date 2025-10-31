@@ -7,7 +7,6 @@ import {
     SDIn,
     IProjectExportable,
     APIControl,
-    EProjectPortfolio,
 } from "@/lib/types/index.types";
 import AppError from "../utils/error";
 
@@ -16,6 +15,10 @@ const get: ServiceSignature<
     SDOut.Project.Get,
     false
 > = async (data, session) => {
+    if (data.target === APIControl.Project.Get.Target.ALL_AS_LIST) {
+        return await getAsList({}, null);
+    }
+
     let projects: IProjectExportable[] = [];
 
     if (data.target === APIControl.Project.Get.Target.MY) {
@@ -23,42 +26,63 @@ const get: ServiceSignature<
             return {
                 success: false,
                 errorCode: ESECs.UNAUTHORIZED,
-                errorMessage: "Must be signed-in to see your projects."
-            }
+                errorMessage: "Must be signed-in to see your projects.",
+            };
         }
 
         projects = await projectRepository.findAllExportable({
-            authors: {
-                $in: [session.userId]
-            },
+            author: session.userId
         });
-    }
-    else if (data.target === APIControl.Project.Get.Target.ALL) {
-        projects = await projectRepository.findAllExportable({
-            portfolio: data.portfolio?.toUpperCase()
-        });
-    }
-    else {
+    } else if (data.target === APIControl.Project.Get.Target.ALL) {
+        const filter = data.portfolio === APIControl.Project.Get.Portfolio.ANY
+            ? {}
+            : { portfolio: data.portfolio?.toUpperCase() }
+
+        projects = await projectRepository.findAllExportable(filter);
+    } else {
         throw new AppError(
-            "APIControl.Project.Get is something other than MY and ALL",
+            "APIControl.Project.Get is something other than MY, ALL, and ALL_AS_LIST",
             { data, session }
         );
     }
 
     return {
         success: true,
-        data: projects.map(project => {
+        data: projects.map((project) => {
             return {
                 ...project,
                 _id: project._id.toHexString(),
-                authors: project.authors.map(author => {
+                author: {
+                    ...project.author,
+                    _id: project.author._id.toHexString(),
+                },
+                collaborators: project.collaborators.map(collaborator => {
                     return {
-                        ...author,
-                        _id: author._id.toHexString(),
+                        ...collaborator,
+                        _id: collaborator._id.toHexString(),
                     }
                 }),
-                media: project.media.map(media => media.toHexString()),
-            }
+                media: project.media.map((media) => media.toHexString()),
+            };
+        }),
+    };
+};
+
+const getAsList: ServiceSignature<
+    SDIn.Project.GetAsList,
+    SDOut.Project.GetAsList,
+    false
+> = async (_data, _session) => {
+    const projects = await projectRepository.findAllExportable();
+
+    return {
+        success: true,
+        data: projects.map((project) => {
+            return {
+                _id: project._id.toHexString(),
+                title: project.title,
+                portfolio: project.portfolio,
+            };
         }),
     };
 };
@@ -72,8 +96,8 @@ const create: ServiceSignature<
         return {
             success: false,
             errorCode: ESECs.FORBIDDEN,
-            errorMessage: "Only members can create a new project."
-        }
+            errorMessage: "Only members can create a new project.",
+        };
     }
 
     await projectRepository.insert({
@@ -81,10 +105,11 @@ const create: ServiceSignature<
         title: data.title,
         description: data.description,
         tags: data.tags,
-        authors: [session.userId],
+        author: session.userId,
+
         links: data.links,
         coverImgMediaKey: null,
-        media: []
+        media: [],
     });
 
     return {
@@ -107,13 +132,15 @@ const update: ServiceSignature<
         };
     }
 
-    if (!session.userRoles.includes(EUserRole.ADMIN) &&
-        !project.authors.some(id => id.toHexString() === session.userId.toHexString())) {
+    if (
+        !session.userRoles.includes(EUserRole.ADMIN) &&
+        !!(project._id.toHexString() === session.userId.toHexString())
+    ) {
         return {
             success: false,
             errorCode: ESECs.FORBIDDEN,
-            errorMessage: "Only admin or author can remove a project."
-        }
+            errorMessage: "Only admin or author can remove a project.",
+        };
     }
 
     const { _id, ...updateDoc } = data;
@@ -140,13 +167,15 @@ const remove: ServiceSignature<
         };
     }
 
-    if (!session.userRoles.includes(EUserRole.ADMIN) &&
-        !project.authors.some(id => id.toHexString() === session.userId.toHexString())) {
+    if (
+        !session.userRoles.includes(EUserRole.ADMIN) &&
+        !(project.author._id.toHexString() === session.userId.toHexString())
+    ) {
         return {
             success: false,
             errorCode: ESECs.FORBIDDEN,
-            errorMessage: "Only admin or author can remove a project."
-        }
+            errorMessage: "Only admin or author can remove a project.",
+        };
     }
 
     await projectRepository.removeById(data._id);
@@ -157,13 +186,11 @@ const remove: ServiceSignature<
     };
 };
 
-
 const projectServices = {
     get,
     create,
     update,
-    remove
+    remove,
 };
-
 
 export default projectServices;

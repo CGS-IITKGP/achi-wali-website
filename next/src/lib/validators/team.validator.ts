@@ -28,8 +28,9 @@ const teamValidator = {
         description: allIbDField.longString.optional(),
         coverImageMediaKey: allIbDField.shortString.optional(),
     }),
-    addMembers: z.object({
+    editMembers: z.object({
         _id: allIbDField._id,
+        target: z.enum(APIControl.Team.EditMembers.Target),
         memberIds: z.array(allIbDField._id),
     }),
     remove: z.object({

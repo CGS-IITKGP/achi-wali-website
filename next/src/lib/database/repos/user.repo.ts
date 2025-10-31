@@ -7,9 +7,9 @@ import AppError from "@/lib/utils/error";
 
 class UserRepository extends GenericRepository<
     IUser,
-    Pick<IUser, "name" | "email" | "passwordHash" | "roles">,
+    Pick<IUser, "name" | "email" | "passwordHash" | "designation" | "roles">,
     Pick<IUser, "name" | "email" | "passwordHash" | "profileImgMediaKey"
-        | "phoneNumber" | "links" | "teamId" | "roles"
+        | "designation" | "phoneNumber" | "links" | "teamId" | "roles"
     >
 > {
     constructor() {

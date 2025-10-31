@@ -7,7 +7,7 @@ import {
     SDIn,
     APIControl,
     EFeaturedType,
-    IRecentFeaturedContent,
+    IFeaturedHighlightExportable,
 } from "@/lib/types/index.types";
 import AppError from "../utils/error";
 import projectRepository from "../database/repos/project.repo";
@@ -19,8 +19,12 @@ const get: ServiceSignature<
     SDOut.Featured.Get,
     false
 > = async (data, session) => {
-    if (data.target === APIControl.Featured.Get.Target.RECENT) {
-        return await getRecent({}, null);
+    if (data.target === APIControl.Featured.Get.Target.HIGHLIGHT) {
+        return await getHighlight({}, null);
+    }
+
+    if (data.target === APIControl.Featured.Get.Target.ALL_AS_LIST) {
+        return await getAsList({}, null);
     }
 
     const featured = await featuredRepository.findAll({
@@ -41,11 +45,16 @@ const get: ServiceSignature<
             data: featuredBlogs.map(blog => {
                 return {
                     ...blog,
+                    slug: blog.slug,
                     _id: blog._id.toHexString(),
-                    authors: blog.authors.map(author => {
+                    author: {
+                        ...blog.author,
+                        _id: blog.author._id.toHexString(),
+                    },
+                    collaborators: blog.collaborators.map(collaborator => {
                         return {
-                            ...author,
-                            _id: author._id.toHexString(),
+                            ...collaborator,
+                            _id: collaborator._id.toHexString(),
                         }
                     })
                 }
@@ -68,12 +77,17 @@ const get: ServiceSignature<
                 return {
                     ...project,
                     _id: project._id.toHexString(),
-                    authors: project.authors.map(author => {
+                    author: {
+                        ...project.author,
+                        _id: project.author._id.toHexString(),
+                    },
+                    collaborators: project.collaborators.map(collaborator => {
                         return {
-                            ...author,
-                            _id: author._id.toHexString(),
+                            ...collaborator,
+                            _id: collaborator._id.toHexString(),
                         }
-                    })
+                    }),
+                    media: undefined
                 }
             }),
         };
@@ -85,23 +99,25 @@ const get: ServiceSignature<
     );
 };
 
-const getRecent: ServiceSignature<
-    SDIn.Featured.GetRecent,
-    SDOut.Featured.GetRecent,
+const getHighlight: ServiceSignature<
+    SDIn.Featured.GetHighlight,
+    SDOut.Featured.GetHighlight,
     false
 > = async (_data, _session) => {
-    const recentFeatured = await featuredRepository.findRecent(5);
+    const featuredHighlighted = await featuredRepository.findAll({
+        isHighlight: true
+    });
 
     const featuredBlogsId: Types.ObjectId[] = [];
     const featuredProjectsId: Types.ObjectId[] = [];
 
-    recentFeatured.map(content => {
+    featuredHighlighted.map(content => {
         content.contentType === EFeaturedType.BLOG
             ? featuredBlogsId.push(content.contentId)
             : featuredProjectsId.push(content.contentId);
     });
 
-    const recentFeaturedContent: IRecentFeaturedContent[] = [];
+    const recentFeaturedContent: IFeaturedHighlightExportable[] = [];
 
     const featuredBlogs = await blogRepository.findAllOfListExportable({
         _id: {
@@ -152,6 +168,24 @@ const getRecent: ServiceSignature<
     }
 };
 
+const getAsList: ServiceSignature<
+    SDIn.Featured.GetAsList,
+    SDOut.Featured.GetAsList,
+    false
+> = async (_data, _session) => {
+    const featuredContents = await featuredRepository.findAllExportableAsList();
+
+    return {
+        success: true,
+        data: featuredContents.map(content => {
+            return {
+                ...content,
+                _id: content._id.toHexString(),
+            }
+        })
+    }
+};
+
 const create: ServiceSignature<
     SDIn.Featured.Create,
     SDOut.Featured.Create,
@@ -179,6 +213,7 @@ const create: ServiceSignature<
     await featuredRepository.insert({
         contentType: data.contentType,
         contentId: data.contentId,
+        isHighlight: data.isHighlight,
     });
 
     return {
@@ -186,6 +221,7 @@ const create: ServiceSignature<
         data: {},
     };
 };
+
 
 const remove: ServiceSignature<
     SDIn.Featured.Remove,

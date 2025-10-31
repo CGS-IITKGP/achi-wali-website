@@ -1,36 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateJWToken } from "./lib/services/core/jwt.core.service";
+import { EUserRole } from "./lib/types/domain.types";
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const token = request.cookies.get("session")?.value || "";
-  let isAuthenticated = false;
+    const { pathname } = request.nextUrl;
+    const token = request.cookies.get("session")?.value || "";
 
-  try {
-    const verifyToken = await validateJWToken(token);
+    let isAuthenticated = false;
+    let isMember = false;
+    let isAdmin = false;
 
-    if (verifyToken !== null) {
-      isAuthenticated = true;
-    } else {
-      isAuthenticated = false;
+    try {
+        const verifyToken = await validateJWToken(token);
+
+        if (verifyToken !== null) {
+            isAuthenticated = true;
+
+            if (verifyToken.roles.includes(EUserRole.MEMBER)) {
+                isMember = true;
+            }
+
+            if (verifyToken.roles.includes(EUserRole.ADMIN)) {
+                isAdmin = true;
+            }
+        }
+    } catch (_error) {
+        isAuthenticated = false;
     }
-  } catch (_error) {
-    isAuthenticated = false;
-  }
 
-  const isAuthPage = pathname.startsWith("/auth");
+    const isAuthPage = pathname.startsWith("/auth");
+    const isDashboardPage = pathname.startsWith("/dashboard");
+    const isAdminPage = pathname.startsWith("/admin");
 
-  if (!isAuthenticated && pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/auth/sign-in", request.url));
-  }
+    if (!isAuthenticated && (isDashboardPage || isAdminPage)) {
+        return NextResponse.redirect(new URL("/auth/sign-in", request.url));
+    }
 
-  if (isAuthenticated && isAuthPage) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
+    if (isAuthenticated && isAuthPage) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
 
-  return NextResponse.next();
+    if ((!isMember && (isDashboardPage || isAdminPage)) ||
+        (!isAdmin && isAdminPage)
+    ) {
+        return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/auth/:path*"],
+    matcher: [
+        "/dashboard/:path*",
+        "/auth/:path*",
+        "/admin/:path*"
+    ],
 };

@@ -30,7 +30,8 @@ const blogValidator = {
         title: allIbDField.shortString.optional(),
         slug: allIbDField.slug.optional(),
         content: allIbDField.longString.optional(),
-        tags: allIbDField.tags,
+        tags: allIbDField.tags.optional(),
+        collaborators: z.array(allIbDField._id).optional(),
         coverImgMediaKey: allIbDField.mediaKey.optional(),
     }),
     remove: z.object({

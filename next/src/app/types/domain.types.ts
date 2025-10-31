@@ -7,6 +7,15 @@ export enum EUserRole {
     ROOT = "ROOT",
 }
 
+export enum EUserDesignation {
+    NONE = "NONE",
+    JUNIOR = "JUNIOR",
+    SENIOR = "SENIOR",
+    EXECUTIVE = "EXECUTIVE",
+    HEAD = "HEAD",
+    ADVISOR = "ADVISOR",
+}
+
 export interface IUser {
     _id: string;
     name: string;
@@ -22,6 +31,7 @@ export interface IUser {
         name: string;
     };
     roles: EUserRole[];
+    designation: EUserDesignation;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -32,7 +42,11 @@ export interface IBlog {
     slug: string;
     tags: string[];
     content: string;
-    authors: {
+    author: {
+        _id: string;
+        name: string;
+    };
+    collaborators: {
         _id: string;
         name: string;
     }[];
@@ -57,7 +71,11 @@ export interface IProject {
     title: string;
     description: string;
     tags: string[];
-    authors: {
+    author: {
+        _id: string;
+        name: string;
+    };
+    collaborators: {
         _id: string;
         name: string;
     }[];
@@ -100,4 +118,38 @@ export type IMediaSignedToken = {
     cloudName: string;
     apiKey: string;
 };
+
+export type ITeamExportable = {
+    _id: string;
+    name: string;
+    description: string;
+    members: {
+        _id: string;
+        name: string;
+        links: {
+            label: string;
+            url: string;
+        }[];
+        profileImgMediaKey: string | null;
+    }[];
+    coverImageMediaKey: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export enum EFeaturedType {
+    BLOG = "BLOG",
+    GAME = "GAME",
+    GRAPHICS = "GRAPHICS",
+    RND = "RND"
+}
+
+export type IFeaturedContentAsList = {
+    _id: string;
+    contentType: "BLOG" | "GAME" | "GRAPHICS" | "RND";
+    contentTitle: string;
+    isHighlight: string;
+}
+
+export type IContentAsList = Omit<IFeaturedContentAsList, "isHighlight">;
 

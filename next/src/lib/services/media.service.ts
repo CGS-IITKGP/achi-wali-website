@@ -76,6 +76,15 @@ const create: ServiceSignature<
         }
     }
 
+    const media = await mediaRepository.findOne({ key: data.publicId });
+    if (media) {
+        return {
+            success: false,
+            errorCode: ESECs.MEDIA_PUBLIC_ID_ALREADY_EXISTS,
+            errorMessage: "Media with this public id already exists."
+        }
+    }
+
     await mediaRepository.insert({
         key: data.publicId,
         url: data.url,

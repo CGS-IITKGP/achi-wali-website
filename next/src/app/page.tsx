@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Righteous, Roboto } from "next/font/google";
 
 import Navbar from "./components/navbar";
@@ -20,7 +22,7 @@ const paragraph_font = Roboto({
 const fetchRecentFeatured = async () => {
   const apiResponse = await api("GET", "/featured", {
     query: {
-      target: "recent",
+      target: "highlight",
     },
   });
 
@@ -146,7 +148,7 @@ export default async function Home() {
           </div>
         </div>
       </div> */}
-      <section className="h-screen w-full flex flex-col justify-center items-center z-10 relative">
+      <section className="h-screen w-full flex flex-col justify-center items-center z-10 relative px-4 sm:px-6 md:px-8">
         <div className="absolute inset-0 w-full h-full overflow-hidden">
           <video
             autoPlay
@@ -162,23 +164,23 @@ export default async function Home() {
 
         <Navbar />
         <h1
-          className={`text-6xl md:text-8xl lg:text-9xl fade-in max-w-6xl text-center ${heading_font.className} bg-gradient-to-tr from-white to-pink-600 bg-clip-text text-transparent z-10`}
+          className={`text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl fade-in max-w-6xl text-center ${heading_font.className} bg-gradient-to-tr from-white to-pink-600 bg-clip-text text-transparent z-10 leading-tight mb-4 sm:mb-6`}
         >
           Computer Graphics Society
         </h1>
 
         <p
-          className={`text-gray-400 px-8 lg:px-0 fade-in-2 text-xl md:text-xl lg:text-2xl max-w-4xl text-center font-bold mt-8 ${paragraph_font.className} z-10`}
+          className={`text-gray-400 px-4 sm:px-6 md:px-8 lg:px-0 fade-in-2 text-base sm:text-lg md:text-xl lg:text-2xl max-w-4xl text-center font-bold mt-4 sm:mt-6 md:mt-8 ${paragraph_font.className} z-10 leading-relaxed`}
         >
           We, the Computer Graphics Society at IIT Kharagpur, are a passionate
           group of students dedicated to exploring the world of game development
           using Unity and Unreal engines.
         </p>
 
-        <p className="text-gray-500 relative top-32 z-10">
+        <p className="text-gray-500 relative top-16 sm:top-24 md:top-32 z-10">
           <span className="inline-flex flex-col items-center animate-bounce">
             <svg
-              className="w-8 h-8 text-pink-400"
+              className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-pink-400"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -190,7 +192,7 @@ export default async function Home() {
                 d="M19 9l-7 7-7-7"
               />
             </svg>
-            <span className="mt-2 text-pink-400 font-semibold">
+            <span className="mt-2 text-pink-400 font-semibold text-sm sm:text-base">
               Scroll Down
             </span>
           </span>

@@ -12,8 +12,12 @@ import {
   IMediaSignedToken,
   IProject,
 } from "../types/domain.types";
-import { prettyDate, prettyDescription } from "../utils/pretty";
-// import { HandMetal } from "lucide-react";
+import {
+  prettyDate,
+  prettyDescription,
+  prettySafeImage,
+} from "../utils/pretty";
+import { Listbox } from "@headlessui/react";
 
 const heading_font = Righteous({
   subsets: ["latin"],
@@ -24,7 +28,13 @@ const paragraph_font = Roboto({
   subsets: ["latin"],
 });
 
-type ActiveSection = "blog" | "projects" | "profile" | "assets" | "settings";
+type ActiveSection =
+  | "blog"
+  | "projects"
+  | "profile"
+  | "assets"
+  | "settings"
+  | "home";
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("profile");
@@ -37,6 +47,13 @@ export default function Dashboard() {
     id: null,
   });
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+  const [showProjectUpdateModal, setShowProjectUpdateModal] = useState<{
+    show: boolean;
+    id: string | null;
+  }>({
+    show: false,
+    id: null,
+  });
   const [showNewAssetModal, setShowNewAssetModal] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [newPostData, setNewPostData] = useState({
@@ -66,6 +83,11 @@ export default function Dashboard() {
     tags: "",
     links: [{ text: "", url: "" }],
   });
+  const [projectUpdate, setProjectUpdate] = useState<{
+    coverImgMediaKey: string;
+  }>({
+    coverImgMediaKey: "",
+  });
   const [newAssetData, setNewAssetData] = useState<{
     name: string;
     file: File | null;
@@ -88,6 +110,15 @@ export default function Dashboard() {
   });
 
   const menuItems = [
+    {
+      id: "home" as ActiveSection,
+      label: "Home",
+      icon: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+        </svg>
+      ),
+    },
     {
       id: "profile" as ActiveSection,
       label: "Profile",
@@ -228,6 +259,16 @@ export default function Dashboard() {
     fetchAssets();
   }, []);
 
+  useEffect(() => {
+    if (activeSection === "home") {
+      router.push("/");
+    }
+  }, [activeSection, router]);
+
+  if (activeSection === "home") {
+    return null;
+  }
+
   const handleNewPostSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -360,6 +401,52 @@ export default function Dashboard() {
       });
       toast.success("Added a new project.");
     }
+  };
+
+  const handleProjectUpdateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (showProjectUpdateModal.id === null) return;
+
+    if (projectUpdate.coverImgMediaKey.split("/").length !== 3) {
+      toast.error("Invalid media key");
+      return;
+    }
+
+    const apiResponse = await api(
+      "PATCH",
+      `/project/${showProjectUpdateModal.id}`,
+      {
+        body: {
+          coverImgMediaKey: projectUpdate.coverImgMediaKey,
+        },
+      }
+    );
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      fetchProjects();
+      setShowProjectUpdateModal({
+        show: false,
+        id: null,
+      });
+      setProjectUpdate({ coverImgMediaKey: "" });
+      toast.success("Updated project cover image.");
+    }
+  };
+
+  const handleProjectUpdateInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+
+    setProjectUpdate((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleProjectDelete = async (id: string) => {
@@ -549,13 +636,18 @@ export default function Dashboard() {
           <div className="space-y-6">
             <div className="flex items-center space-x-4">
               <div className="w-20 h-20 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
-                <svg
+                {/* <svg
                   className="w-10 h-10 text-pink-400"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                </svg>
+                </svg> */}
+                <img
+                  src={prettySafeImage(user?.profileImgMediaKey ?? null)}
+                  alt=""
+                  className="relative z-10 w-full h-full rounded-full border-4 border-pink-500/20 group-hover:border-pink-500/70 transition-all duration-700 object-cover group-hover:scale-110"
+                />
               </div>
               <div>
                 <h2 className={`text-2xl text-white ${heading_font.className}`}>
@@ -796,7 +888,12 @@ export default function Dashboard() {
                     <div className="flex space-x-2 shrink-0 ml-4">
                       <button
                         className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-                        onClick={() => {}}
+                        onClick={() => {
+                          setShowProjectUpdateModal({
+                            id: project._id,
+                            show: true,
+                          });
+                        }}
                       >
                         <svg
                           className="w-4 h-4 text-gray-400 hover:text-white"
@@ -903,12 +1000,13 @@ export default function Dashboard() {
                     </label>
                     <input
                       type="text"
-                      defaultValue="John Doe"
+                      contentEditable={false}
+                      value={user?.name || "Loading"}
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-pink-400 focus:outline-none transition-colors"
                     />
                   </div>
                   <div>
-                    <label
+                    {/* <label
                       className={`block text-gray-400 text-sm mb-2 ${paragraph_font.className}`}
                     >
                       Bio
@@ -916,7 +1014,7 @@ export default function Dashboard() {
                     <textarea
                       defaultValue="Game developer passionate about creating immersive experiences."
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-pink-400 focus:outline-none transition-colors h-24 resize-none"
-                    />
+                    /> */}
                   </div>
                 </div>
               </div>
@@ -1002,7 +1100,10 @@ export default function Dashboard() {
                 <span
                   className={`text-white font-bold ${paragraph_font.className}`}
                 >
-                  JD
+                  {user?.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("") ?? "LD"}
                 </span>
               </div>
               <div>
@@ -1326,7 +1427,7 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() =>
-                    setShowBlogUpdateModal((prev) => {
+                    setShowBlogUpdateModal(() => {
                       return {
                         show: false,
                         id: null,
@@ -1403,23 +1504,43 @@ export default function Dashboard() {
                   >
                     Portfolio Type
                   </label>
-                  <select
-                    name="portfolio"
+                  <Listbox
                     value={newProjectData.portfolio}
-                    onChange={handleProjectInputChange}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                    required
+                    onChange={(value) =>
+                      setNewProjectData((prev) => ({
+                        ...prev,
+                        portfolio: value,
+                      }))
+                    }
                   >
-                    <option value="" disabled>
-                      Select a portfolio...
-                    </option>
-                    <option value="GAME">GAME</option>
-                    <option value="GRAPHICS">GRAPHICS</option>
-                    <option value="RND">RND</option>
-                  </select>
+                    <div className="relative">
+                      {/* Button showing selected value */}
+                      <Listbox.Button
+                        className={`w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300`}
+                      >
+                        {newProjectData.portfolio || "Select a portfolio..."}
+                      </Listbox.Button>
+
+                      {/* Dropdown menu */}
+                      <Listbox.Options className="absolute mt-2 w-full rounded-xl bg-[#1a1a1a] border border-white/10 shadow-lg overflow-hidden z-20">
+                        {["GAME", "GRAPHICS", "RND"].map((item) => (
+                          <Listbox.Option
+                            key={item}
+                            value={item}
+                            className={({ active }) =>
+                              `px-4 py-2 cursor-pointer transition text-white ${
+                                active ? "bg-pink-600/40" : "bg-[#1a1a1a]"
+                              }`
+                            }
+                          >
+                            {item}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </div>
+                  </Listbox>
                 </div>
 
-                {/* Tags Field (Replaced Technology) */}
                 <div>
                   <label
                     className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
@@ -1476,7 +1597,7 @@ export default function Dashboard() {
                   >
                     Project Links{" "}
                     <span className="text-neutral-500">
-                      (use "live-demo" and "github" for advanced cards.)
+                      (use live-demo and github for advanced cards.)
                     </span>
                   </label>
                   <button
@@ -1564,6 +1685,90 @@ export default function Dashboard() {
                   {/* Button Shimmer Effect */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                   <span className="relative z-10">Create Project</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Project Update Modal */}
+      {showProjectUpdateModal.show && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <form onSubmit={handleProjectUpdateSubmit}>
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-white/10">
+                <h2 className={`text-xl text-white ${heading_font.className}`}>
+                  Update Project Cover Image Key
+                </h2>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowProjectUpdateModal((prev) => {
+                      return {
+                        show: false,
+                        id: prev.id,
+                      };
+                    })
+                  }
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6 text-gray-400 hover:text-white"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-6">
+                {/* Cover Image Media Key Field */}
+                <div>
+                  <label
+                    className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
+                  >
+                    Project Cover Image Media Key (e.g.,
+                    user-assets/user-id/project-cover)
+                  </label>
+                  <input
+                    type="text"
+                    name="coverImgMediaKey"
+                    value={projectUpdate.coverImgMediaKey}
+                    onChange={handleProjectUpdateInputChange}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                    placeholder="Paste the asset key here..."
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-4 p-6 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowProjectUpdateModal(() => {
+                      return {
+                        show: false,
+                        id: null,
+                      };
+                    })
+                  }
+                  className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-all duration-200 relative overflow-hidden group"
+                >
+                  {/* Button Shimmer Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+                  <span className="relative z-10">Save Key</span>
                 </button>
               </div>
             </form>

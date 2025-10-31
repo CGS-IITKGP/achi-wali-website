@@ -158,9 +158,9 @@ const update: ServiceSignature<
     };
 };
 
-const updateRoles: ServiceSignature<
-    SDIn.User.UpdateRoles,
-    SDOut.User.Update,
+const updateAssignment: ServiceSignature<
+    SDIn.User.UpdateAssignment,
+    SDOut.User.UpdateAssignment,
     true
 > = async (data, session) => {
     if (!session.userRoles.includes(EUserRole.ADMIN)) {
@@ -182,6 +182,7 @@ const updateRoles: ServiceSignature<
 
     await userRepository.updateById(data._id, {
         roles: data.roles,
+        designation: data.designation
     });
 
     return {
@@ -237,7 +238,7 @@ const remove: ServiceSignature<
 const userService = {
     get,
     update,
-    updateRoles,
+    updateRoles: updateAssignment,
     remove,
 };
 

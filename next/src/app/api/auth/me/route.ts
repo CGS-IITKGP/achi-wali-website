@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import createHandler from '@/lib/handler';
 import authValidator from '@/lib/validators/auth.validator';
 import authService from '@/lib/services/auth.service';

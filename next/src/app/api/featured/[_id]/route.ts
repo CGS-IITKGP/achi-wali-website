@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import createHandler from '@/lib/handler';
 import featuredValidator from '@/lib/validators/featured.validator';
 import featuredServices from '@/lib/services/featured.service';

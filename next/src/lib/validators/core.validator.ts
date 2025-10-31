@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { z, ZodSchema } from "zod";
-import { EProjectPortfolio, EUserRole } from "../types/domain.types";
+import { EProjectPortfolio, EUserDesignation, EUserRole } from "../types/domain.types";
 
 type ValidatedRequest<T> = {
     success: true;
@@ -63,6 +63,7 @@ const allIbDField = {
     otp: z.string().regex(new RegExp("^\\d{6}$")),
     token: z.string().regex(new RegExp("^[a-f0-9]{64}$")),
     roles: z.array(z.enum(EUserRole)),
+    designation: z.enum(EUserDesignation),
     mediaKey: z.string().max(255).nullable(),
     phoneNumber: z.string().trim().max(20),
     projectPortfolio: z.enum(EProjectPortfolio),

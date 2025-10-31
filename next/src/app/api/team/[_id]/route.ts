@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import createServiceOnlyHandler from '@/lib/handler';
 import teamValidator from '@/lib/validators/team.validator';
 import teamServices from '@/lib/services/team.service';
