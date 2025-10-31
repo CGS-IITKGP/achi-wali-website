@@ -20,7 +20,7 @@ const projectValidator = {
         description: allIbDField.longString.optional(),
         tags: allIbDField.tags.optional(),
         links: z.array(allIbDField.link).optional(),
-        collaborators: z.array(allIbDField._id),
+        collaborators: z.array(allIbDField._id).optional(),
         coverImgMediaKey: allIbDField.mediaKey.optional(),
         media: z.array(allIbDField._id).optional(),
     }),
