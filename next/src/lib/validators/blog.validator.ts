@@ -24,6 +24,7 @@ const blogValidator = {
         slug: allIbDField.slug,
         content: allIbDField.bigString,
         tags: allIbDField.tags,
+        coverImgMediaKey: allIbDField.mediaKeyNotNullable,
     }),
     update: z.object({
         _id: allIbDField._id,

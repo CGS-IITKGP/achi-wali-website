@@ -138,6 +138,7 @@ export namespace SDIn {
                 text: string;
                 url: string;
             }[];
+            coverImgMediaKey: string | null;
         };
 
         export type Update = {
@@ -180,6 +181,7 @@ export namespace SDIn {
             slug: string;
             content: string;
             tags: string[];
+            coverImgMediaKey: string | null;
         };
 
         export type Update = {

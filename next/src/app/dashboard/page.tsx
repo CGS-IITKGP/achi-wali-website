@@ -59,6 +59,7 @@ export default function Dashboard() {
   const [newPostData, setNewPostData] = useState({
     title: "",
     slug: "",
+    coverImgMediaKey: "",
     content: "",
     tags: "",
   });
@@ -70,8 +71,9 @@ export default function Dashboard() {
   const [newProjectData, setNewProjectData] = useState<{
     name: string;
     portfolio: "GAME" | "GRAPHICS" | "RND";
-    description: string;
     tags: string;
+    coverImgMediaKey: string;
+    description: string;
     links: {
       text: string;
       url: string;
@@ -79,8 +81,9 @@ export default function Dashboard() {
   }>({
     name: "",
     portfolio: "GAME",
-    description: "",
     tags: "",
+    coverImgMediaKey: "",
+    description: "",
     links: [{ text: "", url: "" }],
   });
   const [projectUpdate, setProjectUpdate] = useState<{
@@ -277,10 +280,16 @@ export default function Dashboard() {
       return;
     }
 
+    if (newPostData.coverImgMediaKey.trim().split("/").length !== 3) {
+      toast.error("Invalid media key");
+      return;
+    }
+
     const apiResponse = await api("POST", "/blog", {
       body: {
         title: newPostData.title,
         slug: newPostData.slug,
+        coverImgMediaKey: newPostData.coverImgMediaKey.trim(),
         content: newPostData.content,
         tags: newPostData.tags
           .split(",")
@@ -296,7 +305,13 @@ export default function Dashboard() {
     } else {
       fetchBlogs();
       setShowNewPostModal(false);
-      setNewPostData({ title: "", slug: "", content: "", tags: "" });
+      setNewPostData({
+        title: "",
+        slug: "",
+        coverImgMediaKey: "",
+        content: "",
+        tags: "",
+      });
       toast.success("Added a new blog.");
     }
   };
@@ -342,7 +357,13 @@ export default function Dashboard() {
     } else {
       fetchBlogs();
       setShowNewPostModal(false);
-      setNewPostData({ title: "", slug: "", content: "", tags: "" });
+      setNewPostData({
+        title: "",
+        slug: "",
+        coverImgMediaKey: "",
+        content: "",
+        tags: "",
+      });
       toast.success("Removed blog.");
     }
   };
@@ -370,6 +391,11 @@ export default function Dashboard() {
   const handleNewProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (newProjectData.coverImgMediaKey.trim().split("/").length !== 3) {
+      toast.error("Invalid media key");
+      return;
+    }
+
     const apiResponse = await api("POST", "/project", {
       body: {
         title: newProjectData.name,
@@ -379,6 +405,7 @@ export default function Dashboard() {
           .split(",")
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
+        coverImgMediaKey: newProjectData.coverImgMediaKey.trim(),
         links: newProjectData.links.filter(
           (link) => link.text.trim() !== "" && link.url.trim() !== ""
         ),
@@ -395,8 +422,9 @@ export default function Dashboard() {
       setNewProjectData({
         name: "",
         portfolio: "GAME",
-        description: "",
         tags: "",
+        coverImgMediaKey: "",
+        description: "",
         links: [{ text: "", url: "" }],
       });
       toast.success("Added a new project.");
@@ -462,8 +490,9 @@ export default function Dashboard() {
       setNewProjectData({
         name: "",
         portfolio: "GAME",
-        description: "",
         tags: "",
+        coverImgMediaKey: "",
+        description: "",
         links: [{ text: "", url: "" }],
       });
       toast.success("Removed project.");
@@ -1330,6 +1359,24 @@ export default function Dashboard() {
                 />
               </div>
 
+              {/* Cover Image Media Key */}
+              <div>
+                <label
+                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
+                >
+                  Cover Image Media Key
+                </label>
+                <input
+                  type="text"
+                  name="coverImgMediaKey"
+                  value={newPostData.coverImgMediaKey}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                  placeholder="Enter cover image media key..."
+                  required
+                />
+              </div>
+
               {/* Tags Field */}
               <div>
                 <label
@@ -1385,12 +1432,6 @@ export default function Dashboard() {
                   className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
-                  className="px-6 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg transition-all duration-200"
-                >
-                  Save Draft
                 </button>
                 <button
                   type="submit"
@@ -1596,6 +1637,24 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* Cover Image Media Key */}
+              <div>
+                <label
+                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
+                >
+                  Cover Image Media Key
+                </label>
+                <input
+                  type="text"
+                  name="coverImgMediaKey"
+                  value={newProjectData.coverImgMediaKey}
+                  onChange={handleProjectInputChange}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                  placeholder="Enter cover image media key..."
+                  required
+                />
+              </div>
+
               {/* Description Field (Unchanged) */}
               <div>
                 <label
@@ -1708,12 +1767,6 @@ export default function Dashboard() {
                   className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
-                  className="px-6 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg transition-all duration-200"
-                >
-                  Save Draft
                 </button>
                 <button
                   type="submit"

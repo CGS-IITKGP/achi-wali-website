@@ -72,6 +72,7 @@ const allIbDField = {
     roles: z.array(z.enum(EUserRole)),
     designation: z.enum(EUserDesignation),
     mediaKey: z.string().max(255).nullable(),
+    mediaKeyNotNullable: z.string().max(255),
     phoneNumber: z.string().trim().max(20),
     projectPortfolio: z.enum(EProjectPortfolio),
     url: z.string().url().max(2048),
