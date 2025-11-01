@@ -60,15 +60,6 @@ export default async function TeamsView() {
                 and storytellers committed to creating immersive gaming
                 experiences that push creative and technical boundaries.
               </p>
-
-              {/* <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
-                <button className="px-8 py-3 bg-pink-500 hover:bg-pink-400 text-gray-900 font-bold rounded-md transition duration-300 transform hover:scale-105 hover:shadow-lg">
-                  Meet the Team
-                </button>
-                <button className="px-8 py-3 bg-transparent border-2 border-white hover:bg-white/10 text-white font-semibold rounded-md transition duration-300 transform hover:scale-105">
-                  View Our Projects
-                </button>
-              </div> */}
             </div>
 
             <div className="absolute bottom-16">
@@ -102,21 +93,6 @@ export default async function TeamsView() {
       <section className="py-20 px-4 sm:px-8 md:px-16 lg:px-24 relative bg-gradient-to-b from-black via-black to-pink-900/10 overflow-hidden">
         {/* Enhanced animated background effects */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* Animated gradient orbs */}
-          <div className="absolute w-[600px] h-[600px] -left-48 top-1/4 rounded-full bg-gradient-to-tr from-pink-500/10 via-purple-500/15 to-pink-500/10 blur-3xl animate-float-slow opacity-30 mix-blend-screen"></div>
-          <div
-            className="absolute w-[500px] h-[500px] -right-32 bottom-1/4 rounded-full bg-gradient-to-bl from-pink-500/10 via-purple-500/15 to-pink-500/10 blur-3xl animate-float opacity-30 mix-blend-screen"
-            style={{ animationDelay: "3s" }}
-          ></div>
-
-          {/* Enhanced grid pattern with glow */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,rgba(236,72,153,0.075)_1px,transparent_0)] bg-[size:40px_40px] opacity-50"></div>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_2px_2px,rgba(236,72,153,0.05)_1px,transparent_0)] bg-[size:80px_80px] opacity-30 animate-pulse-slow"></div>
-
-          {/* Dynamic light effects */}
-          <div className="absolute -inset-[100%] bg-gradient-to-r from-transparent via-pink-500/10 to-transparent rotate-45 animate-[shine_12s_ease-in-out_infinite]"></div>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-pink-500/5 to-purple-500/5 animate-pulse-slow mix-blend-overlay"></div>
-
           {/* Particle effect overlay */}
           <div
             className="absolute inset-0"
