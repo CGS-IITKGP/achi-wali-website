@@ -94,11 +94,11 @@ export default async function Blog() {
                 </div>
                 <div className="text-sm text-gray-500">Articles</div>
               </div>
-              <div className="w-px h-8 bg-gray-700"></div>
+              {/* <div className="w-px h-8 bg-gray-700"></div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-pink-400">1k+</div>
                 <div className="text-sm text-gray-500">Readers</div>
-              </div>
+              </div> */}
               <div className="w-px h-8 bg-gray-700"></div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-pink-400">
