@@ -5,7 +5,8 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { motion, Variants } from "framer-motion";
 import { righteousFont, robotoFont } from "../../fonts";
-import { ExternalLink, Github } from "lucide-react";
+import { ExternalLink, FlaskConical, Github } from "lucide-react";
+import { Image as GraphicsIcon } from "lucide-react";
 // import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import { FiMousePointer } from "react-icons/fi";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
@@ -105,6 +106,15 @@ export default function ProjectsClient({
   };
   const currentProject = featuredProjects[currentIndex];
 
+  const getIconByType = (type: "BLOG" | "GAME" | "GRAPHICS" | "RND") => {
+    if (type === "GRAPHICS") {
+      return <GraphicsIcon className="w-6 h-6" />;
+    } else if (type === "RND") {
+      return <FlaskConical className="w-6 h-6" />;
+    } else {
+      return null;
+    }
+  };
   return (
     <>
       <div
@@ -399,7 +409,13 @@ export default function ProjectsClient({
                     className="object-fill rounded-3xl"
                   />
 
-                  <div className="absolute inset-0 flex flex-col justify-end rounded-3xl bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4">
+                  <div className="absolute inset-0 top-2 flex flex-col justify-end rounded-3xl bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4">
+                    <div className="absolute top-2 xs:top-3 left-2 xs:left-3 flex items-center space-x-1.5 xs:space-x-2 bg-pink-500/80 rounded-full px-1.5 xs:px-2 py-0.5 xs:py-1">
+                      {getIconByType(proj.portfolio)}
+                      <span className="text-white text-[10px] xs:text-xs font-medium">
+                        {proj.portfolio}
+                      </span>
+                    </div>
                     <h3
                       className={`text-xl sm:text-2xl font-bold text-white ${righteousFont.className}`}
                     >
