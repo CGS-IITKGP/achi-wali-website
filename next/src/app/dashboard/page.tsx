@@ -996,7 +996,7 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="flex flex-nowrap gap-4">
+            <div className="flex flex-wrap gap-4">
               {assets.map((asset) => (
                 <div
                   key={asset._id}
