@@ -249,10 +249,6 @@ const signUpVerify: ServiceSignature<
         passwordHash: request.passwordHash,
         roles: [
             EUserRole.GUEST,
-            // TODO: REMOVE THIS.
-            // NOTE: Until we have an admin panel,
-            // let all users be a member.
-            EUserRole.MEMBER
         ],
         designation: EUserDesignation.NONE
     });

@@ -111,7 +111,7 @@ const getHighlight: ServiceSignature<
     const featuredBlogsId: Types.ObjectId[] = [];
     const featuredProjectsId: Types.ObjectId[] = [];
 
-    featuredHighlighted.map(content => {
+    featuredHighlighted.forEach(content => {
         content.contentType === EFeaturedType.BLOG
             ? featuredBlogsId.push(content.contentId)
             : featuredProjectsId.push(content.contentId);

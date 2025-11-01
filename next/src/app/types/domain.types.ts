@@ -1,8 +1,6 @@
 export enum EUserRole {
     GUEST = "GUEST",
     MEMBER = "MEMBER",
-    EXECUTIVE = "EXECUTIVE",
-    HEAD = "HEAD",
     ADMIN = "ADMIN",
     ROOT = "ROOT",
 }
@@ -153,3 +151,22 @@ export type IFeaturedContentAsList = {
 
 export type IContentAsList = Omit<IFeaturedContentAsList, "isHighlight">;
 
+export type ITeamsAsList = {
+    _id: string;
+    name: string;
+}
+
+export type IPaginatedUsers = {
+    users: {
+        _id: string;
+        name: string;
+        email: string;
+        roles: EUserRole[];
+        designation: EUserDesignation;
+        teamId: string | null;
+    }[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}

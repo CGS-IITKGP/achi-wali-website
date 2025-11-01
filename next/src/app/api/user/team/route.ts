@@ -5,10 +5,10 @@ import userValidator from '@/lib/validators/user.validator';
 import userService from '@/lib/services/user.service';
 
 const PATCH = createServiceOnlyHandler({
-    validationSchema: userValidator.updateAssignment,
+    validationSchema: userValidator.updateTeam,
     requireAuth: true,
     options: {
-        service: userService.updateAssignment,
+        service: userService.updateTeam,
     }
 });
 

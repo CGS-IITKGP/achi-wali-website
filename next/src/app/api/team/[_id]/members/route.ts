@@ -20,7 +20,7 @@ const PATCH = createServiceOnlyHandler({
     },
     requireAuth: true,
     options: {
-        service: teamServices.addMembers,
+        service: teamServices.editMembers,
     }
 });
 

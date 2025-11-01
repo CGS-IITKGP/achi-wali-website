@@ -1,3 +1,5 @@
+import { EUserRole } from "../types/domain.types";
+
 const prettyDate = (input: string | Date): string => {
     const date = new Date(input);
     if (isNaN(date.getTime())) return 'Invalid date';
@@ -21,4 +23,23 @@ const prettySafeImage = (key: string | null): string => {
     return key ? "https://res.cloudinary.com/dexgzhyzp/image/upload/" + key : "/default-fallback-image.png"
 }
 
-export { prettyDate, prettyShortName, prettyDescription, prettySafeImage };
+const prettyRolePriority = [
+    EUserRole.ROOT,
+    EUserRole.ADMIN,
+    EUserRole.MEMBER,
+    EUserRole.GUEST
+];
+
+const prettyHighestRole = (roles: EUserRole[]): EUserRole => {
+    return roles.sort(
+        (a, b) => prettyRolePriority.indexOf(a) - prettyRolePriority.indexOf(b)
+    )[0];
+};
+
+export {
+    prettyDate,
+    prettyShortName,
+    prettyDescription,
+    prettySafeImage,
+    prettyHighestRole
+};

@@ -8,12 +8,14 @@ const GET = createServiceOnlyHandler({
     validationSchema: userValidator.get,
     dataUnifier: (req) => {
         const { searchParams } = new URL(req.url);
-        const _id = searchParams.get('_id');
         const target = searchParams.get('target');
+        const page = searchParams.get('page');
+        const limit = searchParams.get('limit');
 
         return {
-            _id,
-            target
+            target: target ?? "all",
+            page,
+            limit
         }
     },
     requireAuth: true,

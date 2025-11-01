@@ -4,10 +4,7 @@ import { APIControl } from "../types/api.types";
 
 const teamValidator = {
     get: z.object({
-        target: z.enum([
-            APIControl.Team.Get.Target.ONE,
-            APIControl.Team.Get.Target.ALL,
-        ]),
+        target: z.enum(APIControl.Team.Get.Target),
         _id: allIbDField._id.optional(),
     }).refine((data) => {
         if (data.target === APIControl.Team.Get.Target.ONE && !data._id) {

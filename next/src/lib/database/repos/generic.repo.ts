@@ -7,6 +7,7 @@ import {
 } from "mongoose";
 import AppError from "@/lib/utils/error";
 import connectToDatabase from "@/lib/database/db";
+import { PaginatedResult, PaginationOptions } from "@/lib/types/index.types";
 
 class GenericRepository<FullT, CreateT, UpdateT> {
     // TODO: Fix this linting issue.
@@ -122,6 +123,47 @@ class GenericRepository<FullT, CreateT, UpdateT> {
         } catch (error) {
             throw new AppError("Failed to find all documents.", {
                 filter,
+                error,
+            });
+        }
+    }
+
+    async findAllPaginated(
+        filter: FilterQuery<FullT> = {},
+        pagination: PaginationOptions = {},
+        session?: ClientSession
+    ): Promise<PaginatedResult<FullT>> {
+        await this.ensureDbConnection();
+
+        const page = Math.max(1, pagination.page || 1);
+        const limit = Math.max(1, pagination.limit || 20);
+        const skip = (page - 1) * limit;
+        const sort = pagination.sort || { createdAt: -1 };
+
+        try {
+            const [data, total] = await Promise.all([
+                this.model
+                    .find(filter)
+                    .sort(sort)
+                    .skip(skip)
+                    .limit(limit)
+                    .session(session || null)
+                    .lean<FullT[]>()
+                    .exec(),
+                this.model.countDocuments(filter).session(session || null)
+            ]);
+
+            return {
+                data,
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            };
+        } catch (error) {
+            throw new AppError("Failed to find paginated documents.", {
+                filter,
+                pagination,
                 error,
             });
         }
