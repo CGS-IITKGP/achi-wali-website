@@ -61,6 +61,7 @@ export type ServiceConfig<SDIn, SDOut, ObD, RequireAuth extends boolean> = {
     onSuccess?: (sDOut: SDOut) => {
         responseData: ObD;
         cookies?: ISetCookie[];
+        redirectUrl?: string;
     };
     controller?: never;
 };

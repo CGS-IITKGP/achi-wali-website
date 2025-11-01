@@ -31,7 +31,7 @@ export interface IUser {
     _id: Types.ObjectId;
     name: string;
     email: string;
-    passwordHash: string;
+    passwordHash: string | null;
     profileImgMediaKey: string | null;
     phoneNumber: string | null;
     links: {

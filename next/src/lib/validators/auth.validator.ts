@@ -8,10 +8,14 @@ const authValidator = {
         email: allIbDField.email,
         password: allIbDField.password,
     }),
+    googleOAuth: z.object({
+        code: allIbDField.longString,
+        scope: allIbDField.longString,
+    }),
     signOut: z.object({}),
     signUp: z.object({
         target: z.enum(APIControl.Auth.SignUp.Target),
-        name: z.string().optional(),
+        name: allIbDField.shortString.optional(),
         email: allIbDField.email,
         password: allIbDField.password.optional(),
         otp: allIbDField.otp.optional(),

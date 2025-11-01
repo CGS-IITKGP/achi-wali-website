@@ -19,6 +19,8 @@ export enum ESECs {
     INVALID_OTP,
     UNAUTHORIZED,
 
+    GOOGLE_OAUTH_FAILED,
+
     TOO_MANY_REQUESTS,
     FORBIDDEN,
 
@@ -46,6 +48,11 @@ export namespace SDIn {
         export type SignIn = {
             email: string,
             password: string,
+        }
+
+        export type GoogleOAuth = {
+            code: string;
+            scope: string;
         }
 
         export type SignOut = EmptyObject;
@@ -303,6 +310,10 @@ export namespace SDOut {
         }
 
         export type SignIn = {
+            token: string;
+        }
+
+        export type GoogleOAuth = {
             token: string;
         }
 

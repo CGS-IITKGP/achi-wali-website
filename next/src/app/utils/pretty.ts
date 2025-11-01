@@ -20,8 +20,10 @@ const prettyDescription = (text: string, max = 60): string => {
 }
 
 const prettySafeImage = (key: string | null): string => {
-    return key ? "https://res.cloudinary.com/dexgzhyzp/image/upload/" + key : "/default-fallback-image.png"
-}
+    if (!key) return "/default-fallback-image.png";
+    const isUrl = /^https?:\/\//i.test(key);
+    return isUrl ? key : `https://res.cloudinary.com/dexgzhyzp/image/upload/${key}`;
+};
 
 const prettyRolePriority = [
     EUserRole.ROOT,

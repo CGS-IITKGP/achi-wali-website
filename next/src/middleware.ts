@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
     if ((!isMember && (isDashboardPage || isAdminPage)) ||
         (!isAdmin && isAdminPage)
     ) {
-        return new NextResponse("Forbidden", { status: 403 });
+        return NextResponse.redirect(new URL("/forbidden", request.url));
     }
 
     return NextResponse.next();
