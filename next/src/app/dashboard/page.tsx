@@ -618,6 +618,21 @@ export default function Dashboard() {
     }
   };
 
+  const handleAssetDelete = async (id: string) => {
+    const apiResponse = await api("DELETE", `/media/${id}`);
+
+    console.log(apiResponse);
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error while deleting asset");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      fetchAssets();
+      toast.success("Removed asset.");
+    }
+  };
+
   const copyAssetKey = async (assetKey: string) => {
     try {
       await navigator.clipboard.writeText(assetKey);
@@ -952,25 +967,47 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="flex flex-nowrap gap-4">
               {assets.map((asset) => (
                 <div
                   key={asset._id}
-                  onClick={() => copyAssetKey(asset.key)}
-                  className="glass rounded-xl p-4 hover:scale-105 transition-all duration-300 group flex flex-col items-center justify-between cursor-pointer" // Added cursor-pointer for visual feedback
+                  className="glass rounded-xl p-4 hover:scale-105 transition-all duration-300 group flex flex-col items-center justify-between relative" // Added relative for absolute positioning of button
                 >
-                  <div className="w-40 h-40 rounded-lg mb-3 flex items-center justify-center overflow-hidden bg-white/5">
-                    <img
-                      src={asset.url}
-                      alt={asset.key.substring(asset.key.lastIndexOf("/") + 1)}
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
-                  <p
-                    className={`text-white text-sm text-center truncate w-full ${paragraph_font.className}`}
+                  <button
+                    className="absolute top-2 right-2 p-1 hover:bg-white/10 rounded-lg transition-colors z-10" // z-10 ensures it's clickable over the image div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAssetDelete(asset._id);
+                    }}
                   >
-                    {asset.key.substring(asset.key.lastIndexOf("/") + 1)}
-                  </p>
+                    <svg
+                      className="w-4 h-4 text-gray-400 hover:text-red-400"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                    </svg>
+                  </button>
+
+                  <div
+                    onClick={() => copyAssetKey(asset.key)}
+                    className="flex flex-col items-center w-full cursor-pointer"
+                  >
+                    <div className="w-40 h-40 rounded-lg mb-3 flex items-center justify-center overflow-hidden bg-white/5">
+                      <img
+                        src={asset.url}
+                        alt={asset.key.substring(
+                          asset.key.lastIndexOf("/") + 1
+                        )}
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                    <p
+                      className={`text-white text-sm text-center truncate w-full ${paragraph_font.className}`}
+                    >
+                      {asset.key.substring(asset.key.lastIndexOf("/") + 1)}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
