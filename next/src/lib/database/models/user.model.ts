@@ -29,7 +29,7 @@ const UserSchema = new Schema<IUser>({
         trim: true,
     },
     links: [{
-        label: {
+        text: {
             type: Schema.Types.String,
             required: true,
             trim: true,

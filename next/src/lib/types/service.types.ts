@@ -265,7 +265,7 @@ export namespace SDIn {
             name?: string,
             phoneNumber?: string,
             links?: {
-                label: string,
+                text: string,
                 url: string,
             }[],
         };
@@ -296,7 +296,7 @@ export namespace SDOut {
             profileImgMediaKey: string | null;
             phoneNumber: string | null;
             links: {
-                label: string;
+                text: string;
                 url: string;
             }[];
             team: {
@@ -345,7 +345,7 @@ export namespace SDOut {
                 _id: string;
                 name: string;
                 links: {
-                    label: string;
+                    text: string;
                     url: string;
                 }[];
                 profileImgMediaKey: string | null;

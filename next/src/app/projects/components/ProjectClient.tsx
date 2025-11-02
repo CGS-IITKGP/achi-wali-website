@@ -380,7 +380,7 @@ export default function ProjectsClient({
         </div>
 
         <div className="grid lg:p-2 md:p-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-14">
-          {projects.map((proj, idx) => (
+          {[...projects].reverse().map((proj, idx) => (
             <motion.div
               key={idx}
               initial={{ opacity: 0, y: 30, scale: 0.95 }}

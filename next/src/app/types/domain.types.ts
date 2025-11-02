@@ -21,7 +21,7 @@ export interface IUser {
     profileImgMediaKey: string | null;
     phoneNumber: string | null;
     links: {
-        label: string;
+        text: string;
         url: string;
     }[];
     team: {
@@ -125,7 +125,7 @@ export type ITeamExportable = {
         _id: string;
         name: string;
         links: {
-            label: string;
+            text: string;
             url: string;
         }[];
         profileImgMediaKey: string | null;
