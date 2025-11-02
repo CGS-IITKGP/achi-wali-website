@@ -120,6 +120,10 @@ const remove: ServiceSignature<
         }
     }
 
+    await cloudinary.uploader.destroy(media.key, {
+        invalidate: true,
+    });
+
     await mediaRepository.removeById(data._id);
 
     return {

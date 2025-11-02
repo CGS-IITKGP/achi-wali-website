@@ -19,6 +19,8 @@ export enum ESECs {
     INVALID_OTP,
     UNAUTHORIZED,
 
+    GOOGLE_OAUTH_FAILED,
+
     TOO_MANY_REQUESTS,
     FORBIDDEN,
 
@@ -46,6 +48,11 @@ export namespace SDIn {
         export type SignIn = {
             email: string,
             password: string,
+        }
+
+        export type GoogleOAuth = {
+            code: string;
+            scope: string;
         }
 
         export type SignOut = EmptyObject;
@@ -88,7 +95,9 @@ export namespace SDIn {
                 target: APIControl.Team.Get.Target.ONE,
                 _id: Types.ObjectId
             }) | ({
-                target: APIControl.Team.Get.Target.ALL
+                target:
+                | APIControl.Team.Get.Target.ALL
+                | APIControl.Team.Get.Target.ALL_AS_LIST;
             });
 
         export type Create = {
@@ -136,6 +145,7 @@ export namespace SDIn {
                 text: string;
                 url: string;
             }[];
+            coverImgMediaKey: string | null;
         };
 
         export type Update = {
@@ -178,6 +188,7 @@ export namespace SDIn {
             slug: string;
             content: string;
             tags: string[];
+            coverImgMediaKey: string | null;
         };
 
         export type Update = {
@@ -239,29 +250,29 @@ export namespace SDIn {
     export namespace User {
         export type Get =
             | ({
-                target: APIControl.User.Get.Target.RESTRICTED
-            } & GetRestricted)
+                target: APIControl.User.Get.Target.ALL;
+            } & GetAll)
             | ({
-                target: APIControl.User.Get.Target.UNRESTRICTED
-            } & GetUnrestricted)
-            | ({
-                target: APIControl.User.Get.Target.ALL
-            } & GetAll);
+                target: APIControl.User.Get.Target.SUMMARY,
+            });
 
-        export type GetRestricted = {
-            _id: Types.ObjectId,
+        export type GetAll = {
+            page: number;
+            limit: number;
         }
-
-        export type GetUnrestricted = GetRestricted;
-        export type GetAll = EmptyObject;
 
         export type Update = {
             name?: string,
             phoneNumber?: string,
             links?: {
-                label: string,
+                text: string,
                 url: string,
             }[],
+        };
+
+        export type UpdateTeam = {
+            _id: Types.ObjectId;
+            teamId: Types.ObjectId | null;
         };
 
         export type UpdateAssignment = {
@@ -285,7 +296,7 @@ export namespace SDOut {
             profileImgMediaKey: string | null;
             phoneNumber: string | null;
             links: {
-                label: string;
+                text: string;
                 url: string;
             }[];
             team: {
@@ -293,11 +304,16 @@ export namespace SDOut {
                 name: string;
             };
             roles: EUserRole[];
+            designation: string;
             createdAt: Date;
             updatedAt: Date;
         }
 
         export type SignIn = {
+            token: string;
+        }
+
+        export type GoogleOAuth = {
             token: string;
         }
 
@@ -319,7 +335,7 @@ export namespace SDOut {
     }
 
     export namespace Team {
-        export type Get = GetOne | GetAll;
+        export type Get = GetOne | GetAll | GetAsList;
 
         export type GetOne = {
             _id: string;
@@ -329,7 +345,7 @@ export namespace SDOut {
                 _id: string;
                 name: string;
                 links: {
-                    label: string;
+                    text: string;
                     url: string;
                 }[];
                 profileImgMediaKey: string | null;
@@ -340,6 +356,11 @@ export namespace SDOut {
         }
 
         export type GetAll = GetOne[];
+
+        export type GetAsList = {
+            _id: string;
+            name: string;
+        }[];
 
         export type Create = EmptyObject;
         export type Update = EmptyObject;
@@ -528,35 +549,23 @@ export namespace SDOut {
     export namespace User {
         export type Get = object;
 
-        export type GetRestricted = {
-            _id: string;
-            name: string;
-            email: string;
-            profileImgMediaKey: string | null;
-            roles: EUserRole[];
-            teamId: string | null;
-            links: {
-                label: string;
-                url: string;
-            }[];
-            createdAt: Date;
-        }
-
-        export type GetUnrestricted = GetRestricted & {
-            phoneNumber: string | null;
-            updatedAt: Date;
-        }
-
         export type GetAll = {
-            _id: string;
-            name: string;
-            email: string;
-            profileImgMediaKey: string | null;
-            roles: EUserRole[];
-            teamId: string | null;
-        }[];
+            users: {
+                _id: string;
+                name: string;
+                email: string;
+                roles: EUserRole[];
+                designation: string;
+                teamId: string | null;
+            }[];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
 
         export type Update = EmptyObject;
+        export type UpdateTeam = EmptyObject;
         export type UpdateAssignment = EmptyObject;
         export type Remove = EmptyObject;
     }

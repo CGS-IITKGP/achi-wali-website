@@ -17,7 +17,7 @@ const UserSchema = new Schema<IUser>({
     },
     passwordHash: {
         type: Schema.Types.String,
-        required: true,
+        default: null,
     },
     profileImgMediaKey: {
         type: Schema.Types.String,
@@ -29,7 +29,7 @@ const UserSchema = new Schema<IUser>({
         trim: true,
     },
     links: [{
-        label: {
+        text: {
             type: Schema.Types.String,
             required: true,
             trim: true,

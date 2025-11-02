@@ -62,9 +62,22 @@ const get: ServiceSignature<
             })
         };
     }
+    else if (data.target === APIControl.Team.Get.Target.ALL_AS_LIST) {
+        const teams = await teamRepository.findAll({});
+
+        return {
+            success: true,
+            data: teams.map(team => {
+                return {
+                    _id: team._id.toHexString(),
+                    name: team.name,
+                }
+            })
+        }
+    }
 
     throw new AppError(
-        "APIControl.Team.Get is something other than ONE and ALL",
+        "APIControl.Team.Get is something other than ONE, ALL AND ALL_AS_LIST",
         { data }
     );
 };
@@ -231,7 +244,7 @@ const teamServices = {
     get,
     create,
     update,
-    addMembers: editMembers,
+    editMembers,
     remove
 };
 

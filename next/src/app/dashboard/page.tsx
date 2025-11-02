@@ -56,9 +56,11 @@ export default function Dashboard() {
   });
   const [showNewAssetModal, setShowNewAssetModal] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isEditingLinks, setIsEditingLinks] = useState(false);
   const [newPostData, setNewPostData] = useState({
     title: "",
     slug: "",
+    coverImgMediaKey: "",
     content: "",
     tags: "",
   });
@@ -70,8 +72,9 @@ export default function Dashboard() {
   const [newProjectData, setNewProjectData] = useState<{
     name: string;
     portfolio: "GAME" | "GRAPHICS" | "RND";
-    description: string;
     tags: string;
+    coverImgMediaKey: string;
+    description: string;
     links: {
       text: string;
       url: string;
@@ -79,8 +82,9 @@ export default function Dashboard() {
   }>({
     name: "",
     portfolio: "GAME",
-    description: "",
     tags: "",
+    coverImgMediaKey: "",
+    description: "",
     links: [{ text: "", url: "" }],
   });
   const [projectUpdate, setProjectUpdate] = useState<{
@@ -95,6 +99,9 @@ export default function Dashboard() {
     name: "",
     file: null,
   });
+  const [userLinks, setUserLinks] = useState<{ text: string; url: string }[]>(
+    []
+  );
 
   const [blogs, setBlogs] = useState<IBlogOfList[]>([]);
   const [projects, setProjects] = useState<IProject[]>([]);
@@ -260,6 +267,12 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    if (user?.links) {
+      setUserLinks(user.links);
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (activeSection === "home") {
       router.push("/");
     }
@@ -277,10 +290,16 @@ export default function Dashboard() {
       return;
     }
 
+    if (newPostData.coverImgMediaKey.trim().split("/").length !== 3) {
+      toast.error("Invalid media key");
+      return;
+    }
+
     const apiResponse = await api("POST", "/blog", {
       body: {
         title: newPostData.title,
         slug: newPostData.slug,
+        coverImgMediaKey: newPostData.coverImgMediaKey.trim(),
         content: newPostData.content,
         tags: newPostData.tags
           .split(",")
@@ -296,7 +315,13 @@ export default function Dashboard() {
     } else {
       fetchBlogs();
       setShowNewPostModal(false);
-      setNewPostData({ title: "", slug: "", content: "", tags: "" });
+      setNewPostData({
+        title: "",
+        slug: "",
+        coverImgMediaKey: "",
+        content: "",
+        tags: "",
+      });
       toast.success("Added a new blog.");
     }
   };
@@ -342,7 +367,13 @@ export default function Dashboard() {
     } else {
       fetchBlogs();
       setShowNewPostModal(false);
-      setNewPostData({ title: "", slug: "", content: "", tags: "" });
+      setNewPostData({
+        title: "",
+        slug: "",
+        coverImgMediaKey: "",
+        content: "",
+        tags: "",
+      });
       toast.success("Removed blog.");
     }
   };
@@ -370,6 +401,11 @@ export default function Dashboard() {
   const handleNewProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (newProjectData.coverImgMediaKey.trim().split("/").length !== 3) {
+      toast.error("Invalid media key");
+      return;
+    }
+
     const apiResponse = await api("POST", "/project", {
       body: {
         title: newProjectData.name,
@@ -379,6 +415,7 @@ export default function Dashboard() {
           .split(",")
           .map((tag) => tag.trim())
           .filter((tag) => tag.length > 0),
+        coverImgMediaKey: newProjectData.coverImgMediaKey.trim(),
         links: newProjectData.links.filter(
           (link) => link.text.trim() !== "" && link.url.trim() !== ""
         ),
@@ -395,8 +432,9 @@ export default function Dashboard() {
       setNewProjectData({
         name: "",
         portfolio: "GAME",
-        description: "",
         tags: "",
+        coverImgMediaKey: "",
+        description: "",
         links: [{ text: "", url: "" }],
       });
       toast.success("Added a new project.");
@@ -462,8 +500,9 @@ export default function Dashboard() {
       setNewProjectData({
         name: "",
         portfolio: "GAME",
-        description: "",
         tags: "",
+        coverImgMediaKey: "",
+        description: "",
         links: [{ text: "", url: "" }],
       });
       toast.success("Removed project.");
@@ -523,6 +562,48 @@ export default function Dashboard() {
       ...prev,
       links: prev.links.filter((_, i) => i !== index),
     }));
+  };
+
+  const handleUserLinkChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    const newLinks = userLinks.map((link, i) => {
+      if (i === index) {
+        return { ...link, [name]: value };
+      }
+      return link;
+    });
+    setUserLinks(newLinks);
+  };
+
+  const addUserLinkField = () => {
+    setUserLinks((prev) => [...prev, { text: "", url: "" }]);
+  };
+
+  const removeUserLinkField = (index: number) => {
+    setUserLinks((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateChanges = async () => {
+    const apiResponse = await api("PATCH", "/user", {
+      body: {
+        links: userLinks.filter(
+          (link) => link.text.trim() !== "" && link.url.trim() !== ""
+        ),
+      },
+    });
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      refreshUser();
+      toast.success("Your links have been updated.");
+    }
+    setIsEditingLinks(false);
   };
 
   const handleAssetFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -615,6 +696,21 @@ export default function Dashboard() {
         file: null,
       });
       toast.success("Added new asset.");
+    }
+  };
+
+  const handleAssetDelete = async (id: string) => {
+    const apiResponse = await api("DELETE", `/media/${id}`);
+
+    console.log(apiResponse);
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error while deleting asset");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      fetchAssets();
+      toast.success("Removed asset.");
     }
   };
 
@@ -952,25 +1048,47 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="flex flex-wrap gap-4">
               {assets.map((asset) => (
                 <div
                   key={asset._id}
-                  onClick={() => copyAssetKey(asset.key)}
-                  className="glass rounded-xl p-4 hover:scale-105 transition-all duration-300 group flex flex-col items-center justify-between cursor-pointer" // Added cursor-pointer for visual feedback
+                  className="glass rounded-xl p-4 hover:scale-105 transition-all duration-300 group flex flex-col items-center justify-between relative" // Added relative for absolute positioning of button
                 >
-                  <div className="w-40 h-40 rounded-lg mb-3 flex items-center justify-center overflow-hidden bg-white/5">
-                    <img
-                      src={asset.url}
-                      alt={asset.key.substring(asset.key.lastIndexOf("/") + 1)}
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
-                  <p
-                    className={`text-white text-sm text-center truncate w-full ${paragraph_font.className}`}
+                  <button
+                    className="absolute top-2 right-2 p-1 hover:bg-white/10 rounded-lg transition-colors z-10" // z-10 ensures it's clickable over the image div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAssetDelete(asset._id);
+                    }}
                   >
-                    {asset.key.substring(asset.key.lastIndexOf("/") + 1)}
-                  </p>
+                    <svg
+                      className="w-4 h-4 text-gray-400 hover:text-red-400"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" />
+                    </svg>
+                  </button>
+
+                  <div
+                    onClick={() => copyAssetKey(asset.key)}
+                    className="flex flex-col items-center w-full cursor-pointer"
+                  >
+                    <div className="w-40 h-40 rounded-lg mb-3 flex items-center justify-center overflow-hidden bg-white/5">
+                      <img
+                        src={asset.url}
+                        alt={asset.key.substring(
+                          asset.key.lastIndexOf("/") + 1
+                        )}
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                    <p
+                      className={`text-white text-sm text-center truncate w-full ${paragraph_font.className}`}
+                    >
+                      {asset.key.substring(asset.key.lastIndexOf("/") + 1)}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -994,32 +1112,159 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   <div>
                     <label
-                      className={`block text-gray-400 text-sm mb-2 ${paragraph_font.className}`}
+                      className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
                     >
-                      Display Name
+                      Name
                     </label>
                     <input
                       type="text"
-                      contentEditable={false}
-                      value={user?.name || "Loading"}
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-pink-400 focus:outline-none transition-colors"
+                      value={user?.name ?? ""}
+                      disabled
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 placeholder-gray-500 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    {/* <label
-                      className={`block text-gray-400 text-sm mb-2 ${paragraph_font.className}`}
+                    <label
+                      className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
                     >
-                      Bio
+                      Email
                     </label>
-                    <textarea
-                      defaultValue="Game developer passionate about creating immersive experiences."
-                      className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:border-pink-400 focus:outline-none transition-colors h-24 resize-none"
-                    /> */}
+                    <input
+                      type="email"
+                      value={user?.email ?? ""}
+                      disabled
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 placeholder-gray-500 cursor-not-allowed"
+                    />
                   </div>
                 </div>
               </div>
 
               <div className="glass rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3
+                    className={`text-lg text-white ${heading_font.className}`}
+                  >
+                    Personal Links
+                  </h3>
+                  <div>
+                    {isEditingLinks ? (
+                      <button
+                        onClick={addUserLinkField}
+                        className="flex items-center space-x-2 px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span className="text-sm">Add Link</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setIsEditingLinks(true)}
+                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                          <path
+                            fillRule="evenodd"
+                            d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {userLinks.map((link, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2"
+                    >
+                      <input
+                        type="text"
+                        name="text"
+                        value={link.text}
+                        onChange={(e) => handleUserLinkChange(index, e)}
+                        placeholder="Link Text (e.g. GitHub)"
+                        disabled={!isEditingLinks}
+                        className={
+                          isEditingLinks
+                            ? "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-pink-400"
+                            : "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg placeholder-gray-500 focus:outline-none focus:border-pink-400 text-gray-500 cursor-not-allowed"
+                        }
+                      />
+                      <input
+                        type="url"
+                        name="url"
+                        value={link.url}
+                        onChange={(e) => handleUserLinkChange(index, e)}
+                        placeholder="URL"
+                        disabled={!isEditingLinks}
+                        className={
+                          isEditingLinks
+                            ? "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-pink-400"
+                            : "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg placeholder-gray-500 focus:outline-none focus:border-pink-400 text-gray-500 cursor-not-allowed"
+                        }
+                      />
+                      {isEditingLinks && (
+                        <button
+                          onClick={() => removeUserLinkField(index)}
+                          className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {isEditingLinks && (
+                  <div className="flex justify-end space-x-4 pt-4 mt-4 border-t border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingLinks(false);
+                        // Optionally reset changes
+                        if (user?.links) setUserLinks(user.links);
+                      }}
+                      className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={updateChanges}
+                      className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-all duration-200"
+                    >
+                      Update Changes
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* <div className="glass rounded-xl p-6">
                 <h3
                   className={`text-lg text-white mb-4 ${heading_font.className}`}
                 >
@@ -1051,7 +1296,7 @@ export default function Dashboard() {
                     </button>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               <div className="glass rounded-xl p-6">
                 <h3
@@ -1060,7 +1305,7 @@ export default function Dashboard() {
                   Danger Zone
                 </h3>
                 <div className="space-y-4">
-                  <button className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors">
+                  <button className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors hover:cursor-not-allowed">
                     Delete Account
                   </button>
                 </div>
@@ -1293,6 +1538,24 @@ export default function Dashboard() {
                 />
               </div>
 
+              {/* Cover Image Media Key */}
+              <div>
+                <label
+                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
+                >
+                  Cover Image Media Key
+                </label>
+                <input
+                  type="text"
+                  name="coverImgMediaKey"
+                  value={newPostData.coverImgMediaKey}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                  placeholder="Enter cover image media key..."
+                  required
+                />
+              </div>
+
               {/* Tags Field */}
               <div>
                 <label
@@ -1348,12 +1611,6 @@ export default function Dashboard() {
                   className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
-                  className="px-6 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg transition-all duration-200"
-                >
-                  Save Draft
                 </button>
                 <button
                   type="submit"
@@ -1559,6 +1816,24 @@ export default function Dashboard() {
                 </div>
               </div>
 
+              {/* Cover Image Media Key */}
+              <div>
+                <label
+                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
+                >
+                  Cover Image Media Key
+                </label>
+                <input
+                  type="text"
+                  name="coverImgMediaKey"
+                  value={newProjectData.coverImgMediaKey}
+                  onChange={handleProjectInputChange}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                  placeholder="Enter cover image media key..."
+                  required
+                />
+              </div>
+
               {/* Description Field (Unchanged) */}
               <div>
                 <label
@@ -1597,7 +1872,8 @@ export default function Dashboard() {
                   >
                     Project Links{" "}
                     <span className="text-neutral-500">
-                      (use live-demo and github for advanced cards.)
+                      (use live-demo and github for advanced cards. Mind the
+                      spellings.)
                     </span>
                   </label>
                   <button
@@ -1654,7 +1930,7 @@ export default function Dashboard() {
                             fill="currentColor"
                             viewBox="0 0 24 24"
                           >
-                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" />
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
                           </svg>
                         </button>
                       )}
@@ -1671,12 +1947,6 @@ export default function Dashboard() {
                   className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
-                  className="px-6 py-2 bg-white/10 text-white hover:bg-white/20 rounded-lg transition-all duration-200"
-                >
-                  Save Draft
                 </button>
                 <button
                   type="submit"
@@ -1724,15 +1994,14 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              {/* Modal Content */}
+              {/* Modal Content - Single Field */}
               <div className="p-6 space-y-6">
                 {/* Cover Image Media Key Field */}
                 <div>
                   <label
                     className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
                   >
-                    Project Cover Image Media Key (e.g.,
-                    user-assets/user-id/project-cover)
+                    Cover Image Media Key (e.g., user-assets/user-id/asset-name)
                   </label>
                   <input
                     type="text"

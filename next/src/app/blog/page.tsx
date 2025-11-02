@@ -7,7 +7,6 @@ import Navbar from "../components/navbar";
 import Footer from "../footer";
 import BlogList from "./components/BlogList";
 import { Righteous, Roboto } from "next/font/google";
-// import CGSLogo from "../assets/logo.png";
 import { IBlogOfList } from "../types/domain.types";
 import api from "../axiosApi";
 import { prettyDate, prettySafeImage, prettyShortName } from "../utils/pretty";
@@ -95,11 +94,11 @@ export default async function Blog() {
                 </div>
                 <div className="text-sm text-gray-500">Articles</div>
               </div>
-              <div className="w-px h-8 bg-gray-700"></div>
+              {/* <div className="w-px h-8 bg-gray-700"></div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-pink-400">1k+</div>
                 <div className="text-sm text-gray-500">Readers</div>
-              </div>
+              </div> */}
               <div className="w-px h-8 bg-gray-700"></div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-pink-400">
@@ -163,10 +162,6 @@ export default async function Blog() {
                         <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-pink-400 transition-colors duration-300">
                           {blog.title}
                         </h3>
-
-                        <p className="text-gray-400 leading-relaxed mb-6">
-                          blog.description
-                        </p>
 
                         <div className="flex items-center justify-between text-sm text-gray-500 mb-6">
                           <div className="flex items-center gap-4">

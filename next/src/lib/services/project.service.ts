@@ -106,9 +106,9 @@ const create: ServiceSignature<
         description: data.description,
         tags: data.tags,
         author: session.userId,
-
+        collaborators: [],
         links: data.links,
-        coverImgMediaKey: null,
+        coverImgMediaKey: data.coverImgMediaKey,
         media: [],
     });
 

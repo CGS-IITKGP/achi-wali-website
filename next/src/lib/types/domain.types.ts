@@ -31,11 +31,11 @@ export interface IUser {
     _id: Types.ObjectId;
     name: string;
     email: string;
-    passwordHash: string;
+    passwordHash: string | null;
     profileImgMediaKey: string | null;
     phoneNumber: string | null;
     links: {
-        label: string;
+        text: string;
         url: string;
     }[];
     teamId: Types.ObjectId | null;
@@ -60,10 +60,11 @@ export interface ITeamExportable extends Omit<ITeam, "members"> {
         _id: Types.ObjectId;
         name: string;
         links: {
-            label: string;
+            text: string;
             url: string;
         }[];
         profileImgMediaKey: string | null;
+        designation: EUserDesignation;
     }[];
 }
 

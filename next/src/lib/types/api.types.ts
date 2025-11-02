@@ -16,6 +16,7 @@ export namespace APIControl {
             export enum Target {
                 ONE = "one",
                 ALL = "all",
+                ALL_AS_LIST = "all_as_list",
             }
         }
 
@@ -30,9 +31,8 @@ export namespace APIControl {
     export namespace User {
         export namespace Get {
             export enum Target {
-                RESTRICTED = "restricted",
-                UNRESTRICTED = "unrestricted",
                 ALL = "all",
+                SUMMARY = "summary",
             }
         }
     }

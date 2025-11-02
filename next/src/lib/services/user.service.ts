@@ -9,7 +9,6 @@ import {
     SDIn,
     APIControl,
 } from "@/lib/types/index.types";
-import { Types } from "mongoose";
 import { withSession } from "../database/db";
 import AppError from "../utils/error";
 
@@ -46,12 +45,12 @@ const get: ServiceSignature<
     SDOut.User.Get,
     true
 > = async (data, session) => {
-    if (data.target === APIControl.User.Get.Target.RESTRICTED) {
-        return getRestricted(data, session);
-    }
-
-    if (data.target === APIControl.User.Get.Target.UNRESTRICTED) {
-        return getUnrestricted(data, session);
+    if (!session.userRoles.includes(EUserRole.ADMIN)) {
+        return {
+            success: false,
+            errorCode: ESECs.FORBIDDEN,
+            errorMessage: "Only Admin can view aggregated user data.",
+        };
     }
 
     if (data.target === APIControl.User.Get.Target.ALL) {
@@ -59,80 +58,39 @@ const get: ServiceSignature<
     }
 
     throw new AppError(
-        "APIControl.User.Get is something other than RESTRICTED, UNRESTRICTED, and ALL",
+        "APIControl.User.Get.Target is something other than SUMMARY and ALL",
         { data, session }
     );
-};
-
-const getRestricted: ServiceSignature<
-    SDIn.User.GetRestricted,
-    SDOut.User.GetRestricted,
-    true
-> = async (data) => {
-    const user = await userRepository.findById(new Types.ObjectId(data._id));
-
-    if (!user) {
-        return {
-            success: false,
-            errorCode: ESECs.USER_NOT_FOUND,
-            errorMessage: "User not found.",
-        };
-    }
-
-    return {
-        success: true,
-        data: _userExportLimitedInfo(user),
-    };
-};
-
-const getUnrestricted: ServiceSignature<
-    SDIn.User.GetUnrestricted,
-    SDOut.User.GetUnrestricted,
-    true
-> = async (data, session) => {
-    if (!session.userRoles.includes(EUserRole.ADMIN)) {
-        return {
-            success: false,
-            errorCode: ESECs.FORBIDDEN,
-            errorMessage: "Only admin can see all info about users.",
-        };
-    }
-
-    const user = await userRepository.findById(new Types.ObjectId(data._id));
-
-    if (!user) {
-        return {
-            success: false,
-            errorCode: ESECs.USER_NOT_FOUND,
-            errorMessage: "User not found.",
-        };
-    }
-
-    return {
-        success: true,
-        data: _userExportUnrestrictedInfo(user),
-    };
 };
 
 const getAll: ServiceSignature<
     SDIn.User.GetAll,
     SDOut.User.GetAll,
     true
-> = async (_) => {
-    const users = await userRepository.findAll({});
+> = async (data) => {
+    const paginatedUsers = await userRepository.findAllPaginated({}, {
+        page: data.page,
+        limit: data.limit,
+    });
 
     return {
         success: true,
-        data: users.map((user) => {
-            return {
-                _id: user._id.toHexString(),
-                name: user.name,
-                email: user.email,
-                profileImgMediaKey: user.profileImgMediaKey,
-                roles: user.roles,
-                teamId: user.teamId?.toHexString() ?? null,
-            };
-        }),
+        data: {
+            users: paginatedUsers.data.map((user) => {
+                return {
+                    _id: user._id.toHexString(),
+                    name: user.name,
+                    email: user.email,
+                    roles: user.roles,
+                    designation: user.designation,
+                    teamId: user.teamId?.toHexString() ?? null,
+                };
+            }),
+            total: paginatedUsers.total,
+            page: paginatedUsers.page,
+            limit: paginatedUsers.limit,
+            totalPages: paginatedUsers.totalPages,
+        },
     };
 };
 
@@ -158,6 +116,79 @@ const update: ServiceSignature<
     };
 };
 
+const updateTeam: ServiceSignature<
+    SDIn.User.UpdateTeam,
+    SDOut.User.UpdateTeam,
+    true
+> = async (data, session) => {
+    if (!session.userRoles.includes(EUserRole.ADMIN)) {
+        return {
+            success: false,
+            errorCode: ESECs.FORBIDDEN,
+            errorMessage: "Only Admin can modify user's team.",
+        };
+    }
+
+    const user = await userRepository.findById(data._id);
+    if (!user) {
+        return {
+            success: false,
+            errorCode: ESECs.USER_NOT_FOUND,
+            errorMessage: "User not found.",
+        };
+    }
+
+    // TODO: Wrap all in a database transaction.
+    await withSession(async (_dbSession) => {
+        const updates: Promise<unknown>[] = [];
+
+        if (user.teamId && data.teamId !== null && user.teamId.toString() !== data.teamId.toString()) {
+            updates.push(
+                teamRepository.updateById(
+                    user.teamId,
+                    { $pull: { members: user._id } },
+                    //dbSession
+                )
+            );
+        }
+
+        if (data.teamId) {
+            updates.push(
+                teamRepository.updateById(
+                    data.teamId,
+                    { $addToSet: { members: user._id } },
+                    // dbSession
+                )
+            );
+
+            updates.push(
+                userRepository.updateById(
+                    user._id,
+                    { $set: { teamId: data.teamId } },
+                    // dbSession
+                )
+            );
+        }
+        else {
+            updates.push(
+                userRepository.updateById(
+                    user._id,
+                    { $set: { teamId: null } },
+                    // dbSession
+                )
+            );
+        }
+
+        await Promise.all(updates);
+    });
+
+    return {
+        success: true,
+        data: {},
+    };
+};
+
+
 const updateAssignment: ServiceSignature<
     SDIn.User.UpdateAssignment,
     SDOut.User.UpdateAssignment,
@@ -167,7 +198,7 @@ const updateAssignment: ServiceSignature<
         return {
             success: false,
             errorCode: ESECs.FORBIDDEN,
-            errorMessage: "Only Admin can modify user roles.",
+            errorMessage: "Only Admin can modify user assignment.",
         };
     }
 
@@ -238,7 +269,8 @@ const remove: ServiceSignature<
 const userService = {
     get,
     update,
-    updateRoles: updateAssignment,
+    updateTeam,
+    updateAssignment,
     remove,
 };
 

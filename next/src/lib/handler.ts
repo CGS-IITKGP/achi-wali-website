@@ -45,7 +45,8 @@ function createHandler<
         const defaultOnSuccess = (sData: SDOut) => {
             return {
                 responseData: sData,
-                cookies: []
+                cookies: [],
+                redirectUrl: undefined,
             };
         }
 
@@ -98,12 +99,26 @@ function createHandler<
                     );
                 }
 
-                const { responseData, cookies } = (config.onSuccess ?? defaultOnSuccess)(
+                const {
+                    responseData,
+                    cookies,
+                    redirectUrl
+                } = (config.onSuccess ?? defaultOnSuccess)(
                     serviceResponse.data
                 );
 
                 if (cookies) {
-                    cookies.forEach((cookie) => responseHandler.setCookie(cookie.name, cookie.value, cookie.options));
+                    cookies.forEach((cookie) =>
+                        responseHandler.setCookie(
+                            cookie.name,
+                            cookie.value,
+                            cookie.options
+                        )
+                    );
+                }
+
+                if (redirectUrl) {
+                    responseHandler.setRedirect(redirectUrl);
                 }
 
                 return responseHandler.sendSuccess(
@@ -160,6 +175,7 @@ const serviceErrorCodeHandler = (
         case ESECs.INVALID_JWT:
         case ESECs.INVALID_OTP:
         case ESECs.UNAUTHORIZED:
+        case ESECs.GOOGLE_OAUTH_FAILED:
             return responseHandler.sendFailed(FailedResponseCodeEnum.UNAUTHORIZED, errorMessage);
 
         case ESECs.FORBIDDEN:

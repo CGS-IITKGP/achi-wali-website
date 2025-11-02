@@ -65,7 +65,7 @@ const ContentCard = React.memo<{
   activeIndex: number;
   totalProjects: number;
   onClick: () => void;
- }>(({ content, index, activeIndex, totalProjects, onClick }) => {
+}>(({ content, index, activeIndex, totalProjects, onClick }) => {
   const position = useMemo(() => {
     const angle = ((index - activeIndex) * 360) / totalProjects;
     const radius = 300;

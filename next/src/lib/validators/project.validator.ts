@@ -13,6 +13,7 @@ const projectValidator = {
         description: allIbDField.longString,
         tags: allIbDField.tags,
         links: z.array(allIbDField.link),
+        coverImgMediaKey: allIbDField.mediaKeyNotNullable,
     }),
     update: z.object({
         _id: allIbDField._id,

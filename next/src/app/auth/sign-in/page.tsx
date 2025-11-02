@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Righteous, Roboto } from "next/font/google";
-// import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../../components/navbar";
-// import GlowingCircle from "../assets/glowing-circle.svg";
 import { useAuth } from "@/app/context/authContext";
 import api from "@/app/axiosApi";
 import toast from "react-hot-toast";
@@ -296,6 +295,32 @@ export default function Login() {
                   </span>
                 </button>
               </form>
+
+              <div className="flex items-center my-6">
+                <div className="flex-grow border-t border-white/10"></div>
+                <span
+                  className={`flex-shrink mx-4 text-gray-500 text-sm ${paragraph_font.className}`}
+                >
+                  OR
+                </span>
+                <div className="flex-grow border-t border-white/10"></div>
+              </div>
+
+              <Link
+                href="/api/auth/google"
+                className="w-full py-3 px-6 border border-white/20 text-white font-semibold rounded-xl transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group flex items-center justify-center space-x-3 bg-white/5 hover:bg-white/10"
+              >
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-pink-400/0 via-pink-400/5 to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                <Image
+                  src="/icons/google_logo.svg"
+                  alt="Google Icon"
+                  width={24}
+                  height={24}
+                />
+                <span className={`relative z-10 ${paragraph_font.className}`}>
+                  Sign in with Google
+                </span>
+              </Link>
 
               {/* Sign Up Link */}
               <div className="text-center mt-8">

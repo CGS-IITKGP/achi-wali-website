@@ -3,13 +3,15 @@ export const dynamic = "force-dynamic";
 import createServiceOnlyHandler from '@/lib/handler';
 import teamValidator from '@/lib/validators/team.validator';
 import teamServices from '@/lib/services/team.service';
-import { APIControl } from '@/lib/types/api.types';
 
 const GET = createServiceOnlyHandler({
     validationSchema: teamValidator.get,
-    dataUnifier: (_req, _parsedData) => {
+    dataUnifier: (req, _parsedData) => {
+        const { searchParams } = new URL(req.url);
+        const target = searchParams.get('target');
+
         return {
-            target: APIControl.Team.Get.Target.ALL
+            target
         }
     },
     requireAuth: false,
