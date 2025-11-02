@@ -30,8 +30,8 @@ export interface IUser {
     };
     roles: EUserRole[];
     designation: EUserDesignation;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface IBlog {
@@ -83,8 +83,8 @@ export interface IProject {
     }[];
     coverImgMediaKey: string | null;
     media: string[];
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: string;
+    updatedAt: string;
 }
 
 
@@ -129,10 +129,11 @@ export type ITeamExportable = {
             url: string;
         }[];
         profileImgMediaKey: string | null;
+        designation: string;
     }[];
     coverImageMediaKey: string | null;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export enum EFeaturedType {

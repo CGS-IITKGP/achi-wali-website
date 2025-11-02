@@ -21,7 +21,7 @@ class TeamRepository extends GenericRepository<
         try {
             return await this.model.findOne(filter).populate({
                 path: "authors",
-                select: "name links profileImgMediaKey",
+                select: "name links profileImgMediaKey designation",
             }).session(session || null).lean<ITeamExportable>().exec();
         } catch (error) {
             throw new AppError('Failed to find document.', {
@@ -37,7 +37,7 @@ class TeamRepository extends GenericRepository<
         try {
             return await this.model.find(filter).populate({
                 path: "members",
-                select: "name links profileImgMediaKey",
+                select: "name links profileImgMediaKey designation",
             }).session(session || null).lean<ITeamExportable[]>().exec();
         } catch (error) {
             throw new AppError('Failed to find document.', {
@@ -53,7 +53,7 @@ class TeamRepository extends GenericRepository<
         try {
             return await this.model.find(filter).populate({
                 path: "members",
-                select: "name links profileImgMediaKey",
+                select: "name links profileImgMediaKey designation",
             }).session(session || null).lean<ITeamOfListExportable[]>().exec();
         } catch (error) {
             throw new AppError('Failed to find document.', {

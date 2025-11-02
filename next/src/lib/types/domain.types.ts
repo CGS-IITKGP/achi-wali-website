@@ -64,6 +64,7 @@ export interface ITeamExportable extends Omit<ITeam, "members"> {
             url: string;
         }[];
         profileImgMediaKey: string | null;
+        designation: EUserDesignation;
     }[];
 }
 
