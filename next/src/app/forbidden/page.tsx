@@ -16,7 +16,7 @@ const paragraph_font = Roboto({
 
 export default function ForbiddenPage() {
   const router = useRouter();
-  const { user, refreshUser } = useAuth();
+  const { refreshUser } = useAuth();
 
   const handleSignOut = async () => {
     const apiResponse = await api("POST", "/auth/sign-out");
