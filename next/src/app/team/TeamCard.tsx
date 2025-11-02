@@ -2,6 +2,7 @@
 
 import { Mail, Github, Linkedin } from "lucide-react";
 import { prettySafeImage } from "../utils/pretty";
+import { useState } from "react";
 
 interface TeamMember {
   _id: string;
@@ -20,8 +21,33 @@ interface TeamCardProps {
 }
 
 export default function TeamCard({ member, index }: TeamCardProps) {
-  const isGithub = false;
-  const isLinkedin = false;
+  const [isGithub, setIsGithub] = useState(false);
+  const [isLinkedin, setIsLinkedin] = useState(false);
+  const [isMail, setIsMail] = useState(false);
+  const [githubUrl, setGithubUrl] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [mailUrl, setMailUrl] = useState("");
+  const checkLinks = () => {
+    member.links.forEach((link) => {
+      const lowerText = link.text?.toLowerCase();
+      if (lowerText?.includes("github")) {
+        setIsGithub(true);
+        setGithubUrl(link.url);
+      }
+      if (lowerText?.includes("linkedin")) {
+        setIsLinkedin(true);
+        setLinkedinUrl(link.url);
+      }
+      if (lowerText?.includes("mail") || lowerText?.includes("email")) {
+        setIsMail(true);
+        setMailUrl("mailto:" + link.url);
+      }
+    });
+  };
+
+  useState(() => {
+    checkLinks();
+  });
   return (
     <div
       className="group relative bg-black/30 rounded-2xl p-4 sm:p-5 lg:p-6 border border-pink-500/20 backdrop-blur-md hover:border-pink-500/50 transition-transform duration-700 hover:-translate-y-2 hover:shadow-[0_15px_50px_rgba(236,72,153,0.25)] animate-slide-up will-change-transform perspective-1000 hover:z-10 transform-gpu"
@@ -125,7 +151,7 @@ export default function TeamCard({ member, index }: TeamCardProps) {
         <div className="flex justify-center gap-2 sm:gap-3 lg:gap-4">
           {isLinkedin ? (
             <a
-              href={"#"}
+              href={linkedinUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="relative w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-full bg-white/5 flex items-center justify-center hover:bg-pink-500/90 hover:scale-110 hover:rotate-3 active:scale-95 transition-all duration-300 ease-out group/icon overflow-hidden backdrop-blur-sm"
@@ -137,7 +163,7 @@ export default function TeamCard({ member, index }: TeamCardProps) {
           ) : null}
           {isGithub ? (
             <a
-              href={"#"}
+              href={githubUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="relative w-12 h-12 rounded-full bg-white/5 flex items-center justify-center hover:bg-pink-500/90 hover:scale-110 hover:-rotate-3 transition-all duration-300 ease-out group/icon overflow-hidden backdrop-blur-sm"
@@ -147,14 +173,16 @@ export default function TeamCard({ member, index }: TeamCardProps) {
               <Github className="relative z-10 w-5 h-5 text-gray-400 group-hover/icon:text-white transition-colors duration-300 group-hover/icon:scale-110" />
             </a>
           ) : null}
-          <a
-            href={"#"}
-            className="relative w-12 h-12 rounded-full bg-white/5 flex items-center justify-center hover:bg-pink-500/90 hover:scale-110 hover:rotate-3 transition-all duration-300 ease-out group/icon overflow-hidden backdrop-blur-sm"
-            aria-label={`Email ${member.name}`}
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-pink-500/40 translate-y-full group-hover/icon:translate-y-0 transition-transform duration-300 ease-out"></div>
-            <Mail className="relative z-10 w-5 h-5 text-gray-400 group-hover/icon:text-white transition-colors duration-300 group-hover/icon:scale-110" />
-          </a>
+          {isMail ? (
+            <a
+              href={mailUrl}
+              className="relative w-12 h-12 rounded-full bg-white/5 flex items-center justify-center hover:bg-pink-500/90 hover:scale-110 hover:rotate-3 transition-all duration-300 ease-out group/icon overflow-hidden backdrop-blur-sm"
+              aria-label={`Email ${member.name}`}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-pink-500/40 translate-y-full group-hover/icon:translate-y-0 transition-transform duration-300 ease-out"></div>
+              <Mail className="relative z-10 w-5 h-5 text-gray-400 group-hover/icon:text-white transition-colors duration-300 group-hover/icon:scale-110" />
+            </a>
+          ) : null}
         </div>
       </div>
 
