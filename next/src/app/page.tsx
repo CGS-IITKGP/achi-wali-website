@@ -5,6 +5,7 @@ import { Righteous, Roboto } from "next/font/google";
 import Navbar from "./components/navbar";
 import FeaturedContent from "./featuredprojects";
 import Footer from "./footer";
+import HeroCard from "./components/HeroCard"
 import api from "./axiosApi";
 import { IRecentFeaturedContent } from "./types/domain.types";
 
@@ -192,13 +193,13 @@ export default async function Home() {
                 d="M19 9l-7 7-7-7"
               />
             </svg>
-            <span className="mt-2 text-pink-400 font-semibold text-sm sm:text-base">
+            <span className=" mb-0 mt-6 lg:mt-0 lg:mb-12 text-pink-400 font-semibold text-sm sm:text-base">
               Scroll Down
             </span>
           </span>
         </p>
       </section>
-
+      <HeroCard/>
       <FeaturedContent featured={recentFeatured} />
       {/* <FeaturedProjects2 /> */}
 
