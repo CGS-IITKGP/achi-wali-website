@@ -5,6 +5,7 @@ import {
     generateJWToken,
     validateJWToken,
 } from "@/lib/services/core/jwt.core.service";
+import { OAuth2Client } from "google-auth-library";
 import {
     hashString,
     verifyStringAndHash,
@@ -109,14 +110,18 @@ const signIn: ServiceSignature<
     };
 };
 
+const __googleOAuthClient = new OAuth2Client(
+    getEnvVariable("GOOGLE_OAUTH_CLIENT_ID", true)
+);
+
 const googleOAuth: ServiceSignature<
     SDIn.Auth.GoogleOAuth,
     SDOut.Auth.GoogleOAuth,
     false
 > = async (data) => {
     let userEmail: string = "";
-    let userName: string = "";
-    let userPicture: string = "";
+    let userName: string | undefined = "";
+    let userPicture: string | undefined = "";
 
     try {
         const apiResponse = await axios.post<{
@@ -153,29 +158,41 @@ const googleOAuth: ServiceSignature<
             };
         }
 
-        const decodedIdToken = jwt.decode(apiResponse.data.id_token);
-
-        const { email, name, picture } = decodedIdToken as {
-            email: string;
-            name: string;
-            picture: string;
-        };
-
-        userEmail = email;
-        userName = name;
-        userPicture = picture;
-    } catch (_error) {
-        throw new AppError("Error while processing google oauth request", {
-            code: data.code,
-            scope: data.scope,
+        const ticket = await __googleOAuthClient.verifyIdToken({
+            idToken: apiResponse.data.id_token,
+            audience: getEnvVariable("GOOGLE_OAUTH_CLIENT_ID", true),
         });
+
+        const payload = ticket.getPayload();
+
+        if (!payload || !payload.email) {
+            return {
+                success: false,
+                errorCode: ESECs.GOOGLE_OAUTH_FAILED,
+                errorMessage: "Missing user information from google."
+            };
+        }
+
+        if (!payload?.email_verified) {
+            return {
+                success: false,
+                errorCode: ESECs.GOOGLE_OAUTH_FAILED,
+                errorMessage: "Google account email not verified. Rejecting request. ",
+            };
+        }
+
+        userEmail = payload.email;
+        userName = payload.name;
+        userPicture = payload.picture;
+    } catch (_error) {
+        throw new AppError("Error while processing google oauth request");
     }
 
     let user = await userRepository.findByEmail(userEmail);
 
     if (!user) {
         user = await userRepository.insert({
-            name: userName,
+            name: userName ?? "Unnamed User",
             email: userEmail,
             passwordHash: null,
             roles: [
