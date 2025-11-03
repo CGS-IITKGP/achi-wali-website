@@ -26,7 +26,6 @@ import { SESSION_COOKIE_NAME } from "@/lib/config/constants";
 import AppError from "../utils/error";
 import teamRepository from "../database/repos/team.repo";
 import getEnvVariable from "../utils/envVariable";
-import jwt from "jsonwebtoken";
 import axios from 'axios';
 
 
