@@ -227,7 +227,7 @@ export default function Register() {
       <Navbar />
 
       {/* Main Content */}
-      <div className="flex items-center justify-center min-h-screen pt-20 px-4 py-8">
+      <div className="flex items-center justify-center min-h-screen pt-20 lg:pt-35 px-4 pb-8">
         <div className="w-full max-w-lg relative">
           {/* Register Card */}
           <div className="glass rounded-3xl p-8 shadow-2xl relative overflow-hidden group transition-all duration-500">

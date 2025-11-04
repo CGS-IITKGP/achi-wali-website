@@ -26,6 +26,7 @@ const userValidator = {
         name: allIbDField.shortString.optional(),
         phoneNumber: allIbDField.phoneNumber.optional(),
         links: z.array(allIbDField.link).optional(),
+        profileImgMediaKey: allIbDField.mediaKeyNotNullable.optional(),
     }),
     updateTeam: z.object({
         _id: allIbDField._id,

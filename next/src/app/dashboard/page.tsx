@@ -523,7 +523,7 @@ export default function Dashboard() {
     } else {
       toast.success("Signed out");
       refreshUser();
-      router.push("/auth/sign-in");
+      router.push("/");
     }
   };
 
@@ -764,12 +764,21 @@ export default function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="glass rounded-xl p-6">
-                <h3
-                  className={`text-lg text-white mb-4 ${heading_font.className}`}
-                >
-                  Personal Information
-                </h3>
+              <div className="glass rounded-xl p-6 relative">
+                <div className="flex items-center justify-between mb-4">
+                  <h3
+                    className={`text-lg text-white ${heading_font.className}`}
+                  >
+                    Personal Information
+                  </h3>
+                  <button
+                    onClick={() => setActiveSection("settings")}
+                    className="text-sm px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-all backdrop-blur-sm border border-white/10"
+                  >
+                    Edit
+                  </button>
+                </div>
+
                 <div className="space-y-3">
                   <div>
                     <label
@@ -781,6 +790,7 @@ export default function Dashboard() {
                       {user?.email ?? "Loading..."}
                     </p>
                   </div>
+
                   <div>
                     <label
                       className={`text-gray-400 text-sm ${paragraph_font.className}`}
@@ -791,6 +801,7 @@ export default function Dashboard() {
                       {user ? user.phoneNumber ?? "N/A" : "Loading..."}
                     </p>
                   </div>
+
                   <div>
                     <label
                       className={`text-gray-400 text-sm ${paragraph_font.className}`}
@@ -1365,24 +1376,6 @@ export default function Dashboard() {
                   Welcome back!
                 </p>
               </div>
-            </div>
-          </div>
-
-          {/* Search */}
-          <div className="p-4 border-b border-white/10">
-            <div className="relative">
-              <svg
-                className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
-              </svg>
-              <input
-                type="search"
-                placeholder="Search..."
-                className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:border-pink-400 focus:outline-none transition-colors"
-              />
             </div>
           </div>
 

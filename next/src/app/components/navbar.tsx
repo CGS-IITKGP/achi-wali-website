@@ -168,7 +168,7 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 20, stiffness: 100 }}
-              className="fixed top-0 left-0 w-[280px] xs:w-80 h-full bg-gradient-to-b from-gray-900 via-black to-gray-900 z-50 lg:hidden shadow-2xl border-r border-pink-500/30"
+              className="fixed top-0 left-0 w-[280px] xs:w-80 h-full bg-gradient-to-b from-gray-900 via-black to-gray-900 z-1000 lg:hidden shadow-2xl border-r border-pink-500/30"
             >
               <div className="flex items-center justify-between p-4 xs:p-6 border-b border-pink-500/20">
                 <div className="flex items-center gap-2 xs:gap-3">
