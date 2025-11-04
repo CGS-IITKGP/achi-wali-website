@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react"; // Added Fragment
 import { Righteous, Roboto } from "next/font/google";
 import api from "../axiosApi";
 import toast from "react-hot-toast";
@@ -17,7 +17,7 @@ import {
   prettyDescription,
   prettySafeImage,
 } from "../utils/pretty";
-import { Listbox } from "@headlessui/react";
+import { Listbox, Menu, Transition } from "@headlessui/react"; // Added Menu, Transition
 
 const heading_font = Righteous({
   subsets: ["latin"],
@@ -26,6 +26,9 @@ const heading_font = Righteous({
 
 const paragraph_font = Roboto({
   subsets: ["latin"],
+  // Note: Roboto font needs weight specified. Assuming 400.
+  // If you get a warning, add: weight: "400"
+  weight: "400",
 });
 
 type ActiveSection =
@@ -1066,7 +1069,8 @@ export default function Dashboard() {
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" />
+                      {/* Using a different delete icon (trash can) */}
+                      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
                     </svg>
                   </button>
 
@@ -1418,7 +1422,7 @@ export default function Dashboard() {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col lg:ml-0">
-          {/* Top Bar */}
+          {/* Top Bar -- THIS IS THE MODIFIED SECTION */}
           <div className="glass border-b border-white/10 p-4 lg:p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -1456,19 +1460,100 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="flex items-center space-x-2 lg:space-x-4">
-                <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                  <svg
-                    className="w-5 h-5 text-gray-400 hover:text-white"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
+                {/* Notification Bell REMOVED */}
+
+                {/* START: Profile Dropdown */}
+                <Menu as="div" className="relative">
+                  <div>
+                    <Menu.Button className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 focus:ring-pink-500">
+                      <span className="sr-only">Open user menu</span>
+                      {user?.profileImgMediaKey ? (
+                        <img
+                          className="h-9 w-9 rounded-full object-cover"
+                          src={prettySafeImage(user.profileImgMediaKey)}
+                          alt="Profile"
+                        />
+                      ) : (
+                        <span
+                          className={`text-white font-medium ${paragraph_font.className}`}
+                        >
+                          {user?.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("") ?? "U"}
+                        </span>
+                      )}
+                    </Menu.Button>
+                  </div>
+                  <Transition
+                    as={Fragment}
+                    enter="transition ease-out duration-100"
+                    enterFrom="transform opacity-0 scale-95"
+                    enterTo="transform opacity-100 scale-100"
+                    leave="transition ease-in duration-75"
+                    leaveFrom="transform opacity-100 scale-100"
+                    leaveTo="transform opacity-0 scale-95"
                   >
-                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-                  </svg>
-                </button>
-                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full"></div>
+                    <Menu.Items className="origin-top-right absolute right-0 mt-2 w-48 bg-gray-950/80 backdrop-blur-md rounded-xl shadow-lg py-1 border border-white/10 focus:outline-none z-50">
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setActiveSection("profile")}
+                            className={`${
+                              active
+                                ? "bg-white/10 text-white"
+                                : "text-gray-300"
+                            } group flex items-center w-full px-4 py-2 text-sm ${
+                              paragraph_font.className
+                            } transition-colors`}
+                          >
+                            Your Profile
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setActiveSection("settings")}
+                            className={`${
+                              active
+                                ? "bg-white/10 text-white"
+                                : "text-gray-300"
+                            } group flex items-center w-full px-4 py-2 text-sm ${
+                              paragraph_font.className
+                            } transition-colors`}
+                          >
+                            Settings
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <div className="py-1">
+                        <div className="h-[1px] bg-white/10 mx-2"></div>
+                      </div>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={handleSignOut}
+                            className={`${
+                              active
+                                ? "bg-red-500/20 text-red-400"
+                                : "text-gray-300"
+                            } group flex items-center w-full px-4 py-2 text-sm ${
+                              paragraph_font.className
+                            } hover:bg-red-500/10 hover:text-red-400 transition-colors`}
+                          >
+                            Sign out
+                          </button>
+                        )}
+                      </Menu.Item>
+                    </Menu.Items>
+                  </Transition>
+                </Menu>
+                {/* END: Profile Dropdown */}
               </div>
             </div>
           </div>
+          {/* END Top Bar -- THIS IS THE MODIFIED SECTION */}
 
           {/* Content */}
           <div className="flex-1 p-4 lg:p-6 overflow-y-auto">
@@ -2105,12 +2190,12 @@ export default function Dashboard() {
                   accept="image/*" // Restricts to image types
                   onChange={handleAssetFileChange} // Assumes handler for file input
                   className="block w-full text-sm text-gray-400
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-pink-500/10 file:text-pink-400
-              hover:file:bg-pink-500/20
-              transition-all duration-300"
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-pink-500/10 file:text-pink-400
+                  hover:file:bg-pink-500/20
+                  transition-all duration-300"
                   required
                 />
                 {newAssetData.file && (

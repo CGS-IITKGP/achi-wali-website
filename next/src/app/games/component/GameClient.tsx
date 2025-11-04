@@ -454,7 +454,7 @@ export default function GameClient({
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
               whileHover={{ y: -10, scale: 1.02 }}
-              className="group relative bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-700/30 hover:border-pink-500/40 shadow-xl hover:shadow-2xl hover:shadow-pink-500/10 transition-all duration-500"
+              className="group relative bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-700/30 hover:border-pink-500/40 shadow-xl hover:shadow-2xl hover:shadow-pink-500/10 transition-all duration-500 flex flex-col"
             >
               <div className="relative h-48 lg:h-56 overflow-hidden">
                 <Image
@@ -475,25 +475,20 @@ export default function GameClient({
                 </div> */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                   <div className="flex gap-3">
+                    {/* THIS IS THE FIX for the hydration error. No more nested buttons. */}
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
+                      onClick={() => {
+                        const liveLink =
+                          game.links?.find(
+                            (link) => link.text === "live-demo"
+                          )?.url || "#";
+                        if (liveLink !== "#") window.open(liveLink, "_blank");
+                      }}
                       className="w-12 h-12 bg-pink-500/90 hover:bg-pink-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
                     >
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => {
-                          const liveLink =
-                            game.links?.find(
-                              (link) => link.text === "live-demo"
-                            )?.url || "#";
-                          if (liveLink !== "#") window.open(liveLink, "_blank");
-                        }}
-                        className="w-12 h-12 bg-pink-500/90 hover:bg-pink-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
-                      >
-                        <Play className="w-5 h-5" />
-                      </motion.button>
+                      <Play className="w-5 h-5" />
                     </motion.button>
                   </div>
                 </div>
@@ -505,34 +500,37 @@ export default function GameClient({
                 </div> */}
               </div>
 
-              <div className="p-6 space-y-4">
-                <div>
-                  <h3
-                    className={`text-xl lg:text-2xl font-bold text-white mb-2 group-hover:text-pink-300 transition-colors duration-300 ${righteousFont.className}`}
-                  >
-                    {game.title}
-                  </h3>
-                  <p
-                    className={`text-gray-400 text-sm leading-relaxed ${robotoFont.className}`}
-                  >
-                    {game.description}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {game.tags?.slice(0, 2).map((tech, techIndex) => (
-                    <span
-                      key={techIndex}
-                      className="px-2 py-1 bg-gray-800/60 text-gray-300 text-xs rounded-full border border-gray-600/40 hover:border-pink-500/40 hover:text-pink-300 transition-all duration-300"
+              {/* THIS IS THE FIX for the layout. `flex-1` pushes the footer down. */}
+              <div className="p-6 flex flex-col flex-1">
+                <div className="flex-1 space-y-4">
+                  <div>
+                    <h3
+                      className={`text-xl lg:text-2xl font-bold text-white mb-2 group-hover:text-pink-300 transition-colors duration-300 ${righteousFont.className}`}
                     >
-                      {tech}
-                    </span>
-                  ))}
-                  {(game.tags?.length ?? 0) > 2 && (
-                    <span className="px-2 py-1 bg-pink-500/20 text-pink-300 text-xs rounded-full border border-pink-500/40">
-                      +{(game.tags?.length ?? 0) - 2}
-                    </span>
-                  )}
+                      {game.title}
+                    </h3>
+                    <p
+                      className={`text-gray-400 text-sm leading-relaxed ${robotoFont.className} line-clamp-3`}
+                    >
+                      {game.description}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {game.tags?.slice(0, 2).map((tech, techIndex) => (
+                      <span
+                        key={techIndex}
+                        className="px-2 py-1 bg-gray-800/60 text-gray-300 text-xs rounded-full border border-gray-600/40 hover:border-pink-500/40 hover:text-pink-300 transition-all duration-300"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                    {(game.tags?.length ?? 0) > 2 && (
+                      <span className="px-2 py-1 bg-pink-500/20 text-pink-300 text-xs rounded-full border border-pink-500/40">
+                        +{(game.tags?.length ?? 0) - 2}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-700/50">
@@ -556,17 +554,16 @@ export default function GameClient({
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => {
-                          const liveLink =
-                            game.links?.find(
-                              (link) => link.text === "github"
-                            )?.url || "#";
-                          if (liveLink !== "#") window.open(liveLink, "_blank");
-                        }}
+                        const liveLink =
+                          game.links?.find(
+                            (link) => link.text === "github"
+                          )?.url || "#";
+                        if (liveLink !== "#") window.open(liveLink, "_blank");
+                      }}
                       className="w-8 h-8 bg-gray-800/60 hover:bg-pink-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-pink-300 transition-all duration-300"
                     >
                       <Github className="w-4 h-4" />
                     </motion.button>
-            
                   </div>
                 </div>
               </div>
