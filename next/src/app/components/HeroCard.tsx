@@ -77,7 +77,7 @@ const HeroCard: React.FC = () => {
       {/* ✅ Shared animated background from Featured section */}
       <AnimatedBackground />
 
-      <div className="relative max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-10 z-5">
+      <div className="relative max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-10 z-10">
         {serviceData.map((item, index) => (
           <div
             key={index}
@@ -96,7 +96,7 @@ const HeroCard: React.FC = () => {
 
             <button
               onClick={() => handleNavigation(item.link)}
-              className="text-pink-500 font-medium text-sm hover:text-pink-400 transition-colors cursor-pointer"
+              className="text-pink-500 font-medium text-sm hover:text-pink-400 transition-colors cursor-pointer relative z-10"
             >
               Learn More →
             </button>
