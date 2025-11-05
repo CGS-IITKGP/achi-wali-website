@@ -8,6 +8,7 @@ import {
 } from "@/lib/types/index.types";
 import getEnvVariable from "../utils/envVariable";
 import mediaRepository from "../database/repos/media.repo";
+import userRepository from "../database/repos/user.repo";
 
 
 const get: ServiceSignature<
@@ -90,6 +91,14 @@ const create: ServiceSignature<
         url: data.url,
         uploadedBy: session.userId
     });
+
+    // Note: Last minute change to have the ability to set profile image
+    //       for users. May be turned long term.
+    if (data.publicId.trim().split('/').pop()?.trim() === 'profileImage') {
+        await userRepository.updateById(session.userId, {
+            profileImgMediaKey: `user-assets/${session.userId.toHexString()}/profileImage`
+        });
+    }
 
     return {
         success: true,

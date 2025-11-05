@@ -268,6 +268,7 @@ export namespace SDIn {
                 text: string,
                 url: string,
             }[],
+            profileImgMediaKey?: string,
         };
 
         export type UpdateTeam = {

@@ -19,7 +19,7 @@ import Link from "next/link";
 const AnimatedBackground = React.memo(() => {
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black" />
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900" />
 
       {[...Array(6)].map((_, i) => (
         <div

@@ -2,11 +2,10 @@ export const dynamic = "force-dynamic";
 
 import Navbar from "../components/navbar";
 import TeamJPG from "../assets/team.jpg";
-import TeamCard from "./TeamCard";
 import Footer from "../footer";
 import api from "../axiosApi";
 import { ITeamExportable } from "../types/domain.types";
-import React from "react";
+import TeamPageClient from "./TeamPageClient";
 
 const fetchAllTeams = async () => {
   const apiResponse = await api("GET", "/team", {
@@ -89,45 +88,9 @@ export default async function TeamsView() {
         </div>
       </section>
 
-      {/* Team Cards Section */}
-      <section className="py-20 px-4 sm:px-8 md:px-16 lg:px-24 relative bg-gradient-to-b from-black via-black to-pink-900/10 overflow-hidden">
-        {/* Enhanced animated background effects */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Particle effect overlay */}
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at center, rgba(236,72,153,0.1) 0%, transparent 8%)",
-              backgroundSize: "120px 120px",
-              animation: "particleFade 4s ease-in-out infinite alternate",
-            }}
-          ></div>
-        </div>
+      {/* Team Designation based Filter Bar & Team Cards Section */}
+      <TeamPageClient allTeams={allTeams} />
 
-        <div className="relative z-10 max-w-[96rem] mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6 gap-6 lg:gap-8 2xl:gap-10">
-            {allTeams.map((team, index1) => (
-              <React.Fragment key={team._id || index1}>
-                {team.members.map((member, index2) => (
-                  <div
-                    key={member._id || `${index1}-${index2}`}
-                    className="lg:max-w-[320px] 2xl:max-w-[360px] mx-auto w-full"
-                  >
-                    <TeamCard
-                      member={{
-                        ...member,
-                        teamName: team.name,
-                      }}
-                      index={index2}
-                    />
-                  </div>
-                ))}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-      </section>
       <Footer />
     </div>
   );

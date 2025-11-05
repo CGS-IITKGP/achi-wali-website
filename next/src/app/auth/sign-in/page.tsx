@@ -92,7 +92,7 @@ export default function Login() {
       <Navbar />
 
       {/* Main Content */}
-      <div className="flex items-center justify-center min-h-screen pt-20 px-4">
+      <div className="flex items-center justify-center min-h-screen pt-20 lg:pt-35 px-4 pb-8">
         <div className="w-full max-w-md relative">
           {/* Glowing Circle Asset */}
           {/* <div className="absolute -top-20 -right-20 opacity-30 animate-float">

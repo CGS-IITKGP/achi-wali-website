@@ -40,7 +40,7 @@ export default function TeamCard({ member, index }: TeamCardProps) {
       }
       if (lowerText?.includes("mail") || lowerText?.includes("email")) {
         setIsMail(true);
-        setMailUrl("mailto:" + link.url);
+        setMailUrl(link.url);
       }
     });
   };
@@ -139,7 +139,7 @@ export default function TeamCard({ member, index }: TeamCardProps) {
 
         {/* Info with staggered animations */}
         <div className="text-center mb-4 sm:mb-5 lg:mb-6">
-          <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-1 sm:mb-2 group-hover:text-pink-400 transition-all duration-500 group-hover:scale-105 break-words">
+          <h3 className="text-base sm:text-md lg:text-lg font-semibold text-white mb-1 sm:mb-2 group-hover:text-pink-400 transition-all duration-500 group-hover:scale-105 break-words">
             {member.name}
           </h3>
           <p className="text-gray-400 text-xs sm:text-sm uppercase tracking-wider transition-all duration-500 group-hover:tracking-widest group-hover:text-pink-300/80 line-clamp-1">

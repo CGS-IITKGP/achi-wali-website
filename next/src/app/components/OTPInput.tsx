@@ -46,26 +46,27 @@ const OTPInputComponent: React.FC<IOTPInputComponentProps> = ({
     }
   };
 
-  return (
-    <div className="flex items-center justify-between gap-3">
-      {Array.from({ length }, (_, index) => (
-        <div key={index} className="relative group">
-          <input
-            type="text"
-            maxLength={1}
-            value={OTP[index]}
-            onChange={(e) => handleChange(e.target.value, index)}
-            onKeyDown={(e) => handleKeyDown(e, index)}
-            ref={(ref) => {
-              inputRef.current[index] = ref as HTMLInputElement;
-            }}
-            className={`w-12 h-12 md:w-14 md:h-14 text-center text-white text-lg font-medium bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400/20 focus:border-pink-400 transition-all duration-300 group-hover:bg-white/10`}
-          />
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-pink-400/0 via-pink-400/5 to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-        </div>
-      ))}
-    </div>
-  );
+ return (
+  <div className="flex flex-wrap justify-between gap-2 sm:gap-3 w-full">
+    {Array.from({ length }, (_, index) => (
+      <div key={index} className="relative group">
+        <input
+          type="text"
+          maxLength={1}
+          value={OTP[index]}
+          onChange={(e) => handleChange(e.target.value, index)}
+          onKeyDown={(e) => handleKeyDown(e, index)}
+          ref={(ref) => {
+            inputRef.current[index] = ref as HTMLInputElement;
+          }}
+          className={`w-9 h-9 sm:w-14 sm:h-14  text-center text-white text-lg font-medium bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-400/20 focus:border-pink-400 transition-all duration-300 group-hover:bg-white/10`}
+        />
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-pink-400/0 via-pink-400/5 to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+      </div>
+    ))}
+  </div>
+);
+
 };
 
 export default OTPInputComponent;
