@@ -475,7 +475,7 @@ export default function GameClient({
                 </div> */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                   <div className="flex gap-3">
-                    <motion.button
+                    {/* <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       className="w-12 h-12 bg-pink-500/90 hover:bg-pink-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
@@ -494,7 +494,19 @@ export default function GameClient({
                       >
                         <Play className="w-5 h-5" />
                       </motion.button>
-                    </motion.button>
+                    </motion.button> */}
+                    <motion.button
+  whileHover={{ scale: 1.1 }}
+  whileTap={{ scale: 0.9 }}
+  onClick={() => {
+    const liveLink =
+      game.links?.find((link) => link.text === "live-demo")?.url || "#";
+    if (liveLink !== "#") window.open(liveLink, "_blank");
+  }}
+  className="w-12 h-12 bg-pink-500/90 hover:bg-pink-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
+>
+  <Play className="w-5 h-5" />
+</motion.button>
                   </div>
                 </div>
                 {/* <div className="absolute top-4 right-4">
