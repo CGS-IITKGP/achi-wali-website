@@ -11,7 +11,7 @@ interface TeamPageClientProps {
 
 export default function TeamPageClient({ allTeams }: TeamPageClientProps) {
   const [selectedDesignation, setSelectedDesignation] = useState<string | null>(
-    null
+    "SENIOR"
   );
 
   // Filter teams based on selected designation
