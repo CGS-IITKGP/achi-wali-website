@@ -39,6 +39,8 @@ type ActiveSection =
   | "settings"
   | "home";
 
+const ALL_PERSONAL_LINK_TYPES = ["mail", "linkedin", "github"];
+
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("profile");
   const [showNewPostModal, setShowNewPostModal] = useState(false);
@@ -88,7 +90,10 @@ export default function Dashboard() {
     tags: "",
     coverImgMediaKey: "",
     description: "",
-    links: [{ text: "", url: "" }],
+    links: [
+      { text: "live-demo", url: "" },
+      { text: "github", url: "" },
+    ],
   });
   const [projectUpdate, setProjectUpdate] = useState<{
     coverImgMediaKey: string;
@@ -438,7 +443,10 @@ export default function Dashboard() {
         tags: "",
         coverImgMediaKey: "",
         description: "",
-        links: [{ text: "", url: "" }],
+        links: [
+          { text: "live-demo", url: "" },
+          { text: "github", url: "" },
+        ],
       });
       toast.success("Added a new project.");
     }
@@ -506,7 +514,10 @@ export default function Dashboard() {
         tags: "",
         coverImgMediaKey: "",
         description: "",
-        links: [{ text: "", url: "" }],
+        links: [
+          { text: "live-demo", url: "" },
+          { text: "github", url: "" },
+        ],
       });
       toast.success("Removed project.");
     }
@@ -539,46 +550,17 @@ export default function Dashboard() {
     }));
   };
 
-  const handleLinkChange = (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = e.target;
-    const newLinks = newProjectData.links.map((link, i) => {
-      if (i === index) {
-        return { ...link, [name]: value };
-      }
-      return link;
-    });
-    setNewProjectData((prev) => ({ ...prev, links: newLinks }));
-  };
-
-  const addLinkField = () => {
-    setNewProjectData((prev) => ({
-      ...prev,
-      links: [...prev.links, { text: "", url: "" }],
-    }));
-  };
-
-  const removeLinkField = (index: number) => {
-    setNewProjectData((prev) => ({
-      ...prev,
-      links: prev.links.filter((_, i) => i !== index),
-    }));
-  };
-
   const handleUserLinkChange = (
     index: number,
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    const newLinks = userLinks.map((link, i) => {
-      if (i === index) {
-        return { ...link, [name]: value };
-      }
-      return link;
-    });
-    setUserLinks(newLinks);
+    const updatedLinks = [...userLinks];
+    updatedLinks[index] = {
+      ...updatedLinks[index],
+      [name]: value,
+    };
+    setUserLinks(updatedLinks);
   };
 
   const addUserLinkField = () => {
@@ -799,17 +781,6 @@ export default function Dashboard() {
                     </label>
                     <p className={`text-white ${paragraph_font.className}`}>
                       {user ? user.phoneNumber ?? "N/A" : "Loading..."}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label
-                      className={`text-gray-400 text-sm ${paragraph_font.className}`}
-                    >
-                      Location
-                    </label>
-                    <p className={`text-white ${paragraph_font.className}`}>
-                      San Francisco, CA
                     </p>
                   </div>
                 </div>
@@ -1203,57 +1174,76 @@ export default function Dashboard() {
                 </div>
 
                 <div className="space-y-4">
-                  {userLinks.map((link, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2"
-                    >
-                      <input
-                        type="text"
-                        name="text"
-                        value={link.text}
-                        onChange={(e) => handleUserLinkChange(index, e)}
-                        placeholder="Link Text (e.g. GitHub)"
-                        disabled={!isEditingLinks}
-                        className={
-                          isEditingLinks
-                            ? "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-pink-400"
-                            : "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg placeholder-gray-500 focus:outline-none focus:border-pink-400 text-gray-500 cursor-not-allowed"
-                        }
-                      />
-                      <input
-                        type="url"
-                        name="url"
-                        value={link.url}
-                        onChange={(e) => handleUserLinkChange(index, e)}
-                        placeholder="URL"
-                        disabled={!isEditingLinks}
-                        className={
-                          isEditingLinks
-                            ? "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-pink-400"
-                            : "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg placeholder-gray-500 focus:outline-none focus:border-pink-400 text-gray-500 cursor-not-allowed"
-                        }
-                      />
-                      {isEditingLinks && (
-                        <button
-                          onClick={() => removeUserLinkField(index)}
-                          className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+                  {userLinks.map((link, index) => {
+                    const usedLinks = userLinks.map((l) => l.text);
+
+                    return (
+                      <>
+                        <div
+                          key={index}
+                          className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2"
                         >
-                          <svg
-                            className="w-5 h-5"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
+                          <select
+                            name="text"
+                            value={link.text}
+                            onChange={(e) => handleUserLinkChange(index, e)}
+                            disabled={!isEditingLinks}
+                            className={
+                              "w-full sm:flex-grow px-3 py-2 rounded-lg focus:outline-none focus:border-pink-400 appearance-none " +
+                              (isEditingLinks
+                                ? "bg-white/5 border border-white/10 text-white placeholder-gray-500"
+                                : "bg-white/5 border border-white/10 text-gray-500 cursor-not-allowed")
+                            }
                           >
-                            <path
-                              fillRule="evenodd"
-                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                            {ALL_PERSONAL_LINK_TYPES.map((type) =>
+                              usedLinks.includes(type) &&
+                              link.text !== type ? null : (
+                                <option
+                                  key={type}
+                                  value={type}
+                                  className="bg-gray-900 text-white"
+                                >
+                                  {type}
+                                </option>
+                              )
+                            )}
+                          </select>
+
+                          <input
+                            type="url"
+                            name="url"
+                            value={link.url}
+                            onChange={(e) => handleUserLinkChange(index, e)}
+                            placeholder="URL"
+                            disabled={!isEditingLinks}
+                            className={
+                              isEditingLinks
+                                ? "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-pink-400"
+                                : "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg placeholder-gray-500 focus:outline-none focus:border-pink-400 text-gray-500 cursor-not-allowed"
+                            }
+                          />
+                          {isEditingLinks && (
+                            <button
+                              onClick={() => removeUserLinkField(index)}
+                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })}
                 </div>
                 {isEditingLinks && (
                   <div className="flex justify-end space-x-4 pt-4 mt-4 border-t border-white/10">
@@ -1261,7 +1251,6 @@ export default function Dashboard() {
                       type="button"
                       onClick={() => {
                         setIsEditingLinks(false);
-                        // Optionally reset changes
                         if (user?.links) setUserLinks(user.links);
                       }}
                       className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
@@ -1456,7 +1445,7 @@ export default function Dashboard() {
                 {/* Notification Bell REMOVED */}
 
                 {/* START: Profile Dropdown */}
-                <Menu as="div" className="relative">
+                <Menu as="div" className="relative ">
                   <div>
                     <Menu.Button className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 focus:ring-pink-500">
                       <span className="sr-only">Open user menu</span>
@@ -1487,7 +1476,7 @@ export default function Dashboard() {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="origin-top-right absolute right-0 mt-2 w-48 bg-gray-950/80 backdrop-blur-md rounded-xl shadow-lg py-1 border border-white/10 focus:outline-none z-50">
+                    <Menu.Items className="origin-top-right absolute right-0 mt-2 w-48 bg-gray-950/80 backdrop-blur-md rounded-xl shadow-lg py-1 border border-white/10 focus:outline-none z-[1000]">
                       <Menu.Item>
                         {({ active }) => (
                           <button
@@ -1942,78 +1931,73 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Dynamic Links Section (NEW) */}
               <div className="pt-2">
                 <div className="flex items-center justify-between mb-4">
                   <label
                     className={`block text-gray-300 text-sm font-medium ${paragraph_font.className}`}
                   >
-                    Project Links{" "}
-                    <span className="text-neutral-500">
-                      (use live-demo and github for advanced cards. Mind the
-                      spellings.)
-                    </span>
+                    Project Links
                   </label>
-                  <button
-                    type="button"
-                    onClick={addLinkField}
-                    className="text-pink-400 hover:text-pink-300 text-sm flex items-center transition-colors"
-                  >
-                    <svg
-                      className="w-5 h-5 mr-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
-                    Add Link
-                  </button>
                 </div>
 
                 <div className="space-y-4">
-                  {newProjectData.links.map((link, index) => (
-                    <div key={index} className="flex gap-4 items-center">
-                      <input
-                        type="text"
-                        name="text"
-                        value={link.text}
-                        onChange={(e) => handleLinkChange(index, e)}
-                        className="w-1/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                        placeholder="Link Text (e.g., Live Demo)"
-                        required
-                      />
-                      <input
-                        type="url"
-                        name="url"
-                        value={link.url}
-                        onChange={(e) => handleLinkChange(index, e)}
-                        className="w-2/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                        placeholder="Link URL (https://...)"
-                        required
-                      />
-                      {newProjectData.links.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeLinkField(index)}
-                          className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                  <div className="flex gap-4 items-center mb-2">
+                    <input
+                      type="text"
+                      value="live-demo"
+                      disabled
+                      className="w-1/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 opacity-70 cursor-not-allowed"
+                    />
+                    <input
+                      type="url"
+                      placeholder="Live Demo URL (https://...)"
+                      value={
+                        newProjectData.links.find((l) => l.text === "live-demo")
+                          ?.url || ""
+                      }
+                      onChange={(e) => {
+                        const newUrl = e.target.value;
+                        setNewProjectData((prev) => ({
+                          ...prev,
+                          links: prev.links.map((link) =>
+                            link.text === "live-demo"
+                              ? { ...link, url: newUrl }
+                              : link
+                          ),
+                        }));
+                      }}
+                      className="w-2/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                    />
+                  </div>
+
+                  <div className="flex gap-4 items-center mb-2">
+                    <input
+                      type="text"
+                      value="github"
+                      disabled
+                      className="w-1/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 opacity-70 cursor-not-allowed"
+                    />
+                    <input
+                      type="url"
+                      placeholder="GitHub URL (https://...)"
+                      value={
+                        newProjectData.links.find((l) => l.text === "github")
+                          ?.url || ""
+                      }
+                      onChange={(e) => {
+                        const newUrl = e.target.value;
+                        setNewProjectData((prev) => ({
+                          ...prev,
+                          links: prev.links.map((link) =>
+                            link.text === "github"
+                              ? { ...link, url: newUrl }
+                              : link
+                          ),
+                        }));
+                      }}
+                      className="w-2/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
+                    />
+                  </div>
                 </div>
               </div>
 

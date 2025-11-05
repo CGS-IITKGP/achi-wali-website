@@ -143,6 +143,16 @@ const Index = () => {
       animate={{ opacity: 1, y: 0, backgroundColor: "rgba(0,0,0,1)" }}
       transition={{ duration: 1.2, ease: "easeOut" }}
     >
+      {/* COMING SOON BANNER */}
+      <motion.div
+        className="fixed top-0 left-0 w-full z-50 bg-gradient-to-r from-pink-600 via-purple-600 to-fuchsia-600 text-white text-center py-3 font-semibold tracking-wide shadow-lg"
+        initial={{ y: -80 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        Coming Soon — This page is under active development!
+      </motion.div>
+
       {/* Hero & Info Section */}
       <header className="relative overflow-hidden border-0 bg-card/60 backdrop-blur-sm">
         <div className="absolute inset-0 bg-gradient-to-br from-pink-600/20 via-purple-600/15 to-fuchsia-600/20" />

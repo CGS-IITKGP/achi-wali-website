@@ -202,6 +202,7 @@ const create: ServiceSignature<
     const existingFeatured = await featuredRepository.findOne({
         contentId: data.contentId
     });
+
     if (existingFeatured) {
         return {
             success: false,

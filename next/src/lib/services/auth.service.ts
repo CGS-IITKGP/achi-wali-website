@@ -82,7 +82,7 @@ const signIn: ServiceSignature<
         return {
             success: false,
             errorCode: ESECs.INVALID_CREDENTIALS,
-            errorMessage: "The password you provided is incorrect.",
+            errorMessage: "Email or password is incorrect.",
         };
     }
 
@@ -92,7 +92,7 @@ const signIn: ServiceSignature<
         return {
             success: false,
             errorCode: ESECs.INVALID_CREDENTIALS,
-            errorMessage: "The password you provided is incorrect.",
+            errorMessage: "Email or password is incorrect.",
         };
     }
 
@@ -415,7 +415,7 @@ const changePassword: ServiceSignature<
         return {
             success: false,
             errorCode: ESECs.INVALID_CREDENTIALS,
-            errorMessage: "The password you provided is incorrect.",
+            errorMessage: "Email or password is incorrect.",
         };
     }
 

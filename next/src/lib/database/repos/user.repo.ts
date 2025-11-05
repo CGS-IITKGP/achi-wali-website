@@ -8,7 +8,7 @@ import AppError from "@/lib/utils/error";
 class UserRepository extends GenericRepository<
     IUser,
     Pick<IUser, "name" | "email" | "passwordHash" | "designation" | "roles">,
-    Pick<IUser, "name" | "email" | "passwordHash" | "profileImgMediaKey"
+    Pick<IUser, "name" | "passwordHash" | "profileImgMediaKey"
         | "designation" | "phoneNumber" | "links" | "teamId" | "roles"
     >
 > {
