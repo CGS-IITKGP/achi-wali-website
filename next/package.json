@@ -15,6 +15,7 @@
     "cloudinary": "^2.8.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.22",
+    "google-auth-library": "^10.5.0",
     "gray-matter": "^4.0.3",
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",

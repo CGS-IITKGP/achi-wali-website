@@ -5,6 +5,7 @@ import { Righteous, Roboto } from "next/font/google";
 import Navbar from "./components/navbar";
 import FeaturedContent from "./featuredprojects";
 import Footer from "./footer";
+import HeroCard from "./components/HeroCard"
 import api from "./axiosApi";
 import { IRecentFeaturedContent } from "./types/domain.types";
 
@@ -164,13 +165,13 @@ export default async function Home() {
 
         <Navbar />
         <h1
-          className={`text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl fade-in max-w-6xl text-center ${heading_font.className} bg-gradient-to-tr from-white to-pink-600 bg-clip-text text-transparent z-10 leading-tight mb-4 sm:mb-6`}
+          className={`text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl fade-in max-w-6xl text-center ${heading_font.className} bg-gradient-to-tr from-white to-pink-600 bg-clip-text text-transparent z-10 leading-tight mb-25 sm:mb-20 md:mb-6`}
         >
           Computer Graphics Society
         </h1>
 
         <p
-          className={`text-gray-400 px-4 sm:px-6 md:px-8 lg:px-0 fade-in-2 text-base sm:text-lg md:text-xl lg:text-2xl max-w-4xl text-center font-bold mt-4 sm:mt-6 md:mt-8 ${paragraph_font.className} z-10 leading-relaxed`}
+          className={`text-gray-400 px-4 sm:px-6 md:px-8 lg:px-0 fade-in-2 text-base sm:text-lg md:text-xl lg:text-2xl max-w-4xl text-center font-bold mb-10 sm:mb-0 mt-4 sm:mt-6 md:mt-8 ${paragraph_font.className} z-10 leading-relaxed`}
         >
           We, the Computer Graphics Society at IIT Kharagpur, are a passionate
           group of students dedicated to exploring the world of game development
@@ -192,13 +193,13 @@ export default async function Home() {
                 d="M19 9l-7 7-7-7"
               />
             </svg>
-            <span className="mt-2 text-pink-400 font-semibold text-sm sm:text-base">
+            <span className=" mb-0 mt-6 lg:mt-0 lg:mb-12 text-pink-400 font-semibold text-sm sm:text-base">
               Scroll Down
             </span>
           </span>
         </p>
       </section>
-
+      <HeroCard/>
       <FeaturedContent featured={recentFeatured} />
       {/* <FeaturedProjects2 /> */}
 
