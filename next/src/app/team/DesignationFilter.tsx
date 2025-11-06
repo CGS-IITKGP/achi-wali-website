@@ -20,7 +20,7 @@ export default function DesignationFilter({
 
   const handleFilterClick = (value: string) => {
     setActiveFilter(value);
-    onFilterChange(value === "all" ? null : value);
+    onFilterChange(value === "SENIOR" ? "SENIOR" : value);
   };
 
   return (

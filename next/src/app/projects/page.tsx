@@ -117,6 +117,10 @@ const getProjectsData = async () => {
 export default async function ProjectsPage() {
   const { projects, featuredProjects } = await getProjectsData();
 
+  // Fallback: If no featured projects, use first 3 regular projects
+  const displayFeaturedProjects =
+    featuredProjects.length > 0 ? featuredProjects : projects.slice(0, 3);
+
   return (
     <>
       <FireflyBackground quantity={30} />
@@ -124,7 +128,7 @@ export default async function ProjectsPage() {
         <Navbar />
         <ProjectsClient
           projects={projects}
-          featuredProjects={featuredProjects}
+          featuredProjects={displayFeaturedProjects}
         />
         <Footer />
       </div>

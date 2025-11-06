@@ -22,7 +22,8 @@ const prettyDescription = (text: string, max = 60): string => {
 const prettySafeImage = (key: string | null): string => {
     if (!key) return "/default-fallback-image.png";
     const isUrl = /^https?:\/\//i.test(key);
-    return isUrl ? key : `https://res.cloudinary.com/dexgzhyzp/image/upload/${key}`;
+    return isUrl ? key :
+        `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${key}`;
 };
 
 const prettyRolePriority = [
