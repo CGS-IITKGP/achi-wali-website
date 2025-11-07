@@ -9,6 +9,7 @@ interface DesignationFilterProps {
 const designations = [
   { value: "ADVISOR", label: "Advisor" },
   { value: "HEAD", label: "Head" },
+  { value: "EXECUTIVE", label: "Executive" },
   { value: "SENIOR", label: "Senior" },
   { value: "JUNIOR", label: "Junior " },
 ];
