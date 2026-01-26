@@ -23,7 +23,7 @@
     "lucide-react": "^0.544.0",
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.1",
-    "next": "15.5.2",
+    "next": "^16.1.4",
     "next-mdx-remote": "^5.0.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
