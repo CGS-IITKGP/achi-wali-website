@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, Fragment } from "react"; // Added Fragment
+import { useEffect, useState, Fragment } from "react";
+import Image from "next/image";
 import { Righteous, Roboto } from "next/font/google";
 import api from "../axiosApi";
 import toast from "react-hot-toast";
@@ -18,6 +19,7 @@ import {
   prettySafeImage,
 } from "../utils/pretty";
 import { Listbox, Menu, Transition } from "@headlessui/react"; // Added Menu, Transition
+import Link from "next/link";
 
 const heading_font = Righteous({
   subsets: ["latin"],
@@ -36,8 +38,7 @@ type ActiveSection =
   | "projects"
   | "profile"
   | "assets"
-  | "settings"
-  | "home";
+  | "settings";
 
 const ALL_PERSONAL_LINK_TYPES = ["mail", "linkedin", "github"];
 
@@ -125,15 +126,6 @@ export default function Dashboard() {
   });
 
   const menuItems = [
-    {
-      id: "home" as ActiveSection,
-      label: "Home",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-        </svg>
-      ),
-    },
     {
       id: "profile" as ActiveSection,
       label: "Profile",
@@ -280,16 +272,6 @@ export default function Dashboard() {
     }
   }, [user]);
 
-  useEffect(() => {
-    if (activeSection === "home") {
-      router.push("/");
-    }
-  }, [activeSection, router]);
-
-  if (activeSection === "home") {
-    return null;
-  }
-
   const handleNewPostSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -344,7 +326,7 @@ export default function Dashboard() {
       return;
     }
 
-    const apiResponse = await api("PATCH", `/blog/${showBlogUpdateModal.id}`, {
+    const apiResponse = await api("PATCH", `/ blog / ${showBlogUpdateModal.id} `, {
       body: {
         coverImgMediaKey: blogUpdate.coverImgMediaKey,
       },
@@ -366,7 +348,7 @@ export default function Dashboard() {
   };
 
   const handlePostDelete = async (id: string) => {
-    const apiResponse = await api("DELETE", `/blog/${id}`);
+    const apiResponse = await api("DELETE", `/ blog / ${id} `);
 
     if (apiResponse.action === null) {
       toast.error("Server Error");
@@ -464,7 +446,7 @@ export default function Dashboard() {
 
     const apiResponse = await api(
       "PATCH",
-      `/project/${showProjectUpdateModal.id}`,
+      `/ project / ${showProjectUpdateModal.id} `,
       {
         body: {
           coverImgMediaKey: projectUpdate.coverImgMediaKey,
@@ -499,7 +481,7 @@ export default function Dashboard() {
   };
 
   const handleProjectDelete = async (id: string) => {
-    const apiResponse = await api("DELETE", `/project/${id}`);
+    const apiResponse = await api("DELETE", `/ project / ${id} `);
 
     if (apiResponse.action === null) {
       toast.error("Server Error");
@@ -699,6 +681,9 @@ export default function Dashboard() {
     }
   };
 
+  /* New state for quick upload loading */
+  const [isUploading, setIsUploading] = useState(false);
+
   const copyAssetKey = async (assetKey: string) => {
     try {
       await navigator.clipboard.writeText(assetKey);
@@ -710,13 +695,81 @@ export default function Dashboard() {
     }
   };
 
+  const handleQuickUpload = async (e: React.ChangeEvent<HTMLInputElement>, setKeyCallback: (key: string) => void) => {
+    const file = e.target.files ? e.target.files[0] : null;
+    if (!file) return;
+
+    setIsUploading(true);
+    const toastId = toast.loading("Uploading image...");
+
+    try {
+      // 1. Sign
+      const uniqueName = `quick-upload-${Date.now()}`;
+      const signRes = await api("POST", "/media/sign", {
+        body: { publicId: uniqueName }
+      });
+
+      if (signRes.action !== true) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        throw new Error((signRes as any).message || "Failed to sign upload request");
+      }
+
+      const signedToken = signRes.data as IMediaSignedToken;
+
+      // 2. Upload to Cloudinary
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("api_key", signedToken.apiKey);
+      formData.append("folder", signedToken.folder);
+      formData.append("public_id", uniqueName);
+      formData.append("timestamp", signedToken.timestamp);
+      formData.append("signature", signedToken.signature);
+
+      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${signedToken.cloudName}/image/upload`;
+      const cloudinaryRes = await fetch(cloudinaryUrl, {
+        method: "POST",
+        body: formData,
+      });
+      const cloudinaryData = await cloudinaryRes.json();
+
+      if (cloudinaryData.error) {
+        throw new Error(cloudinaryData.error.message || "Cloudinary upload failed");
+      }
+
+      // 3. Create Media Record
+      const createMediaRes = await api("POST", "/media", {
+        body: {
+          publicId: cloudinaryData.public_id,
+          url: cloudinaryData.secure_url,
+        }
+      });
+
+      if (createMediaRes.action !== true) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        throw new Error((createMediaRes as any).message || "Failed to save asset record");
+      }
+
+      // Success
+      setKeyCallback(cloudinaryData.public_id);
+      toast.success("Image uploaded successfully!", { id: toastId });
+      fetchAssets(); // Refresh assets list
+    } catch (error) {
+      console.error(error);
+      toast.error((error as Error).message || "Upload failed", { id: toastId });
+    } finally {
+      setIsUploading(false);
+      // Clear input value so same file can be selected again if needed
+      e.target.value = "";
+    }
+  };
+
   const renderContent = () => {
     switch (activeSection) {
       case "profile":
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div className="flex items-center space-x-4">
-              <div className="w-20 h-20 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
                 {/* <svg
                   className="w-10 h-10 text-pink-400"
                   fill="currentColor"
@@ -724,10 +777,12 @@ export default function Dashboard() {
                 >
                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                 </svg> */}
-                <img
+                <Image
                   src={prettySafeImage(user?.profileImgMediaKey ?? null)}
                   alt=""
-                  className="relative z-10 w-full h-full rounded-full border-4 border-pink-500/20 group-hover:border-pink-500/70 transition-all duration-700 object-cover group-hover:scale-110"
+                  width={64}
+                  height={64}
+                  className="relative z-10 rounded-full border-4 border-pink-500/20 group-hover:border-pink-500/70 transition-all duration-700 object-cover group-hover:scale-110"
                 />
               </div>
               <div>
@@ -745,8 +800,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="glass rounded-xl p-6 relative">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="glass rounded-xl p-5 relative">
                 <div className="flex items-center justify-between mb-4">
                   <h3
                     className={`text-lg text-white ${heading_font.className}`}
@@ -786,7 +841,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="glass rounded-xl p-6">
+              <div className="glass rounded-xl p-5">
                 <h3
                   className={`text-lg text-white mb-4 ${heading_font.className}`}
                 >
@@ -1060,13 +1115,15 @@ export default function Dashboard() {
                     onClick={() => copyAssetKey(asset.key)}
                     className="flex flex-col items-center w-full cursor-pointer"
                   >
-                    <div className="w-40 h-40 rounded-lg mb-3 flex items-center justify-center overflow-hidden bg-white/5">
-                      <img
+                    <div className="w-40 h-40 rounded-lg mb-3 flex items-center justify-center overflow-hidden bg-white/5 relative">
+                      <Image
                         src={asset.url}
                         alt={asset.key.substring(
                           asset.key.lastIndexOf("/") + 1
                         )}
-                        className="max-w-full max-h-full object-contain"
+                        fill
+                        className="object-contain"
+                        unoptimized
                       />
                     </div>
                     <p
@@ -1178,70 +1235,68 @@ export default function Dashboard() {
                     const usedLinks = userLinks.map((l) => l.text);
 
                     return (
-                      <>
-                        <div
-                          key={index}
-                          className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2"
+                      <div
+                        key={index}
+                        className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2"
+                      >
+                        <select
+                          name="text"
+                          value={link.text}
+                          onChange={(e) => handleUserLinkChange(index, e)}
+                          disabled={!isEditingLinks}
+                          className={
+                            "w-full sm:flex-grow px-3 py-2 rounded-lg focus:outline-none focus:border-pink-400 appearance-none " +
+                            (isEditingLinks
+                              ? "bg-white/5 border border-white/10 text-white placeholder-gray-500"
+                              : "bg-white/5 border border-white/10 text-gray-500 cursor-not-allowed")
+                          }
                         >
-                          <select
-                            name="text"
-                            value={link.text}
-                            onChange={(e) => handleUserLinkChange(index, e)}
-                            disabled={!isEditingLinks}
-                            className={
-                              "w-full sm:flex-grow px-3 py-2 rounded-lg focus:outline-none focus:border-pink-400 appearance-none " +
-                              (isEditingLinks
-                                ? "bg-white/5 border border-white/10 text-white placeholder-gray-500"
-                                : "bg-white/5 border border-white/10 text-gray-500 cursor-not-allowed")
-                            }
-                          >
-                            {ALL_PERSONAL_LINK_TYPES.map((type) =>
-                              usedLinks.includes(type) &&
+                          {ALL_PERSONAL_LINK_TYPES.map((type) =>
+                            usedLinks.includes(type) &&
                               link.text !== type ? null : (
-                                <option
-                                  key={type}
-                                  value={type}
-                                  className="bg-gray-900 text-white"
-                                >
-                                  {type}
-                                </option>
-                              )
-                            )}
-                          </select>
-
-                          <input
-                            type="url"
-                            name="url"
-                            value={link.url}
-                            onChange={(e) => handleUserLinkChange(index, e)}
-                            placeholder="URL"
-                            disabled={!isEditingLinks}
-                            className={
-                              isEditingLinks
-                                ? "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-pink-400"
-                                : "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg placeholder-gray-500 focus:outline-none focus:border-pink-400 text-gray-500 cursor-not-allowed"
-                            }
-                          />
-                          {isEditingLinks && (
-                            <button
-                              onClick={() => removeUserLinkField(index)}
-                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
+                              <option
+                                key={type}
+                                value={type}
+                                className="bg-gray-900 text-white"
                               >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </button>
+                                {type}
+                              </option>
+                            )
                           )}
-                        </div>
-                      </>
+                        </select>
+
+                        <input
+                          type="url"
+                          name="url"
+                          value={link.url}
+                          onChange={(e) => handleUserLinkChange(index, e)}
+                          placeholder="URL"
+                          disabled={!isEditingLinks}
+                          className={
+                            isEditingLinks
+                              ? "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-pink-400"
+                              : "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg placeholder-gray-500 focus:outline-none focus:border-pink-400 text-gray-500 cursor-not-allowed"
+                          }
+                        />
+                        {isEditingLinks && (
+                          <button
+                            onClick={() => removeUserLinkField(index)}
+                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -1343,7 +1398,7 @@ export default function Dashboard() {
         `}
         >
           {/* Header */}
-          <div className="p-6 border-b border-white/10">
+          <div className="p-4 border-b border-white/10">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center">
                 <span
@@ -1371,15 +1426,24 @@ export default function Dashboard() {
           {/* Navigation Menu */}
           <nav className="flex-1 p-4">
             <div className="space-y-2">
+              <Link
+                href={"/"}
+                className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 ${"text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+                </svg>
+                <span className={paragraph_font.className}>Home</span>
+              </Link>
               {menuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setActiveSection(item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    activeSection === item.id
-                      ? "bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-400 border border-pink-500/30"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
+                  className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 ${activeSection === item.id
+                    ? "bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-400 border border-pink-500/30"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    }`}
                 >
                   {item.icon}
                   <span className={paragraph_font.className}>{item.label}</span>
@@ -1392,7 +1456,7 @@ export default function Dashboard() {
           <div className="p-4 border-t border-white/10">
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center cursor-pointer space-x-3 px-4 py-3 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+              className="w-full flex items-center cursor-pointer space-x-3 px-4 py-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5z" />
@@ -1405,7 +1469,7 @@ export default function Dashboard() {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col lg:ml-0">
           {/* Top Bar -- THIS IS THE MODIFIED SECTION */}
-          <div className="glass border-b border-white/10 p-4 lg:p-6">
+          <div className="glass border-b border-white/10 p-3 lg:p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 {/* Hamburger Menu Button - Mobile Only */}
@@ -1430,7 +1494,7 @@ export default function Dashboard() {
 
                 <div>
                   <h1
-                    className={`text-2xl lg:text-3xl text-white ${heading_font.className} capitalize`}
+                    className={`text-xl lg:text-2xl text-white ${heading_font.className} capitalize`}
                   >
                     {activeSection}
                   </h1>
@@ -1450,10 +1514,12 @@ export default function Dashboard() {
                     <Menu.Button className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 focus:ring-pink-500">
                       <span className="sr-only">Open user menu</span>
                       {user?.profileImgMediaKey ? (
-                        <img
-                          className="h-9 w-9 rounded-full object-cover"
+                        <Image
+                          className="rounded-full object-cover"
                           src={prettySafeImage(user.profileImgMediaKey)}
                           alt="Profile"
+                          width={36}
+                          height={36}
                         />
                       ) : (
                         <span
@@ -1481,13 +1547,11 @@ export default function Dashboard() {
                         {({ active }) => (
                           <button
                             onClick={() => setActiveSection("profile")}
-                            className={`${
-                              active
-                                ? "bg-white/10 text-white"
-                                : "text-gray-300"
-                            } group flex items-center w-full px-4 py-2 text-sm ${
-                              paragraph_font.className
-                            } transition-colors`}
+                            className={`${active
+                              ? "bg-white/10 text-white"
+                              : "text-gray-300"
+                              } group flex items-center w-full px-4 py-2 text-sm ${paragraph_font.className
+                              } transition-colors`}
                           >
                             Your Profile
                           </button>
@@ -1497,13 +1561,11 @@ export default function Dashboard() {
                         {({ active }) => (
                           <button
                             onClick={() => setActiveSection("settings")}
-                            className={`${
-                              active
-                                ? "bg-white/10 text-white"
-                                : "text-gray-300"
-                            } group flex items-center w-full px-4 py-2 text-sm ${
-                              paragraph_font.className
-                            } transition-colors`}
+                            className={`${active
+                              ? "bg-white/10 text-white"
+                              : "text-gray-300"
+                              } group flex items-center w-full px-4 py-2 text-sm ${paragraph_font.className
+                              } transition-colors`}
                           >
                             Settings
                           </button>
@@ -1516,13 +1578,11 @@ export default function Dashboard() {
                         {({ active }) => (
                           <button
                             onClick={handleSignOut}
-                            className={`${
-                              active
-                                ? "bg-red-500/20 text-red-400"
-                                : "text-gray-300"
-                            } group flex items-center w-full px-4 py-2 text-sm ${
-                              paragraph_font.className
-                            } hover:bg-red-500/10 hover:text-red-400 transition-colors`}
+                            className={`${active
+                              ? "bg-red-500/20 text-red-400"
+                              : "text-gray-300"
+                              } group flex items-center w-full px-4 py-2 text-sm ${paragraph_font.className
+                              } hover:bg-red-500/10 hover:text-red-400 transition-colors`}
                           >
                             Sign out
                           </button>
@@ -1621,6 +1681,16 @@ export default function Dashboard() {
                   placeholder="Enter cover image media key..."
                   required
                 />
+                <div className="mt-2">
+                  <span className={`text-xs text-gray-500 mb-1 block ${paragraph_font.className}`}>Or upload directly:</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={isUploading}
+                    onChange={(e) => handleQuickUpload(e, (key) => setNewPostData(prev => ({ ...prev, coverImgMediaKey: key })))}
+                    className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
               </div>
 
               {/* Tags Field */}
@@ -1743,6 +1813,16 @@ export default function Dashboard() {
                     placeholder="Paste the asset key here..."
                     required
                   />
+                  <div className="mt-2">
+                    <span className={`text-xs text-gray-500 mb-1 block ${paragraph_font.className}`}>Or upload directly:</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploading}
+                      onChange={(e) => handleQuickUpload(e, (key) => setBlogUpdate(prev => ({ ...prev, coverImgMediaKey: key })))}
+                      className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1852,8 +1932,7 @@ export default function Dashboard() {
                             key={item}
                             value={item}
                             className={({ active }) =>
-                              `px-4 py-2 cursor-pointer transition text-white ${
-                                active ? "bg-pink-600/40" : "bg-[#1a1a1a]"
+                              `px-4 py-2 cursor-pointer transition text-white ${active ? "bg-pink-600/40" : "bg-[#1a1a1a]"
                               }`
                             }
                           >
@@ -1899,6 +1978,16 @@ export default function Dashboard() {
                   placeholder="Enter cover image media key..."
                   required
                 />
+                <div className="mt-2">
+                  <span className={`text-xs text-gray-500 mb-1 block ${paragraph_font.className}`}>Or upload directly:</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={isUploading}
+                    onChange={(e) => handleQuickUpload(e, (key) => setNewProjectData(prev => ({ ...prev, coverImgMediaKey: key })))}
+                    className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
               </div>
 
               {/* Description Field (Unchanged) */}
@@ -2074,6 +2163,16 @@ export default function Dashboard() {
                     placeholder="Paste the asset key here..."
                     required
                   />
+                  <div className="mt-2">
+                    <span className={`text-xs text-gray-500 mb-1 block ${paragraph_font.className}`}>Or upload directly:</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isUploading}
+                      onChange={(e) => handleQuickUpload(e, (key) => setProjectUpdate(prev => ({ ...prev, coverImgMediaKey: key })))}
+                      className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -314,9 +314,9 @@ const FeaturedProjects2: React.FC = () => {
           index === activeIndex
             ? 10
             : 5 -
-              Math.abs(
-                (index - activeIndex + projects.length) % projects.length
-              ),
+            Math.abs(
+              (index - activeIndex + projects.length) % projects.length
+            ),
         config: config.gentle,
       };
     })
@@ -332,7 +332,7 @@ const FeaturedProjects2: React.FC = () => {
     }
 
     return () => clearInterval(timer);
-  }, [autoRotate, projects.length]);
+  }, [autoRotate]);
 
   const handleNext = () => {
     setAutoRotate(false);

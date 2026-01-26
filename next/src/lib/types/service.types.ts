@@ -254,6 +254,13 @@ export namespace SDIn {
             } & GetAll)
             | ({
                 target: APIControl.User.Get.Target.SUMMARY,
+            })
+            | ({
+                target: APIControl.User.Get.Target.PUBLIC_ALL;
+            } & GetAll)
+            | ({
+                target: APIControl.User.Get.Target.PUBLIC_SINGLE;
+                _id: Types.ObjectId;
             });
 
         export type GetAll = {
@@ -548,13 +555,14 @@ export namespace SDOut {
     }
 
     export namespace User {
-        export type Get = object;
+        export type Get = GetAll | GetSinglePublic;
 
         export type GetAll = {
             users: {
                 _id: string;
                 name: string;
                 email: string;
+                profileImgMediaKey: string | null;
                 roles: EUserRole[];
                 designation: string;
                 teamId: string | null;
@@ -563,6 +571,25 @@ export namespace SDOut {
             page: number;
             limit: number;
             totalPages: number;
+        };
+
+        export type GetSinglePublic = {
+            _id: string;
+            name: string;
+            email: string;
+            profileImgMediaKey: string | null;
+            phoneNumber: string | null;
+            links: {
+                text: string;
+                url: string;
+            }[];
+            team: {
+                _id: string;
+                name: string;
+            };
+            roles: EUserRole[];
+            designation: string;
+            memberSince: string; // Derived from createdAt
         };
 
         export type Update = EmptyObject;

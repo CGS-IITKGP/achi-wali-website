@@ -45,7 +45,15 @@ const get: ServiceSignature<
     SDOut.User.Get,
     true
 > = async (data, session) => {
-    if (!session.userRoles.includes(EUserRole.ADMIN)) {
+    if (data.target === APIControl.User.Get.Target.PUBLIC_ALL) {
+        return getPublicAll(data, session);
+    }
+    
+    if (data.target === APIControl.User.Get.Target.PUBLIC_SINGLE) {
+        return getPublicOne(data, session);
+    }
+    
+    if (!session || !session.userRoles.includes(EUserRole.ADMIN)) {
         return {
             success: false,
             errorCode: ESECs.FORBIDDEN,
@@ -58,7 +66,7 @@ const get: ServiceSignature<
     }
 
     throw new AppError(
-        "APIControl.User.Get.Target is something other than SUMMARY and ALL",
+        "APIControl.User.Get.Target is something other than valid targets",
         { data, session }
     );
 };
@@ -81,6 +89,7 @@ const getAll: ServiceSignature<
                     _id: user._id.toHexString(),
                     name: user.name,
                     email: user.email,
+                    profileImgMediaKey: user.profileImgMediaKey,
                     roles: user.roles,
                     designation: user.designation,
                     teamId: user.teamId?.toHexString() ?? null,
@@ -264,6 +273,81 @@ const remove: ServiceSignature<
         success: true,
         data: {},
     };
+};
+
+const getPublicAll: ServiceSignature<
+    SDIn.User.Get,
+    SDOut.User.GetAll,
+    false
+> = async (data) => {
+    const paginatedUsers = await userRepository.findAllPaginated({}, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        page: (data as any).page,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        limit: (data as any).limit,
+    });
+
+    return {
+        success: true,
+        data: {
+            users: paginatedUsers.data.map((user) => {
+                return {
+                    _id: user._id.toHexString(),
+                    name: user.name,
+                    email: user.email, 
+                    profileImgMediaKey: user.profileImgMediaKey,
+                    roles: user.roles,
+                    designation: user.designation,
+                    teamId: user.teamId?.toHexString() ?? null,
+                };
+            }),
+            total: paginatedUsers.total,
+            page: paginatedUsers.page,
+            limit: paginatedUsers.limit,
+            totalPages: paginatedUsers.totalPages,
+        },
+    };
+};
+
+const getPublicOne: ServiceSignature<
+    SDIn.User.Get,
+    SDOut.User.GetSinglePublic,
+    false
+> = async (data) => {
+    // @ts-expect-error -- Library types mismatch
+    const user = await userRepository.findById(data._id);
+    if (!user) {
+        return {
+            success: false,
+            errorCode: ESECs.USER_NOT_FOUND,
+            errorMessage: "User not found.",
+        };
+    }
+
+    let teamName = "Unknown";
+    if (user.teamId) {
+        const team = await teamRepository.findById(user.teamId);
+        if (team) teamName = team.name;
+    }
+
+    return {
+        success: true,
+        data: {
+            _id: user._id.toHexString(),
+            name: user.name,
+            email: user.email,
+            profileImgMediaKey: user.profileImgMediaKey,
+            phoneNumber: null,
+            links: user.links,
+            team: {
+                _id: user.teamId?.toHexString() ?? "",
+                name: teamName,
+            },
+            roles: user.roles,
+            designation: user.designation,
+            memberSince: new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        }
+    }
 };
 
 const userService = {

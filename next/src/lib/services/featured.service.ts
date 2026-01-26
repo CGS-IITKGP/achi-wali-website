@@ -112,9 +112,11 @@ const getHighlight: ServiceSignature<
     const featuredProjectsId: Types.ObjectId[] = [];
 
     featuredHighlighted.forEach(content => {
-        content.contentType === EFeaturedType.BLOG
-            ? featuredBlogsId.push(content.contentId)
-            : featuredProjectsId.push(content.contentId);
+        if (content.contentType === EFeaturedType.BLOG) {
+            featuredBlogsId.push(content.contentId);
+        } else {
+            featuredProjectsId.push(content.contentId);
+        }
     });
 
     const recentFeaturedContent: IFeaturedHighlightExportable[] = [];

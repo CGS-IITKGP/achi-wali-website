@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import Image from "next/image";
 import Navbar from "../components/navbar";
 import TeamJPG from "../assets/team.jpg";
 import Footer from "../footer";
@@ -34,10 +35,11 @@ export default async function TeamsView() {
       <section className="h-screen">
         <div className="relative w-full h-full overflow-hidden">
           <div className="absolute inset-0">
-            <img
-              src={TeamJPG.src}
+            <Image
+              src={TeamJPG}
               alt="Our Team"
               className="w-full h-full object-cover"
+              priority
             />
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
           </div>

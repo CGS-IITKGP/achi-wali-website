@@ -39,7 +39,7 @@ const Footer = () => {
           </div>
 
           <p className="text-gray-400/90 text-sm md:text-base tracking-wide">
-            Creative minds at IIT Kharagpur — blending art and technology.
+            Creative minds at IIT Kharagpur: blending art and technology.
           </p>
           <p className="text-xs text-gray-500 mt-4">
             © {year} Computer Graphics Society

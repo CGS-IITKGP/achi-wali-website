@@ -11,14 +11,16 @@ const GET = createServiceOnlyHandler({
         const target = searchParams.get('target');
         const page = searchParams.get('page');
         const limit = searchParams.get('limit');
+        const id = searchParams.get('id');
 
         return {
             target: target ?? "all",
-            page,
-            limit
+            page: page ?? undefined,
+            limit: limit ?? undefined,
+            _id: id ?? undefined,
         }
     },
-    requireAuth: true,
+    requireAuth: false,
     options: {
         service: userService.get,
     }

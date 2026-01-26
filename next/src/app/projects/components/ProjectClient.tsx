@@ -68,13 +68,14 @@ export default function ProjectsClient({
       }
     );
 
-    if (featuredSectionRef.current) {
-      observer.observe(featuredSectionRef.current);
+    const element = featuredSectionRef.current;
+    if (element) {
+      observer.observe(element);
     }
 
     return () => {
-      if (featuredSectionRef.current) {
-        observer.unobserve(featuredSectionRef.current);
+      if (element) {
+        observer.unobserve(element);
       }
     };
   }, []);
@@ -154,11 +155,10 @@ export default function ProjectsClient({
                   <motion.button
                     key={proj._id || index}
                     onClick={() => handleSelect(index)}
-                    className={`relative w-auto overflow-hidden px-2 py-2 sm:px-4 sm:py-2.5 rounded-3xl font-semibold transition-all duration-300 whitespace-nowrap text-[0.6rem] sm:text-lg lg:text-base tracking-wide ${
-                      currentIndex === index
+                    className={`relative w-auto overflow-hidden px-2 py-2 sm:px-4 sm:py-2.5 rounded-3xl font-semibold transition-all duration-300 whitespace-nowrap text-[0.6rem] sm:text-lg lg:text-base tracking-wide ${currentIndex === index
                         ? "text-white"
                         : "text-gray-400 hover:text-white"
-                    }`}
+                      }`}
                   >
                     {currentIndex === index ? proj.title : index + 1}
                     {currentIndex === index && (
@@ -344,9 +344,8 @@ export default function ProjectsClient({
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`group flex items-center justify-center gap-2.5 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold transition-all duration-300 hover:scale-105 text-sm sm:text-base ${
-                            isGithub ? secondaryButton : primaryButton
-                          }`}
+                          className={`group flex items-center justify-center gap-2.5 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold transition-all duration-300 hover:scale-105 text-sm sm:text-base ${isGithub ? secondaryButton : primaryButton
+                            }`}
                         >
                           {link.text}
                           {isGithub ? (
@@ -391,15 +390,13 @@ export default function ProjectsClient({
               onClick={() => hasMounted && handleCardClick(idx)}
             >
               <div
-                className={`relative h-full w-full rounded-3xl shadow-xl [transform-style:preserve-3d] transition-transform duration-[1000ms] ${
-                  hasMounted && !isMobile
+                className={`relative h-full w-full rounded-3xl shadow-xl [transform-style:preserve-3d] transition-transform duration-[1000ms] ${hasMounted && !isMobile
                     ? "group-hover:[transform:rotateX(180deg)_rotateZ(-180deg)]"
                     : ""
-                } ${
-                  hasMounted && isMobile && flippedCardIndex === idx
+                  } ${hasMounted && isMobile && flippedCardIndex === idx
                     ? "[transform:rotateX(180deg)_rotateZ(-180deg)]"
                     : ""
-                }`}
+                  }`}
               >
                 <div className="absolute inset-0 backface-hidden rounded-3xl border-2 border-pink-500/20 overflow-hidden shadow-lg transition-all duration-500 group-hover:border-pink-500/50 group-hover:shadow-pink-500/30 group-hover:scale-105">
                   <Image

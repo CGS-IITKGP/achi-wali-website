@@ -5,22 +5,25 @@ import { APIControl } from "../types/api.types";
 const userValidator = {
     get: z
         .object({
-            target: z.enum(APIControl.User.Get.Target),
+            target: z.nativeEnum(APIControl.User.Get.Target),
             _id: allIbDField._id.optional(),
             page: allIbDField.paginationPage.optional(),
             limit: allIbDField.paginationLimit.optional(),
         })
         .refine((data) => {
-            if (data.target === APIControl.User.Get.Target.ALL) {
+            if (data.target === APIControl.User.Get.Target.ALL || data.target === APIControl.User.Get.Target.PUBLIC_ALL) {
                 return data.page != undefined && data.limit != undefined;
             }
             if (data.target === APIControl.User.Get.Target.SUMMARY) {
                 return true;
             }
+            if (data.target === APIControl.User.Get.Target.PUBLIC_SINGLE) {
+                return data._id != undefined;
+            }
             return false;
         }, {
             message:
-                "Invalid combination: if target is ALL, provide page & limit; if not ALL or SUMMARY, _id is required",
+                "Invalid combination: if target is ALL or PUBLIC_ALL, provide page & limit; if PUBLIC_SINGLE, _id is required; other targets follow specific rules.",
         }),
     update: z.object({
         name: allIbDField.shortString.optional(),

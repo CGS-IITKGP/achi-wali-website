@@ -1,8 +1,9 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { FaGamepad } from "react-icons/fa";
-import { FaShuttleSpace, FaSpaceAwesome } from "react-icons/fa6";
+// Icons removed
+import Image from "next/image";
+import { CardBody, CardContainer, CardItem } from "@/components/ui/3d-card";
 
 // ✅ Reuse AnimatedBackground from FeaturedContent
 const AnimatedBackground = React.memo(() => {
@@ -18,9 +19,8 @@ const AnimatedBackground = React.memo(() => {
             height: `${120 + i * 30}px`,
             left: `${20 + i * 15}%`,
             top: `${10 + i * 12}%`,
-            background: `radial-gradient(circle, ${
-              ["#ff69b4", "#ff1493", "#c71585"][i % 3]
-            }40, transparent)`,
+            background: `radial-gradient(circle, ${["#ff69b4", "#ff1493", "#c71585"][i % 3]
+              }40, transparent)`,
             animationDelay: `${i * 3}s`,
             animationDuration: `${20 + i * 5}s`,
             filter: "blur(2px)",
@@ -46,7 +46,7 @@ const serviceData: IServiceData[] = [
     title: "Game Development",
     description:
       "We craft engaging and interactive games using Unity, delivering dynamic gameplay experiences with smooth mechanics, intuitive controls, and immersive storytelling.",
-    icon: <FaGamepad className="icon-spin text-6xl text-white" />,
+    icon: <Image src={"/game-controller.png"} alt="Game Controller" width={100} height={100} />,
     aosDelay: "300",
     link: "/games",
   },
@@ -54,15 +54,15 @@ const serviceData: IServiceData[] = [
     title: "Graphics & Animation",
     description:
       "Our expertise ensures high-quality visuals, from detailed environments to dynamic lighting and textures. We create stunning animations and artwork that push creative boundaries.",
-    icon: <FaShuttleSpace className="icon-spin text-6xl text-white" />,
+    icon: <Image src={"/rocket-3d.png"} alt="Animation" width={100} height={100} />,
     aosDelay: "500",
     link: "/projects",
   },
   {
-    title: "R&D in Game Tech",
+    title: "Research & Development",
     description:
       "We're at the forefront of game technology, researching advanced shaders, AI, and machine learning to pioneer innovative visual effects and AI-driven gameplay mechanics.",
-    icon: <FaSpaceAwesome className="icon-spin text-6xl text-white" />,
+    icon: <Image src={"/microscope-3d.png"} alt="Game Development" width={100} height={100} />,
     aosDelay: "700",
     link: "/projects",
   },
@@ -73,48 +73,61 @@ const HeroCard: React.FC = () => {
   const handleNavigation = (link: string) => router.push(link);
 
   return (
-    <section id="services" className="relative overflow-hidden py-16 px-6 sm:px-12">
-      {/* ✅ Shared animated background from Featured section */}
+    <section id="services" className="relative overflow-hidden py-20 px-6 sm:px-12 bg-black/40">
       <AnimatedBackground />
 
-      <div className="relative max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-10 z-5">
+      <div className="relative max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 z-10">
         {serviceData.map((item, index) => (
           <div
             key={index}
             data-aos="fade-up"
             data-aos-delay={item.aosDelay}
             data-aos-once="true"
-            className="group relative bg-black/40 border border-white/20 backdrop-blur-lg rounded-2xl p-8 flex flex-col justify-between items-center text-center shadow-lg hover:border-pink-500/40 transition-all duration-300"
+            className="flex justify-center" // Center cards in grid cells
           >
-            <div className="mb-4">{item.icon}</div>
-            <h3 className="text-2xl font-semibold text-white mb-4">
-              {item.title}
-            </h3>
-            <p className="text-gray-300 text-sm leading-relaxed mb-6">
-              {item.description}
-            </p>
+            <CardContainer className="inter-var w-full">
+              <CardBody className="bg-black/40 relative group/card dark:hover:shadow-2xl dark:hover:shadow-pink-500/[0.1] dark:bg-black dark:border-white/[0.2] border-white/[0.1] w-full h-auto rounded-xl p-8 border backdrop-blur-sm">
 
-            <button
-              onClick={() => handleNavigation(item.link)}
-              className="text-pink-500 font-medium text-sm hover:text-pink-400 transition-colors cursor-pointer relative z-10"
-            >
-              Learn More →
-            </button>
+                {/* Icon - Floating High */}
+                <CardItem translateZ="60" className="w-full flex justify-center mb-6">
+                  <div className="relative w-24 h-24 drop-shadow-2xl">
+                    {item.icon}
+                  </div>
+                </CardItem>
 
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-pink-500/0 to-transparent opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+                {/* Title - Mid Depth */}
+                <CardItem
+                  translateZ="50"
+                  className="text-xl font-bold text-white text-center w-full"
+                >
+                  {item.title}
+                </CardItem>
+
+                {/* Description - Lower Depth */}
+                <CardItem
+                  as="p"
+                  translateZ="40"
+                  className="text-gray-300 text-sm max-w-sm mt-4 text-center mx-auto leading-relaxed"
+                >
+                  {item.description}
+                </CardItem>
+
+                {/* Button - Base Depth */}
+                <div className="flex justify-center items-center mt-8">
+                  <CardItem
+                    translateZ={30}
+                    as="button"
+                    onClick={() => handleNavigation(item.link)}
+                    className="px-6 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold transition-colors shadow-lg shadow-pink-500/20"
+                  >
+                    Learn More →
+                  </CardItem>
+                </div>
+              </CardBody>
+            </CardContainer>
           </div>
         ))}
       </div>
-
-      {/* Global CSS for icon rotation */}
-      <style jsx global>{`
-        .icon-spin {
-          transition: transform 0.6s ease-in-out;
-        }
-        .group:hover .icon-spin {
-          transform: rotate(360deg);
-        }
-      `}</style>
     </section>
   );
 };

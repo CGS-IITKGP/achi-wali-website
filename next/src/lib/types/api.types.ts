@@ -33,6 +33,8 @@ export namespace APIControl {
             export enum Target {
                 ALL = "all",
                 SUMMARY = "summary",
+                PUBLIC_ALL = "public_all",
+                PUBLIC_SINGLE = "public_single",
             }
         }
     }

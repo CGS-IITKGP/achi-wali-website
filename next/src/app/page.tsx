@@ -199,7 +199,7 @@ export default async function Home() {
           </span>
         </p>
       </section>
-      <HeroCard/>
+      <HeroCard />
       <FeaturedContent featured={recentFeatured} />
       {/* <FeaturedProjects2 /> */}
 

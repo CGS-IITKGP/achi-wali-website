@@ -164,6 +164,7 @@ export type IPaginatedUsers = {
     _id: string;
     name: string;
     email: string;
+    profileImgMediaKey: string | null;
     roles: EUserRole[];
     designation: EUserDesignation;
     teamId: string | null;

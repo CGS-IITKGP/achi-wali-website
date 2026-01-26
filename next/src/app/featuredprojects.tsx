@@ -7,14 +7,12 @@ import {
   ChevronRight,
   ExternalLink,
   Github,
-  FileText,
-  Gamepad,
-  Image,
-  FlaskConical,
 } from "lucide-react";
+import Image from "next/image";
 import { IRecentFeaturedContent } from "./types/domain.types";
 import { prettySafeImage } from "./utils/pretty";
 import Link from "next/link";
+import { CometCard } from "@/components/ui/comet-card";
 
 const AnimatedBackground = React.memo(() => {
   return (
@@ -30,9 +28,8 @@ const AnimatedBackground = React.memo(() => {
             height: `${120 + i * 30}px`,
             left: `${20 + i * 15}%`,
             top: `${10 + i * 12}%`,
-            background: `radial-gradient(circle, ${
-              ["#ff69b4", "#ff1493", "#c71585"][i % 3]
-            }40, transparent)`,
+            background: `radial-gradient(circle, ${["#ff69b4", "#ff1493", "#c71585"][i % 3]
+              }40, transparent)`,
             animationDelay: `${i * 3}s`,
             animationDuration: `${20 + i * 5}s`,
             filter: "blur(2px)",
@@ -45,19 +42,7 @@ const AnimatedBackground = React.memo(() => {
 
 AnimatedBackground.displayName = "AnimatedBackground";
 
-const getIconByType = (type: "BLOG" | "GAME" | "GRAPHICS" | "RND") => {
-  if (type === "BLOG") {
-    return <FileText className="w-6 h-6" />;
-  } else if (type === "GAME") {
-    return <Gamepad className="w-6 h-6" />;
-  } else if (type === "GRAPHICS") {
-    return <Image className="w-6 h-6" />;
-  } else if (type === "RND") {
-    return <FlaskConical className="w-6 h-6" />;
-  } else {
-    return null;
-  }
-};
+// getIconByType removed (unused)
 
 const ContentCard = React.memo<{
   content: IRecentFeaturedContent;
@@ -76,7 +61,7 @@ const ContentCard = React.memo<{
     return { x, y, z, rotateY: -angle };
   }, [index, activeIndex, totalProjects]);
 
-  const isActive = index === activeIndex;
+  // const isActive = index === activeIndex; // Unused
   const distance = Math.abs(index - activeIndex);
 
   const cardStyle = useMemo(
@@ -108,98 +93,82 @@ const ContentCard = React.memo<{
         transformStyle: "preserve-3d",
       }}
     >
-      <div
-        className={`
-        relative w-[260px] xs:w-[280px] sm:w-72 h-[320px] xs:h-[360px] sm:h-80 rounded-xl overflow-hidden
-        ${
-          isActive
-            ? "shadow-xl shadow-pink-500/20"
-            : "shadow-md shadow-black/10"
-        }
-        transition-shadow duration-300
-        bg-gradient-to-br from-pink-600 via-violet-500 to-purple-600
-        border border-pink-300/10
-      `}
-      >
-        <div
-          className={`relative z-10 h-full ${
-            isActive ? "bg-black/80" : "bg-black/30"
-          } flex flex-col transition-colors duration-300`}
-        >
-          <div className="relative h-36 xs:h-44 sm:h-40 overflow-hidden">
-            <img
-              src={prettySafeImage(content.coverImgMediaKey)}
-              alt={content.title}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+      <div className="h-full px-4 py-6 flex items-center justify-center">
+        <CometCard className="w-full h-full max-w-[320px]">
+          <div className="relative w-full h-full bg-zinc-900 rounded-2xl border border-white/10 overflow-hidden flex flex-col items-stretch group-hover:border-pink-500/50 transition-colors duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 via-transparent to-purple-500/5 pointer-events-none" />
 
-            <div className="absolute top-2 xs:top-3 left-2 xs:left-3 flex items-center space-x-1.5 xs:space-x-2 bg-pink-500/80 rounded-full px-1.5 xs:px-2 py-0.5 xs:py-1">
-              {getIconByType(content.type)}
-              <span className="text-white text-[10px] xs:text-xs font-medium">
-                {content.type}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex-1 p-4 sm:p-4 flex flex-col">
-            <h3 className="text-base sm:text-lg font-bold text-white mb-2 sm:mb-2 line-clamp-2">
-              {content.title}
-            </h3>
-
-            <div className="flex flex-wrap gap-1 mb-2 xs:mb-3">
-              {content.tags.slice(0, 3).map((tech, techIndex) => (
-                <span
-                  key={techIndex}
-                  className="px-1.5 xs:px-2 py-0.5 sm:py-1 bg-pink-500/20 rounded text-[9px] xs:text-[10px] sm:text-xs text-pink-200 border border-pink-400/20"
-                >
-                  {tech}
-                </span>
-              ))}
-              {content.tags.length > 3 && (
-                <span className="px-2 py-1 bg-pink-500/20 rounded text-xs text-pink-200 border border-pink-400/20">
-                  +{content.tags.length - 3}
-                </span>
-              )}
+            {/* Image Section */}
+            <div className="relative h-48 w-full p-2">
+              <div className="relative h-full w-full rounded-xl overflow-hidden bg-white/5">
+                <Image
+                  src={prettySafeImage(content.coverImgMediaKey)}
+                  alt={content.title}
+                  fill
+                  className="object-cover"
+                />
+              </div>
             </div>
 
-            <div className="flex space-x-2">
-              {content.type === "BLOG" ? (
-                <Link
-                  href={content.readUrl || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 bg-pink-500/70 hover:bg-pink-500/90 text-white px-3 py-2 rounded text-sm transition-colors duration-200 flex items-center justify-center space-x-1"
-                >
-                  <ExternalLink className="w-3 h-3" />
-                  <span>Read Blog</span>
-                </Link>
-              ) : (
-                <>
+            {/* Content Section */}
+            <div className="flex-1 flex flex-col p-4 pt-1">
+              <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 leading-tight">
+                {content.title}
+              </h3>
+
+              <div className="flex flex-wrap gap-1.5 mb-auto">
+                {content.tags.slice(0, 3).map((tech, techIndex) => (
+                  <span
+                    key={techIndex}
+                    className="px-2 py-0.5 bg-white/5 rounded text-[10px] text-gray-300 border border-white/5"
+                  >
+                    {tech}
+                  </span>
+                ))}
+                {content.tags.length > 3 && (
+                  <span className="px-2 py-0.5 bg-white/5 rounded text-[10px] text-gray-300 border border-white/5">
+                    +{content.tags.length - 3}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex space-x-2 mt-4 pt-4 border-t border-white/5">
+                {content.type === "BLOG" ? (
                   <Link
-                    href={content.liveDemoLink || "#"}
+                    href={content.readUrl || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 bg-pink-500/70 hover:bg-pink-500/90 text-white px-3 py-2 rounded text-sm transition-colors duration-200 flex items-center justify-center space-x-1"
+                    className="flex-1 bg-white/10 hover:bg-white/20 text-white py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5"
                   >
                     <ExternalLink className="w-3 h-3" />
-                    <span>Live Demo</span>
+                    <span>Read</span>
                   </Link>
+                ) : (
+                  <>
+                    <Link
+                      href={content.liveDemoLink || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-200 border border-indigo-500/30 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center space-x-1.5"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      <span>Demo</span>
+                    </Link>
 
-                  <Link
-                    href={content.githubLink || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-black/40 hover:bg-black/60 text-white px-3 py-2 rounded text-sm transition-colors duration-200 flex items-center justify-center"
-                  >
-                    <Github className="w-3 h-3" />
-                  </Link>
-                </>
-              )}
+                    <Link
+                      href={content.githubLink || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center justify-center"
+                    >
+                      <Github className="w-3.5 h-3.5" />
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </CometCard>
       </div>
     </motion.div>
   );
@@ -223,19 +192,19 @@ const FeaturedContent = ({ featured }: FeaturedContentProps) => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [isAutoRotating]);
+  }, [isAutoRotating, featured.length]);
 
   const nextContent = useCallback(() => {
     setIsAutoRotating(false);
     setActiveIndex((prev) => (prev + 1) % featured.length);
     setTimeout(() => setIsAutoRotating(true), 8000);
-  }, []);
+  }, [featured.length]);
 
   const prevContent = useCallback(() => {
     setIsAutoRotating(false);
     setActiveIndex((prev) => (prev - 1 + featured.length) % featured.length);
     setTimeout(() => setIsAutoRotating(true), 8000);
-  }, []);
+  }, [featured.length]);
 
   const selectContent = useCallback((index: number) => {
     setIsAutoRotating(false);
@@ -295,11 +264,10 @@ const FeaturedContent = ({ featured }: FeaturedContentProps) => {
               <button
                 key={index}
                 onClick={() => selectContent(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                  index === activeIndex
-                    ? "bg-pink-500 shadow-sm shadow-pink-500/50"
-                    : "bg-pink-300/20 hover:bg-pink-300/40"
-                }`}
+                className={`w-2 h-2 rounded-full transition-all duration-200 ${index === activeIndex
+                  ? "bg-pink-500 shadow-sm shadow-pink-500/50"
+                  : "bg-pink-300/20 hover:bg-pink-300/40"
+                  }`}
               />
             ))}
           </div>

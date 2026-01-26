@@ -36,7 +36,7 @@ export default function GameClient({
     }, 6000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, featuredGames.length]);
 
   const nextGame = () => {
     setSelectedGame((prev) => (prev + 1) % featuredGames.length);
@@ -296,11 +296,10 @@ export default function GameClient({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
                   onClick={() => selectGame(index)}
-                  className={`relative flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:h-[120px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 snap-center ${
-                    selectedGame === index
+                  className={`relative flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:h-[120px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 snap-center ${selectedGame === index
                       ? "border-pink-500 shadow-lg shadow-pink-500/25 scale-105"
                       : "border-gray-700/50 hover:border-pink-500/50 hover:scale-102"
-                  }`}
+                    }`}
                 >
                   <Image
                     src={prettySafeImage(game.coverImgMediaKey)}
@@ -310,29 +309,26 @@ export default function GameClient({
                   />
 
                   <div
-                    className={`absolute inset-0 transition-all duration-300 ${
-                      selectedGame === index
+                    className={`absolute inset-0 transition-all duration-300 ${selectedGame === index
                         ? "bg-pink-500/20"
                         : "bg-black/40 hover:bg-black/20"
-                    }`}
+                      }`}
                   ></div>
 
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
                     <div
-                      className={`mb-1 transition-all duration-300 ${
-                        selectedGame === index
+                      className={`mb-1 transition-all duration-300 ${selectedGame === index
                           ? "text-pink-300 scale-110"
                           : "text-white/80"
-                      }`}
+                        }`}
                     >
                       <Gamepad2 className="w-6 h-6" />
                     </div>
                     <span
-                      className={`text-xs font-semibold text-center leading-tight ${
-                        selectedGame === index
+                      className={`text-xs font-semibold text-center leading-tight ${selectedGame === index
                           ? "text-pink-300"
                           : "text-white/80"
-                      }`}
+                        }`}
                     >
                       {game.title}
                     </span>
@@ -401,11 +397,10 @@ export default function GameClient({
             <button
               key={index}
               onClick={() => selectGame(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                selectedGame === index
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${selectedGame === index
                   ? "bg-pink-500 scale-125"
                   : "bg-gray-600 hover:bg-gray-500"
-              }`}
+                }`}
             />
           ))}
         </motion.div>

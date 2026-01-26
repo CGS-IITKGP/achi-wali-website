@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Mail, Github, Linkedin } from "lucide-react";
 import { prettySafeImage } from "../utils/pretty";
 import { useState } from "react";
@@ -130,10 +131,11 @@ export default function TeamCard({ member, index }: TeamCardProps) {
             <div className="absolute inset-0 rounded-full border-2 border-pink-500/30 animate-ping"></div>
           </div>
 
-          <img
+          <Image
             src={prettySafeImage(member.profileImgMediaKey)}
             alt={member.name}
-            className="relative z-10 w-full h-full rounded-full border-4 border-pink-500/20 group-hover:border-pink-500/70 transition-all duration-700 object-cover group-hover:scale-110"
+            fill
+            className="relative z-10 rounded-full border-4 border-pink-500/20 group-hover:border-pink-500/70 transition-all duration-700 object-cover group-hover:scale-110"
           />
         </div>
 

@@ -3,13 +3,17 @@ export const dynamic = "force-dynamic";
 import React from "react";
 import { ArrowRight, Calendar, Clock, Star } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "../components/navbar";
 import Footer from "../footer";
 import BlogList from "./components/BlogList";
 import { Righteous, Roboto } from "next/font/google";
 import { IBlogOfList } from "../types/domain.types";
 import api from "../axiosApi";
-import { prettyDate, prettySafeImage, prettyShortName } from "../utils/pretty";
+import {
+  prettyDate,
+  prettySafeImage,
+} from "../utils/pretty";
 
 const righteousFont = Righteous({ weight: "400", subsets: ["latin"] });
 const robotoFont = Roboto({
@@ -129,10 +133,12 @@ export default async function Blog() {
                   <Link href={`/blog/${blog.slug}`}>
                     <div className="bg-gray-900/50 backdrop-blur-xl rounded-2xl border border-gray-800 overflow-hidden hover:border-pink-500/50 transition-all duration-500 h-full">
                       <div className="relative h-64 overflow-hidden">
-                        <img
+                        <Image
                           src={prettySafeImage(blog.coverImgMediaKey)}
                           alt={blog.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-700"
+                          unoptimized
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                         <div className="absolute top-4 left-4">
@@ -182,7 +188,7 @@ export default async function Blog() {
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
                               <span className="text-white font-semibold">
-                                {prettyShortName(blog.author.name)}
+                                {blog.author.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div>
