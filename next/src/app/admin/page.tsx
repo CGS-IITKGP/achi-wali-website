@@ -2,6 +2,7 @@
 
 import { Activity, ChevronRight, Edit2, LogOut, Star } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
   EFeaturedType,
@@ -27,22 +28,22 @@ const navBarItems: {
   label: string;
   icon: typeof LogOut;
 }[] = [
-  {
-    id: "server_health",
-    label: "Server Health",
-    icon: Activity,
-  },
-  {
-    id: "featured_content",
-    label: "Featured Content",
-    icon: Star,
-  },
-  {
-    id: "user_management",
-    label: "User Management",
-    icon: Activity,
-  },
-];
+    {
+      id: "server_health",
+      label: "Server Health",
+      icon: Activity,
+    },
+    {
+      id: "featured_content",
+      label: "Featured Content",
+      icon: Star,
+    },
+    {
+      id: "user_management",
+      label: "User Management",
+      icon: Activity,
+    },
+  ];
 
 const AdminPanel = () => {
   const [activeSectionId, setActiveSectionId] =
@@ -417,6 +418,7 @@ const AdminPanel = () => {
 
   useEffect(() => {
     setUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.page, pagination.limit]);
 
   useEffect(() => {
@@ -424,6 +426,7 @@ const AdminPanel = () => {
     setFeatured();
     setContent();
     setUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const renderServerHealthSection = () => {
@@ -637,20 +640,18 @@ const AdminPanel = () => {
                             </div>
                             <div className="flex gap-3 items-center">
                               <p
-                                className={`text-sm font-semibold ${
-                                  designationStyles[user.designation]
-                                }`}
+                                className={`text-sm font-semibold ${designationStyles[user.designation]
+                                  }`}
                               >
                                 {!user.roles.includes(EUserRole.ROOT) &&
-                                !user.roles.includes(EUserRole.ADMIN) &&
-                                user.roles.includes(EUserRole.MEMBER)
+                                  !user.roles.includes(EUserRole.ADMIN) &&
+                                  user.roles.includes(EUserRole.MEMBER)
                                   ? user.designation
                                   : null}
                               </p>
                               <p
-                                className={`px-3 py-1 text-xs font-semibold rounded-md border ${
-                                  roleStyles[prettyHighestRole(user.roles)]
-                                }`}
+                                className={`px-3 py-1 text-xs font-semibold rounded-md border ${roleStyles[prettyHighestRole(user.roles)]
+                                  }`}
                               >
                                 {prettyHighestRole(user.roles)}
                               </p>
@@ -688,11 +689,10 @@ const AdminPanel = () => {
                   <button
                     key={page}
                     onClick={() => setPagination({ ...pagination, page })}
-                    className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                      pagination.page === page
+                    className={`px-4 py-2 rounded-lg font-medium transition-all ${pagination.page === page
                         ? "bg-gradient-to-r from-pink-500 via-purple-500 to-purple-600 text-white shadow-lg shadow-cyan-500/25"
                         : "bg-slate-800/50 hover:bg-slate-800 border border-white/10 text-slate-300 hover:text-white"
-                    }`}
+                      }`}
                   >
                     {page}
                   </button>
@@ -746,7 +746,7 @@ const AdminPanel = () => {
         <div className="flex h-full">
           <div className="w-72 h-full bg-slate-900/50 backdrop-blur-xl border-r border-white/5 flex flex-col">
             <div className="p-8 border-b border-white/5 flex gap-2">
-              <img src="/logo.png" className="w-12 h-12" />
+              <Image src="/logo.png" width={48} height={48} alt="Logo" className="w-12 h-12" />
               <div>
                 <p className="text-xl font-bold">Admin Panel</p>
                 <p className="text-slate-400 text-xs">
@@ -763,11 +763,10 @@ const AdminPanel = () => {
                   <button
                     key={item.id}
                     onClick={() => setActiveSectionId(item.id)}
-                    className={`w-full group flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
-                      isActive
+                    className={`w-full group flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${isActive
                         ? "bg-gradient-to-r from-pink-500 via-purple-500 to-purple-600 text-white shadow-lg shadow-fuchsia-300/20"
                         : "hover:bg-white/5 text-slate-400 hover:text-white hover:cursor-pointer"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center space-x-3">
                       <Icon
@@ -905,15 +904,13 @@ const AdminPanel = () => {
                           key={role}
                           type="button"
                           onClick={handleClick}
-                          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                            isSelected
+                          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${isSelected
                               ? "bg-gradient-to-r from-pink-500 via-purple-500 to-purple-600 text-white"
                               : "bg-white/20 text-white"
-                          } ${
-                            !isEditable
+                            } ${!isEditable
                               ? "opacity-50 cursor-default"
                               : "hover:cursor-pointer"
-                          }`}
+                            }`}
                           disabled={!isEditable}
                         >
                           {role}
