@@ -25,12 +25,29 @@ const api = async (
     data.query = data.query ?? {};
 
     try {
-        const response = await axiosInstance({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await axiosInstance<any>({
             method,
             url,
             ...(Object.keys(data.query).length ? { params: data.query } : {}),
             ...(method !== "GET" ? { data: data.body } : {}),
         });
+
+        if (response.data.action === undefined) {
+            if (response.status === 405) {
+                return {
+                    action: false,
+                    message: "Method not Implemented.",
+                    statusCode: response.status
+                } as IResponse;
+            }
+
+            return {
+                action: false,
+                message: "There's always an edge case.",
+                statusCode: response.status
+            } as IResponse;
+        }
 
         return {
             ...response.data,
