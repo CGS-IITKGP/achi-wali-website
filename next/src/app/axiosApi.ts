@@ -33,19 +33,26 @@ const api = async (
             ...(method !== "GET" ? { data: data.body } : {}),
         });
 
+        if (!response.data ||
+            typeof response.data !== "object" ||
+            !("action" in response.data)
+        ) {
+            throw Error("Unexpected API response format.");
+        }
+
         if (response.data.action === undefined) {
             if (response.status === 405) {
                 return {
                     action: false,
-                    message: "Method not Implemented.",
-                    statusCode: response.status
+                    message: "Method not Allowed.",
+                    statusCode: response.status,
                 } as IResponse;
             }
 
             return {
                 action: false,
-                message: "There's always an edge case.",
-                statusCode: response.status
+                message: "Unexpected API response format.",
+                statusCode: response.status,
             } as IResponse;
         }
 
