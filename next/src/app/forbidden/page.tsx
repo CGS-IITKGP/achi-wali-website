@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Footer from "../footer";
 import Navbar from "../components/navbar";
 import Link from "next/link";
@@ -17,6 +17,14 @@ const paragraph_font = Roboto({
 export default function ForbiddenPage() {
   const router = useRouter();
   const { refreshUser } = useAuth();
+  const [particles, setParticles] = useState<
+    {
+      left: number;
+      top: number;
+      duration: number;
+      delay: number;
+    }[]
+  >([]);
 
   const handleSignOut = async () => {
     const apiResponse = await api("POST", "/auth/sign-out");
@@ -25,17 +33,33 @@ export default function ForbiddenPage() {
       toast.error("Server Error");
     } else if (apiResponse.action === false) {
       toast.error(apiResponse.message);
-      console.log(apiResponse);
     } else {
       toast.success("Signed out");
       refreshUser();
       router.push("/auth/sign-in");
     }
   };
+
+  // Note: Small hack to work around old design decision.
+  useEffect(() => {
+    api("POST", "/auth/refresh-session");
+  }, []);
+
+  useEffect(() => {
+    const generated = [...Array(50)].map(() => ({
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      duration: Math.random() * 5 + 3,
+      delay: Math.random() * 3,
+    }));
+
+    setParticles(generated);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-tr from-neutral-900 via-gray-950 to-black relative overflow-hidden">
       <div className="particles-container absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(50)].map((_, i) => (
+        {particles.map((_, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-pink-400 rounded-full opacity-30 animate-pulse"

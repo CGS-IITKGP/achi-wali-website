@@ -33,7 +33,7 @@ const BlogSchema = new Schema<IBlog>({
         ref: 'User',
         required: true,
     }],
-    coverImgMediaKey: {
+    coverImgUrl: {
         type: Schema.Types.String,
         default: null,
     },

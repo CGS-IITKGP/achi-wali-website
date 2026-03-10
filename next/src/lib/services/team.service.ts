@@ -188,7 +188,7 @@ const update: ServiceSignature<
     await teamRepository.updateById(data._id, {
         name: data.name,
         description: data.description,
-        coverImageMediaKey: data.coverImageMediaKey,
+        coverImageMediaKey: data.coverImageUrl,
     });
 
     return {

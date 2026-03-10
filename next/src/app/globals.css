@@ -27,7 +27,7 @@ html {
 
 body {
   color: #ffffff;
-  font-family: 'Inter', 'Segoe UI', sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   overflow-x: hidden;
 }
 
@@ -53,8 +53,44 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.glass-without-border {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  /* hack to force browser to create a separate layer so backdrop-layer can render */
+  will-change: backdrop-filter;
+}
+
+.form-input {
+  @apply w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white
+  focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500/50;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(236, 72, 153, 0.4);
+  border-radius: 0px;
+}
+
+@keyframes uploadbar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) scale(1);
   }
   33% {
@@ -84,7 +120,8 @@ body {
 }
 
 @keyframes footer-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.15;
   }
@@ -95,7 +132,8 @@ body {
 }
 
 @keyframes glow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
   }
   50% {
@@ -104,7 +142,8 @@ body {
 }
 
 @keyframes pulse-pink {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

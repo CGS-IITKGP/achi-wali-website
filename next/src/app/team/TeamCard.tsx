@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Mail, Github, Linkedin } from "lucide-react";
 import { prettySafeImage } from "../utils/pretty";
-import { useState } from "react";
+import { useState as useEffect } from "react";
 
 interface TeamMember {
   _id: string;
@@ -13,7 +13,7 @@ interface TeamMember {
     text: string;
     url: string;
   }[];
-  profileImgMediaKey: string | null;
+  profileImgUrl: string | null;
 }
 
 interface TeamCardProps {
@@ -21,13 +21,15 @@ interface TeamCardProps {
   index: number;
 }
 
-export default function TeamCard({ member, index }: TeamCardProps) {
-  const [isGithub, setIsGithub] = useState(false);
-  const [isLinkedin, setIsLinkedin] = useState(false);
-  const [isMail, setIsMail] = useState(false);
-  const [githubUrl, setGithubUrl] = useState("");
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-  const [mailUrl, setMailUrl] = useState("");
+export default function MemberCard({ member, index }: TeamCardProps) {
+  const [isGithub, setIsGithub] = useEffect(false);
+  const [isLinkedin, setIsLinkedin] = useEffect(false);
+  const [isMail, setIsMail] = useEffect(false);
+
+  const [githubUrl, setGithubUrl] = useEffect("");
+  const [linkedinUrl, setLinkedinUrl] = useEffect("");
+  const [mailUrl, setMailUrl] = useEffect("");
+
   const checkLinks = () => {
     member.links.forEach((link) => {
       const lowerText = link.text?.toLowerCase();
@@ -39,16 +41,21 @@ export default function TeamCard({ member, index }: TeamCardProps) {
         setIsLinkedin(true);
         setLinkedinUrl(link.url);
       }
-      if (lowerText?.includes("mail") || lowerText?.includes("email")) {
+      if (
+        lowerText?.includes("mail") ||
+        lowerText?.includes("email") ||
+        lowerText?.includes("gmail")
+      ) {
         setIsMail(true);
         setMailUrl(link.url);
       }
     });
   };
 
-  useState(() => {
+  useEffect(() => {
     checkLinks();
   });
+
   return (
     <div
       className="group relative bg-black/30 rounded-2xl p-4 sm:p-5 lg:p-6 border border-pink-500/20 backdrop-blur-md hover:border-pink-500/50 transition-transform duration-700 hover:-translate-y-2 hover:shadow-[0_15px_50px_rgba(236,72,153,0.25)] animate-slide-up will-change-transform perspective-1000 hover:z-10 transform-gpu"
@@ -132,7 +139,7 @@ export default function TeamCard({ member, index }: TeamCardProps) {
           </div>
 
           <Image
-            src={prettySafeImage(member.profileImgMediaKey)}
+            src={prettySafeImage(member.profileImgUrl)}
             alt={member.name}
             fill
             className="relative z-10 rounded-full border-4 border-pink-500/20 group-hover:border-pink-500/70 transition-all duration-700 object-cover group-hover:scale-110"
@@ -141,7 +148,7 @@ export default function TeamCard({ member, index }: TeamCardProps) {
 
         {/* Info with staggered animations */}
         <div className="text-center mb-4 sm:mb-5 lg:mb-6">
-          <h3 className="text-base sm:text-md lg:text-lg font-semibold text-white mb-1 sm:mb-2 group-hover:text-pink-400 transition-all duration-500 group-hover:scale-105 break-words">
+          <h3 className="text-base sm:text-sm md:text-md lg:text-lg font-semibold text-white mb-1 sm:mb-2 group-hover:text-pink-400 transition-all duration-500 group-hover:scale-105 break-words">
             {member.name}
           </h3>
           <p className="text-gray-400 text-xs sm:text-sm uppercase tracking-wider transition-all duration-500 group-hover:tracking-widest group-hover:text-pink-300/80 line-clamp-1">
@@ -184,6 +191,9 @@ export default function TeamCard({ member, index }: TeamCardProps) {
               <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-pink-500/40 translate-y-full group-hover/icon:translate-y-0 transition-transform duration-300 ease-out"></div>
               <Mail className="relative z-10 w-5 h-5 text-gray-400 group-hover/icon:text-white transition-colors duration-300 group-hover/icon:scale-110" />
             </a>
+          ) : null}
+          {!isLinkedin && !isGithub && !isMail ? (
+            <div className="relative w-12 h-12" />
           ) : null}
         </div>
       </div>

@@ -2,17 +2,12 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  Github,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, Github } from "lucide-react";
 import Image from "next/image";
 import { IRecentFeaturedContent } from "./types/domain.types";
 import { prettySafeImage } from "./utils/pretty";
 import Link from "next/link";
-import { CometCard } from "@/components/ui/comet-card";
+import { CometCard } from "@/app/components/ui/comet-card";
 
 const AnimatedBackground = React.memo(() => {
   return (
@@ -28,8 +23,9 @@ const AnimatedBackground = React.memo(() => {
             height: `${120 + i * 30}px`,
             left: `${20 + i * 15}%`,
             top: `${10 + i * 12}%`,
-            background: `radial-gradient(circle, ${["#ff69b4", "#ff1493", "#c71585"][i % 3]
-              }40, transparent)`,
+            background: `radial-gradient(circle, ${
+              ["#ff69b4", "#ff1493", "#c71585"][i % 3]
+            }40, transparent)`,
             animationDelay: `${i * 3}s`,
             animationDuration: `${20 + i * 5}s`,
             filter: "blur(2px)",
@@ -69,7 +65,7 @@ const ContentCard = React.memo<{
       opacity: distance === 0 ? 1 : distance === 1 ? 0.7 : 0.4,
       scale: distance === 0 ? 1 : distance === 1 ? 0.85 : 0.7,
     }),
-    [distance]
+    [distance],
   );
 
   return (
@@ -102,7 +98,7 @@ const ContentCard = React.memo<{
             <div className="relative h-48 w-full p-2">
               <div className="relative h-full w-full rounded-xl overflow-hidden bg-white/5">
                 <Image
-                  src={prettySafeImage(content.coverImgMediaKey)}
+                  src={prettySafeImage(content.coverImgUrl)}
                   alt={content.title}
                   fill
                   className="object-cover"
@@ -264,10 +260,11 @@ const FeaturedContent = ({ featured }: FeaturedContentProps) => {
               <button
                 key={index}
                 onClick={() => selectContent(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-200 ${index === activeIndex
-                  ? "bg-pink-500 shadow-sm shadow-pink-500/50"
-                  : "bg-pink-300/20 hover:bg-pink-300/40"
-                  }`}
+                className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                  index === activeIndex
+                    ? "bg-pink-500 shadow-sm shadow-pink-500/50"
+                    : "bg-pink-300/20 hover:bg-pink-300/40"
+                }`}
               />
             ))}
           </div>

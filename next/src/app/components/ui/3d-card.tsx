@@ -1,3 +1,6 @@
+// I just moved the file. Contents were not changed.
+// Original author: @shrehanrajsingh.
+
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -50,7 +53,7 @@ export const CardContainer = ({
       <div
         className={cn(
           "py-20 flex items-center justify-center",
-          containerClassName
+          containerClassName,
         )}
         style={{
           perspective: "1000px",
@@ -63,7 +66,7 @@ export const CardContainer = ({
           onMouseLeave={handleMouseLeave}
           className={cn(
             "flex items-center justify-center relative transition-all duration-200 ease-linear",
-            className
+            className,
           )}
           style={{
             transformStyle: "preserve-3d",
@@ -87,7 +90,7 @@ export const CardBody = ({
     <div
       className={cn(
         "h-96 w-96 [transform-style:preserve-3d]  [&>*]:[transform-style:preserve-3d]",
-        className
+        className,
       )}
     >
       {children}
@@ -129,7 +132,15 @@ export const CardItem = ({
     } else {
       ref.current.style.transform = `translateX(0px) translateY(0px) translateZ(0px) rotateX(0deg) rotateY(0deg) rotateZ(0deg)`;
     }
-  }, [isMouseEntered, translateX, translateY, translateZ, rotateX, rotateY, rotateZ]);
+  }, [
+    isMouseEntered,
+    translateX,
+    translateY,
+    translateZ,
+    rotateX,
+    rotateY,
+    rotateZ,
+  ]);
 
   return (
     <Tag

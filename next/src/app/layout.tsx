@@ -30,13 +30,12 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="shortcut icon" href={Logo.src} type="image/x-icon" />
+        <title>Computer Graphics Society</title>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
         <Toaster />
       </body>
     </html>

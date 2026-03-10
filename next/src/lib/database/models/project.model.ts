@@ -44,7 +44,7 @@ const ProjectSchema = new Schema<IProject>({
             trim: true,
         }
     }],
-    coverImgMediaKey: {
+    coverImgUrl: {
         type: Schema.Types.String,
         default: null,
     },

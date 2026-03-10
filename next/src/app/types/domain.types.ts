@@ -14,11 +14,16 @@ export enum EUserDesignation {
   ADVISOR = "ADVISOR",
 }
 
+export interface Links {
+  text: string;
+  url: string;
+}
+
 export interface IUser {
   _id: string;
   name: string;
   email: string;
-  profileImgMediaKey: string | null;
+  profileImgUrl: string | null;
   phoneNumber: string | null;
   links: {
     text: string;
@@ -48,7 +53,7 @@ export interface IBlog {
     _id: string;
     name: string;
   }[];
-  coverImgMediaKey: string | null;
+  coverImgUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -81,7 +86,7 @@ export interface IProject {
     text: string;
     url: string;
   }[];
-  coverImgMediaKey: string | null;
+  coverImgUrl: string | null;
   media: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -91,19 +96,19 @@ export type IRecentFeaturedContent = {
   _id: string;
   type: "BLOG" | "GAME" | "GRAPHICS" | "RND";
   title: string;
-  coverImgMediaKey: string | null;
+  coverImgUrl: string | null;
   tags: string[];
 } & (
-  | {
+    | {
       type: "BLOG";
       readUrl: string | null;
     }
-  | {
+    | {
       type: "GAME" | "GRAPHICS" | "RND";
       liveDemoLink: string | null;
       githubLink: string | null;
     }
-);
+  );
 
 export type IMedia = {
   _id: string;
@@ -115,6 +120,7 @@ export type IMediaSignedToken = {
   signature: string;
   timestamp: string;
   folder: string;
+  publicId: string;
   cloudName: string;
   apiKey: string;
 };
@@ -130,10 +136,10 @@ export type ITeamExportable = {
       text: string;
       url: string;
     }[];
-    profileImgMediaKey: string | null;
+    profileImgUrl: string | null;
     designation: string;
   }[];
-  coverImageMediaKey: string | null;
+  coverImageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -164,7 +170,7 @@ export type IPaginatedUsers = {
     _id: string;
     name: string;
     email: string;
-    profileImgMediaKey: string | null;
+    profileImgUrl: string | null;
     roles: EUserRole[];
     designation: EUserDesignation;
     teamId: string | null;

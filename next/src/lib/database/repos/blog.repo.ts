@@ -8,10 +8,10 @@ import { ClientSession, FilterQuery } from "mongoose";
 class BlogRepository extends GenericRepository<
     IBlog,
     Pick<IBlog, "title" | "slug" | "content" | "tags" | "author"
-        | "collaborators" | "coverImgMediaKey"
+        | "collaborators" | "coverImgUrl"
     >,
     Pick<IBlog, "title" | "slug" | "content" | "tags" | "collaborators"
-        | "coverImgMediaKey"
+        | "coverImgUrl"
     >
 > {
     constructor() {

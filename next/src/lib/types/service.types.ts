@@ -50,6 +50,8 @@ export namespace SDIn {
             password: string,
         }
 
+        export type RefreshSession = EmptyObject;
+
         export type GoogleOAuth = {
             code: string;
             scope: string;
@@ -109,7 +111,7 @@ export namespace SDIn {
             _id: Types.ObjectId,
             name?: string,
             description?: string,
-            coverImageMediaKey?: string,
+            coverImageUrl?: string,
         }
 
         export type EditMembers = {
@@ -145,7 +147,7 @@ export namespace SDIn {
                 text: string;
                 url: string;
             }[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
         };
 
         export type Update = {
@@ -159,7 +161,7 @@ export namespace SDIn {
                 text: string;
                 url: string;
             }[];
-            coverImgMediaKey?: string | null;
+            coverImgUrl?: string | null;
             media?: Types.ObjectId[];
         };
 
@@ -188,7 +190,7 @@ export namespace SDIn {
             slug: string;
             content: string;
             tags: string[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
         };
 
         export type Update = {
@@ -198,7 +200,7 @@ export namespace SDIn {
             content?: string;
             tags?: string[];
             collaborators?: Types.ObjectId[];
-            coverImgMediaKey?: string | null;
+            coverImgUrl?: string | null;
         };
 
         export type Remove = {
@@ -232,10 +234,7 @@ export namespace SDIn {
 
     export namespace Media {
         export type Get = EmptyObject;
-
-        export type Sign = {
-            publicId: string;
-        }
+        export type Sign = EmptyObject;
 
         export type Create = {
             publicId: string;
@@ -275,7 +274,7 @@ export namespace SDIn {
                 text: string,
                 url: string,
             }[],
-            profileImgMediaKey?: string,
+            profileImgUrl?: string,
         };
 
         export type UpdateTeam = {
@@ -301,7 +300,7 @@ export namespace SDOut {
             _id: string;
             name: string;
             email: string;
-            profileImgMediaKey: string | null;
+            profileImgUrl: string | null;
             phoneNumber: string | null;
             links: {
                 text: string;
@@ -318,6 +317,10 @@ export namespace SDOut {
         }
 
         export type SignIn = {
+            token: string;
+        }
+
+        export type RefreshSession = {
             token: string;
         }
 
@@ -356,9 +359,9 @@ export namespace SDOut {
                     text: string;
                     url: string;
                 }[];
-                profileImgMediaKey: string | null;
+                profileImgUrl: string | null;
             }[];
-            coverImageMediaKey: string | null;
+            coverImageUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
         }
@@ -395,7 +398,7 @@ export namespace SDOut {
                 text: string;
                 url: string;
             }[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             media: string[];
             createdAt: Date;
             updatedAt: Date;
@@ -428,7 +431,7 @@ export namespace SDOut {
                 _id: string;
                 name: string;
             }[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -449,7 +452,7 @@ export namespace SDOut {
                 _id: string;
                 name: string;
             }[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
         };
@@ -480,7 +483,7 @@ export namespace SDOut {
                 _id: string;
                 name: string;
             }[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -503,7 +506,7 @@ export namespace SDOut {
                 text: string;
                 url: string;
             }[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -512,7 +515,7 @@ export namespace SDOut {
             _id: string;
             type: "BLOG" | "GAME" | "GRAPHICS" | "RND",
             title: string;
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             tags: string[];
         } & ({
             type: "BLOG",
@@ -546,6 +549,7 @@ export namespace SDOut {
             signature: string;
             timestamp: string;
             folder: string;
+            publicId: string;
             cloudName: string;
             apiKey: string;
         }
@@ -562,7 +566,7 @@ export namespace SDOut {
                 _id: string;
                 name: string;
                 email: string;
-                profileImgMediaKey: string | null;
+                profileImgUrl: string | null;
                 roles: EUserRole[];
                 designation: string;
                 teamId: string | null;
@@ -577,7 +581,7 @@ export namespace SDOut {
             _id: string;
             name: string;
             email: string;
-            profileImgMediaKey: string | null;
+            profileImgUrl: string | null;
             phoneNumber: string | null;
             links: {
                 text: string;

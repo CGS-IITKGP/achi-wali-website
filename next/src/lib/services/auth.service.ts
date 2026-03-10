@@ -109,6 +109,30 @@ const signIn: ServiceSignature<
     };
 };
 
+const refreshSession: ServiceSignature<
+    SDIn.Auth.RefreshSession,
+    SDOut.Auth.RefreshSession,
+    true
+> = async ({ }, session) => {
+    const user = await userRepository.findById(session.userId);
+
+    if (!user) {
+        throw new AppError("Session exists, but user not found.", { session });
+    }
+
+    const token = await generateJWToken({
+        _id: user._id.toString(),
+        roles: user.roles,
+    });
+
+    return {
+        success: true,
+        data: {
+            token,
+        },
+    };
+};
+
 const __googleOAuthClient = new OAuth2Client(
     getEnvVariable("GOOGLE_OAUTH_CLIENT_ID", true)
 );
@@ -228,8 +252,8 @@ const googleOAuth: ServiceSignature<
 const signOut: ServiceSignature<
     SDIn.Auth.SignOut,
     SDOut.Auth.SignOut,
-    true
-> = async ({ }, { }) => {
+    false
+> = async ({ }) => {
     return {
         success: true,
         data: {
@@ -469,6 +493,7 @@ const extractSession = async (request: Request): Promise<ISession | null> => {
 const authServices = {
     me,
     signIn,
+    refreshSession,
     googleOAuth,
     signOut,
     signUp,

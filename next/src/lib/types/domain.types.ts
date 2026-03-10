@@ -32,7 +32,7 @@ export interface IUser {
     name: string;
     email: string;
     passwordHash: string | null;
-    profileImgMediaKey: string | null;
+    profileImgUrl: string | null;
     phoneNumber: string | null;
     links: {
         text: string;
@@ -50,7 +50,7 @@ export interface ITeam {
     name: string;
     description: string;
     members: Types.ObjectId[];
-    coverImageMediaKey: string | null;
+    coverImageUrl: string | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -63,7 +63,7 @@ export interface ITeamExportable extends Omit<ITeam, "members"> {
             text: string;
             url: string;
         }[];
-        profileImgMediaKey: string | null;
+        profileImgUrl: string | null;
         designation: EUserDesignation;
     }[];
 }
@@ -90,7 +90,7 @@ export interface IProject {
         text: string;
         url: string;
     }[];
-    coverImgMediaKey: string | null;
+    coverImgUrl: string | null;
     media: Types.ObjectId[];
     createdAt: Date;
     updatedAt: Date;
@@ -115,7 +115,7 @@ export interface IBlog {
     tags: string[];
     author: Types.ObjectId;
     collaborators: Types.ObjectId[];
-    coverImgMediaKey: string | null;
+    coverImgUrl: string | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -171,7 +171,7 @@ export type IFeaturedHighlightExportable = ({
     _id: Types.ObjectId;
     type: "BLOG" | "GAME" | "GRAPHICS" | "RND",
     title: string;
-    coverImgMediaKey: string | null;
+    coverImgUrl: string | null;
     tags: string[];
 } & ({
     type: "BLOG",

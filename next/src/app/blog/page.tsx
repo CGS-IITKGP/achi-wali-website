@@ -10,10 +10,7 @@ import BlogList from "./components/BlogList";
 import { Righteous, Roboto } from "next/font/google";
 import { IBlogOfList } from "../types/domain.types";
 import api from "../axiosApi";
-import {
-  prettyDate,
-  prettySafeImage,
-} from "../utils/pretty";
+import { prettyDate, prettySafeImage } from "../utils/pretty";
 
 const righteousFont = Righteous({ weight: "400", subsets: ["latin"] });
 const robotoFont = Roboto({
@@ -134,7 +131,7 @@ export default async function Blog() {
                     <div className="bg-gray-900/50 backdrop-blur-xl rounded-2xl border border-gray-800 overflow-hidden hover:border-pink-500/50 transition-all duration-500 h-full">
                       <div className="relative h-64 overflow-hidden">
                         <Image
-                          src={prettySafeImage(blog.coverImgMediaKey)}
+                          src={prettySafeImage(blog.coverImgUrl)}
                           alt={blog.title}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-700"
