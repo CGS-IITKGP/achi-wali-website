@@ -5,5 +5,5 @@ export * from "./service.types";
 export * from "./api.types";
 
 export type EmptyObject = {
-    [key: string]: never;
+    [key: string]: unknown;
 }

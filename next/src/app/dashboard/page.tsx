@@ -1,133 +1,175 @@
 "use client";
 
-import { useEffect, useState, Fragment } from "react";
+import { JSX, useEffect, useRef, useState } from "react";
+import { useAuth } from "../context/authContext";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Righteous, Roboto } from "next/font/google";
 import api from "../axiosApi";
 import toast from "react-hot-toast";
-import { useAuth } from "../context/authContext";
-import { useRouter } from "next/navigation";
-import {
-  IBlogOfList,
-  IMedia,
-  IMediaSignedToken,
-  IProject,
-} from "../types/domain.types";
-import {
-  prettyDate,
-  prettyDescription,
-  prettySafeImage,
-} from "../utils/pretty";
-import { Listbox, Menu, Transition } from "@headlessui/react"; // Added Menu, Transition
-import Link from "next/link";
+import CGSLogo from "../assets/logo.png";
+import { LucideCalendar, LucideClock, Pencil } from "lucide-react";
+import { prettySafeImage } from "../utils/pretty";
+import { uploadToCloudinary } from "../utils/cloudinary";
+import { X, Trash2, Copy } from "lucide-react";
+import { DashboardProvider, useDashboard } from "../context/dashboardContext";
+import { Links } from "../types/domain.types";
+import { Listbox } from "@headlessui/react";
 
-const heading_font = Righteous({
+type AllSections = "BLOGS" | "PROJECTS" | "PROFILE" | "ASSETS";
+
+const headingFont = Righteous({
   subsets: ["latin"],
   weight: "400",
 });
 
-const paragraph_font = Roboto({
+const paragraphFont = Roboto({
   subsets: ["latin"],
-  // Note: Roboto font needs weight specified. Assuming 400.
-  // If you get a warning, add: weight: "400"
   weight: "400",
 });
 
-type ActiveSection =
-  | "blog"
-  | "projects"
-  | "profile"
-  | "assets"
-  | "settings";
+export const fonts = {
+  heading: headingFont,
+  paragraph: paragraphFont,
+} as const;
 
-const ALL_PERSONAL_LINK_TYPES = ["mail", "linkedin", "github"];
+const Dashboard = () => {
+  const [activeSection, setActiveSection] = useState<AllSections>("PROFILE");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] =
+    useState<boolean>(false);
 
-export default function Dashboard() {
-  const [activeSection, setActiveSection] = useState<ActiveSection>("profile");
-  const [showNewPostModal, setShowNewPostModal] = useState(false);
-  const [showBlogUpdateModal, setShowBlogUpdateModal] = useState<{
-    show: boolean;
-    id: string | null;
-  }>({
-    show: false,
-    id: null,
-  });
-  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
-  const [showProjectUpdateModal, setShowProjectUpdateModal] = useState<{
-    show: boolean;
-    id: string | null;
-  }>({
-    show: false,
-    id: null,
-  });
-  const [showNewAssetModal, setShowNewAssetModal] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isEditingLinks, setIsEditingLinks] = useState(false);
-  const [newPostData, setNewPostData] = useState({
-    title: "",
-    slug: "",
-    coverImgMediaKey: "",
-    content: "",
-    tags: "",
-  });
-  const [blogUpdate, setBlogUpdate] = useState<{
-    coverImgMediaKey: string;
-  }>({
-    coverImgMediaKey: "",
-  });
-  const [newProjectData, setNewProjectData] = useState<{
-    name: string;
-    portfolio: "GAME" | "GRAPHICS" | "RND";
-    tags: string;
-    coverImgMediaKey: string;
-    description: string;
-    links: {
-      text: string;
-      url: string;
-    }[];
-  }>({
-    name: "",
-    portfolio: "GAME",
-    tags: "",
-    coverImgMediaKey: "",
-    description: "",
-    links: [
-      { text: "live-demo", url: "" },
-      { text: "github", url: "" },
-    ],
-  });
-  const [projectUpdate, setProjectUpdate] = useState<{
-    coverImgMediaKey: string;
-  }>({
-    coverImgMediaKey: "",
-  });
-  const [newAssetData, setNewAssetData] = useState<{
-    name: string;
-    file: File | null;
-  }>({
-    name: "",
-    file: null,
-  });
-  const [userLinks, setUserLinks] = useState<{ text: string; url: string }[]>(
-    []
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case "PROFILE":
+        return <ProfileSection />;
+      case "BLOGS":
+        return <BlogsSection />;
+      case "PROJECTS":
+        return <ProjectsSection />;
+      case "ASSETS":
+        return <AssetsSection />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      <DashboardProvider>
+        <div className="min-h-screen bg-gradient-to-tr from-neutral-900 via-gray-950 to-black">
+          <div className="flex h-screen">
+            <SideBar
+              activeSection={activeSection}
+              onSectionChange={(section) => {
+                setActiveSection(section);
+              }}
+              isMobileSidebarOpen={isMobileSidebarOpen}
+              onCloseMobileSidebar={() => setIsMobileSidebarOpen(false)}
+            />
+
+            <div className="flex-1 flex flex-col">
+              <TopBar
+                activeSection={activeSection}
+                isMobileSidebarOpen={isMobileSidebarOpen}
+                onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+              />
+              <div className="flex-1 overflow-y-auto">
+                {renderActiveSection()}
+              </div>
+            </div>
+          </div>
+        </div>
+      </DashboardProvider>
+    </>
   );
+};
 
-  const [blogs, setBlogs] = useState<IBlogOfList[]>([]);
-  const [projects, setProjects] = useState<IProject[]>([]);
-  const [assets, setAssets] = useState<IMedia[]>([]);
-  const [statistics, setStatistics] = useState<{
-    countBlogs: number;
-    countProjects: number;
-    countAssets: number;
-  }>({
-    countBlogs: -1,
-    countProjects: -1,
-    countAssets: -1,
-  });
+export default Dashboard;
 
-  const menuItems = [
+interface TopBarProps {
+  activeSection: AllSections;
+  isMobileSidebarOpen: boolean;
+  onOpenMobileSidebar: () => void;
+}
+
+const TopBar = (props: TopBarProps) => {
+  const sectionInfo: Record<AllSections, { title: string; message: string }> = {
+    PROFILE: {
+      title: "Profile",
+      message: "Welcome back! Here's a quick look at your account",
+    },
+    PROJECTS: {
+      title: "Projects",
+      message: "Manage your active and completed projects",
+    },
+    BLOGS: {
+      title: "Blogs",
+      message: "Write, edit, and publish your posts",
+    },
+    ASSETS: {
+      title: "Assets",
+      message: "Organize your images, videos, and media",
+    },
+  };
+
+  return (
+    <>
+      <div className="h-20 glass-without-border border-b border-gray-500 px-4 lg:px-4 flex items-center space-x-4">
+        <button
+          onClick={props.onOpenMobileSidebar}
+          className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
+        >
+          <svg
+            className="w-6 h-6 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+
+        <div>
+          <h1
+            className={`text-lg lg:text-xl text-white ${fonts.heading.className}`}
+          >
+            {sectionInfo[props.activeSection].title}
+          </h1>
+          <p
+            className={`text-gray-400 text-sm lg:text-base ${fonts.paragraph.className} hidden sm:block`}
+          >
+            {sectionInfo[props.activeSection].message}
+          </p>
+        </div>
+      </div>
+    </>
+  );
+};
+
+interface SidebarProps {
+  activeSection: AllSections;
+  onSectionChange: (section: AllSections) => void;
+  isMobileSidebarOpen: boolean;
+  onCloseMobileSidebar: () => void;
+}
+
+const SideBar = (props: SidebarProps) => {
+  const { refreshUser } = useAuth();
+  const router = useRouter();
+
+  const menuItems: {
+    id: AllSections;
+    label: string;
+    icon: JSX.Element;
+  }[] = [
     {
-      id: "profile" as ActiveSection,
+      id: "PROFILE",
       label: "Profile",
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -136,7 +178,7 @@ export default function Dashboard() {
       ),
     },
     {
-      id: "blog" as ActiveSection,
+      id: "BLOGS",
       label: "Blog",
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -145,7 +187,7 @@ export default function Dashboard() {
       ),
     },
     {
-      id: "projects" as ActiveSection,
+      id: "PROJECTS",
       label: "Projects",
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -154,7 +196,7 @@ export default function Dashboard() {
       ),
     },
     {
-      id: "assets" as ActiveSection,
+      id: "ASSETS",
       label: "Assets",
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -162,348 +204,13 @@ export default function Dashboard() {
         </svg>
       ),
     },
-    {
-      id: "settings" as ActiveSection,
-      label: "Settings",
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97s-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1s.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z" />
-        </svg>
-      ),
-    },
   ];
 
-  const { user, refreshUser } = useAuth();
-  const router = useRouter();
-
-  const fetchBlogs = async () => {
-    const apiResponse = await api("GET", "/blog", {
-      query: {
-        target: "my",
-      },
-    });
-
-    if (apiResponse.action === null) {
-      toast.error("Server Error");
-    } else if (apiResponse.action === false) {
-      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
-      setBlogs([]);
-      setStatistics((prev) => {
-        return {
-          ...prev,
-          countProjects: -1,
-        };
-      });
-    } else {
-      setBlogs((apiResponse.data as IBlogOfList[]) ?? []);
-      setStatistics((prev) => {
-        return {
-          ...prev,
-          countBlogs: (apiResponse.data as IBlogOfList[])?.length ?? 0,
-        };
-      });
-    }
-  };
-
-  const fetchProjects = async () => {
-    const apiResponse = await api("GET", "/project", {
-      query: {
-        target: "my",
-        portfolio: "any",
-      },
-    });
-
-    if (apiResponse.action === null) {
-      toast.error("Server Error");
-    } else if (apiResponse.action === false) {
-      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
-      setProjects([]);
-      setStatistics((prev) => {
-        return {
-          ...prev,
-          countProjects: -1,
-        };
-      });
-    } else {
-      setProjects((apiResponse.data as IProject[]) ?? []);
-      setStatistics((prev) => {
-        return {
-          ...prev,
-          countProjects: (apiResponse.data as IProject[])?.length ?? 0,
-        };
-      });
-    }
-  };
-
-  const fetchAssets = async () => {
-    const apiResponse = await api("GET", "/media");
-
-    if (apiResponse.action === null) {
-      toast.error("Server Error");
-    } else if (apiResponse.action === false) {
-      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
-      setAssets([]);
-      setStatistics((prev) => {
-        return {
-          ...prev,
-          countProjects: -1,
-        };
-      });
-    } else {
-      setAssets((apiResponse.data as IMedia[]) ?? []);
-      setStatistics((prev) => {
-        return {
-          ...prev,
-          countAssets: (apiResponse.data as IMedia[])?.length ?? 0,
-        };
-      });
-    }
-  };
-
-  useEffect(() => {
-    fetchBlogs();
-    fetchProjects();
-    fetchAssets();
-  }, []);
-
-  useEffect(() => {
-    if (user?.links) {
-      setUserLinks(user.links);
-    }
-  }, [user]);
-
-  const handleNewPostSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (newPostData.slug.includes(" ")) {
-      toast.error("Slug must be url friendly.");
-      return;
-    }
-
-    if (newPostData.coverImgMediaKey.trim().split("/").length !== 3) {
-      toast.error("Invalid media key");
-      return;
-    }
-
-    const apiResponse = await api("POST", "/blog", {
-      body: {
-        title: newPostData.title,
-        slug: newPostData.slug,
-        coverImgMediaKey: newPostData.coverImgMediaKey.trim(),
-        content: newPostData.content,
-        tags: newPostData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag.length > 0),
-      },
-    });
-
-    if (apiResponse.action === null) {
-      toast.error("Server Error");
-    } else if (apiResponse.action === false) {
-      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
-    } else {
-      fetchBlogs();
-      setShowNewPostModal(false);
-      setNewPostData({
-        title: "",
-        slug: "",
-        coverImgMediaKey: "",
-        content: "",
-        tags: "",
-      });
-      toast.success("Added a new blog.");
-    }
-  };
-
-  const handleBlogUpdateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (showBlogUpdateModal.id === null) return;
-
-    if (blogUpdate.coverImgMediaKey.split("/").length !== 3) {
-      toast.error("Invalid media key");
-      return;
-    }
-
-    const apiResponse = await api("PATCH", `/ blog / ${showBlogUpdateModal.id} `, {
-      body: {
-        coverImgMediaKey: blogUpdate.coverImgMediaKey,
-      },
-    });
-
-    if (apiResponse.action === null) {
-      toast.error("Server Error");
-    } else if (apiResponse.action === false) {
-      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
-    } else {
-      fetchBlogs();
-      setShowBlogUpdateModal({
-        show: false,
-        id: null,
-      });
-      setBlogUpdate({ coverImgMediaKey: "" });
-      toast.success("Updated cover image.");
-    }
-  };
-
-  const handlePostDelete = async (id: string) => {
-    const apiResponse = await api("DELETE", `/ blog / ${id} `);
-
-    if (apiResponse.action === null) {
-      toast.error("Server Error");
-    } else if (apiResponse.action === false) {
-      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
-    } else {
-      fetchBlogs();
-      setShowNewPostModal(false);
-      setNewPostData({
-        title: "",
-        slug: "",
-        coverImgMediaKey: "",
-        content: "",
-        tags: "",
-      });
-      toast.success("Removed blog.");
-    }
-  };
-
-  const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value } = e.target;
-    setNewPostData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleBlogUpdateInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = e.target;
-
-    setBlogUpdate((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleNewProjectSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (newProjectData.coverImgMediaKey.trim().split("/").length !== 3) {
-      toast.error("Invalid media key");
-      return;
-    }
-
-    const apiResponse = await api("POST", "/project", {
-      body: {
-        title: newProjectData.name,
-        portfolio: newProjectData.portfolio,
-        description: newProjectData.description,
-        tags: newProjectData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag.length > 0),
-        coverImgMediaKey: newProjectData.coverImgMediaKey.trim(),
-        links: newProjectData.links.filter(
-          (link) => link.text.trim() !== "" && link.url.trim() !== ""
-        ),
-      },
-    });
-
-    if (apiResponse.action === null) {
-      toast.error("Server Error");
-    } else if (apiResponse.action === false) {
-      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
-    } else {
-      fetchProjects();
-      setShowNewProjectModal(false);
-      setNewProjectData({
-        name: "",
-        portfolio: "GAME",
-        tags: "",
-        coverImgMediaKey: "",
-        description: "",
-        links: [
-          { text: "live-demo", url: "" },
-          { text: "github", url: "" },
-        ],
-      });
-      toast.success("Added a new project.");
-    }
-  };
-
-  const handleProjectUpdateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (showProjectUpdateModal.id === null) return;
-
-    if (projectUpdate.coverImgMediaKey.split("/").length !== 3) {
-      toast.error("Invalid media key");
-      return;
-    }
-
-    const apiResponse = await api(
-      "PATCH",
-      `/ project / ${showProjectUpdateModal.id} `,
-      {
-        body: {
-          coverImgMediaKey: projectUpdate.coverImgMediaKey,
-        },
-      }
-    );
-
-    if (apiResponse.action === null) {
-      toast.error("Server Error");
-    } else if (apiResponse.action === false) {
-      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
-    } else {
-      fetchProjects();
-      setShowProjectUpdateModal({
-        show: false,
-        id: null,
-      });
-      setProjectUpdate({ coverImgMediaKey: "" });
-      toast.success("Updated project cover image.");
-    }
-  };
-
-  const handleProjectUpdateInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = e.target;
-
-    setProjectUpdate((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleProjectDelete = async (id: string) => {
-    const apiResponse = await api("DELETE", `/ project / ${id} `);
-
-    if (apiResponse.action === null) {
-      toast.error("Server Error");
-    } else if (apiResponse.action === false) {
-      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
-    } else {
-      fetchProjects();
-      setShowNewPostModal(false);
-      setNewProjectData({
-        name: "",
-        portfolio: "GAME",
-        tags: "",
-        coverImgMediaKey: "",
-        description: "",
-        links: [
-          { text: "live-demo", url: "" },
-          { text: "github", url: "" },
-        ],
-      });
-      toast.success("Removed project.");
-    }
-  };
+  const signOutIconSVG = (
+    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5z" />
+    </svg>
+  );
 
   const handleSignOut = async () => {
     const apiResponse = await api("POST", "/auth/sign-out");
@@ -520,45 +227,266 @@ export default function Dashboard() {
     }
   };
 
-  const handleProjectInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    const { name, value } = e.target;
-    setNewProjectData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  return (
+    <>
+      {props.isMobileSidebarOpen ? (
+        <div>
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            onClick={props.onCloseMobileSidebar}
+          />
+        </div>
+      ) : null}
+
+      <div
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 
+          glass-without-border border-r border-gray-500 flex flex-col 
+          transform transition-transform duration-300 ease-in-out
+          ${props.isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+          lg:translate-x-0 lg:static
+        `}
+      >
+        <div className="h-20 px-4 border-b border-gray-500 flex items-center space-x-3">
+          <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-white/5">
+            <Image src={CGSLogo} alt="CGS Logo" className="w-8 h-8" />
+          </div>
+          <div className="flex flex-col">
+            <h1
+              className={`text-white text-md tracking-widest font-medium ${fonts.heading.className}`}
+            >
+              CGS
+            </h1>
+            <span
+              className={`text-sm text-gray-400 ${fonts.paragraph.className}`}
+            >
+              Dashboard
+            </span>
+          </div>
+        </div>
+
+        <nav className="flex-1 p-4 space-y-2">
+          <Link
+            href="/"
+            className="flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+            </svg>
+            <span className={fonts.paragraph.className}>Home</span>
+          </Link>
+
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => props.onSectionChange(item.id)}
+              className={`
+                w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 border border-transparent focus:outline-none
+                ${
+                  props.activeSection === item.id
+                    ? "bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-400 border border-pink-500/30"
+                    : "text-gray-400 hover:text-white hover:bg-white/5 cursor-pointer"
+                }
+              `}
+            >
+              {item.icon}
+              <span className={fonts.paragraph.className}>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="p-4 border-t border-gray-500">
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center cursor-pointer space-x-3 px-4 py-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+          >
+            {signOutIconSVG}
+            <span className={fonts.paragraph.className}>SignOut</span>
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+const ProfileSection = () => {
+  const { user } = useAuth();
+  const { state: dashboardState } = useDashboard();
+
+  const correctCount = (count: number) => {
+    return count === -1 ? "Loading..." : count;
   };
 
-  const handleUserLinkChange = (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    const updatedLinks = [...userLinks];
-    updatedLinks[index] = {
-      ...updatedLinks[index],
-      [name]: value,
+  return (
+    <>
+      <div className="w-full flex flex-col items-center">
+        <div className="w-full max-w-[1000px] p-4 md:p-6 flex flex-col gap-5">
+          <div className="w-full mt-2 px-6 h-28 rounded-lg flex flex-row gap-6 items-center border border-slate-900">
+            <Image
+              src={prettySafeImage(user?.profileImgUrl)}
+              alt=""
+              width={64}
+              height={64}
+              className="w-16 h-16 rounded-full border-2 border-pink-500/20"
+            />
+            <div className="flex-1 flex flex-col gap-2">
+              <h2 className={`text-md text-white ${fonts.heading.className}`}>
+                {user?.name ?? "Loading..."}
+              </h2>
+
+              <div className="flex justify-between">
+                <div className="flex gap-3 items-center">
+                  <p
+                    className={`text-sm text-gray-500 ${fonts.paragraph.className}`}
+                  >
+                    {user?.team.name}
+                  </p>
+                  <p
+                    className={`text-xs p-1 rounded-md bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-400 border border-pink-500/30 ${fonts.paragraph.className}`}
+                  >
+                    {user?.designation}
+                  </p>
+                </div>
+                <p
+                  className={`bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent text-sm ${fonts.paragraph.className}`}
+                >
+                  Member since {user?.createdAt.getFullYear() ?? "Loading..."}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="w-full flex flex-row justify-between gap-3">
+            <div className="flex-1 h-24 px-4 flex flex-col justify-around rounded-xl border border-slate-900">
+              <p
+                className={`text-md text-gray-400  ${fonts.paragraph.className}`}
+              >
+                Blogs
+              </p>
+              <p className={`text-2xl text-white ${fonts.paragraph.className}`}>
+                {correctCount(dashboardState.statistics.countBlogs)}
+              </p>
+            </div>
+            <div className="flex-1 h-24 px-4 flex flex-col justify-around rounded-xl border border-slate-900">
+              <p
+                className={`text-md text-gray-400  ${fonts.paragraph.className}`}
+              >
+                Projects
+              </p>
+              <p className={`text-2xl text-white ${fonts.paragraph.className}`}>
+                {correctCount(dashboardState.statistics.countProjects)}
+              </p>
+            </div>
+            <div className="flex-1 h-24 px-4 flex flex-col justify-around rounded-xl border border-slate-900">
+              <p
+                className={`text-md text-gray-400  ${fonts.paragraph.className}`}
+              >
+                Assets
+              </p>
+              <p className={`text-2xl text-white ${fonts.paragraph.className}`}>
+                {correctCount(dashboardState.statistics.countAssets)}
+              </p>
+            </div>
+          </div>
+          <PersonalInfoAndLinksSubSection />
+        </div>
+      </div>
+    </>
+  );
+};
+
+const PersonalInfoAndLinksSubSection = () => {
+  const { user, refreshUser } = useAuth();
+
+  const [personalEdit, setPersonalEdit] = useState(false);
+  const [linksEdit, setLinksEdit] = useState(false);
+
+  const [personal, setPersonal] = useState({
+    name: "",
+    phone: "",
+    email: "",
+  });
+
+  const [links, setLinks] = useState({
+    github: "",
+    linkedin: "",
+    mail: "",
+  });
+
+  const [initialPersonal, setInitialPersonal] = useState(personal);
+  const [initialLinks, setInitialLinks] = useState(links);
+
+  useEffect(() => {
+    resetPersonal();
+    resetLinks();
+  }, [user]);
+
+  const resetPersonal = () => {
+    if (!user) {
+      const value = {
+        name: "",
+        phone: "",
+        email: "",
+      };
+
+      setPersonal(value);
+      setInitialPersonal(value);
+      setPersonalEdit(false);
+      return;
+    }
+
+    const value = {
+      name: user.name ?? "",
+      phone: user.phoneNumber ?? "",
+      email: user.email ?? "",
     };
-    setUserLinks(updatedLinks);
+
+    setPersonal(value);
+    setInitialPersonal(value);
+    setPersonalEdit(false);
   };
 
-  const addUserLinkField = () => {
-    setUserLinks((prev) => [...prev, { text: "", url: "" }]);
+  const resetLinks = () => {
+    let value;
+
+    if (!user) {
+      value = {
+        github: "",
+        linkedin: "",
+        mail: "",
+      };
+    } else {
+      const map = Object.fromEntries(
+        (user.links ?? []).map((link) => [link.text, link.url]),
+      );
+
+      value = {
+        github: map.github ?? "",
+        linkedin: map.linkedin ?? "",
+        mail: map.mail ?? "",
+      };
+    }
+
+    setLinks(value);
+    setInitialLinks(value);
+
+    setLinksEdit(false);
   };
 
-  const removeUserLinkField = (index: number) => {
-    setUserLinks((prev) => prev.filter((_, i) => i !== index));
-  };
+  const handlePersonalSave = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const updateChanges = async () => {
+    const name = personal.name.trim();
+    const phone = personal.phone.trim();
+
+    if (name === "") {
+      toast.error("Name cannot be empty.");
+      return;
+    }
+
     const apiResponse = await api("PATCH", "/user", {
       body: {
-        links: userLinks.filter(
-          (link) => link.text.trim() !== "" && link.url.trim() !== ""
-        ),
+        name,
+        phoneNumber: phone === "" ? "N/A" : phone,
       },
     });
 
@@ -568,105 +496,700 @@ export default function Dashboard() {
       toast.error(apiResponse.statusCode + ": " + apiResponse.message);
     } else {
       refreshUser();
-      toast.success("Your links have been updated.");
+      setInitialPersonal(personal);
+      setPersonalEdit(false);
+      toast.success("Your personal information has been updated.");
     }
-    setIsEditingLinks(false);
   };
 
-  const handleAssetFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files ? e.target.files[0] : null;
-
-    setNewAssetData((prev) => ({
-      ...prev,
-      file: file,
-    }));
-  };
-
-  const handleAssetInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewAssetData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleNewAssetSubmit = async (e: React.FormEvent) => {
+  const handleLinksSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newAssetData.file) {
-      toast.error("Please select an image file.");
-      return;
-    }
+    const payload = [
+      { text: "github", url: links.github },
+      { text: "linkedin", url: links.linkedin },
+      { text: "mail", url: links.mail },
+    ].filter((link) => link.url.trim() !== "");
 
-    if (!new RegExp("^[A-Za-z0-9-._~]*$").test(newAssetData.name)) {
-      toast.error("Name of the asset must be url safe.");
-      return;
-    }
-
-    const apiResponse = await api("POST", "/media/sign", {
+    const apiResponse = await api("PATCH", "/user", {
       body: {
-        publicId: newAssetData.name,
+        links: payload,
       },
     });
 
     if (apiResponse.action === null) {
-      toast.error("Server Error while signing.");
-      return;
+      toast.error("Server Error");
     } else if (apiResponse.action === false) {
+      console.log(apiResponse.errors);
       toast.error(apiResponse.statusCode + ": " + apiResponse.message);
-      console.log(apiResponse.statusCode + ": " + apiResponse.message);
-      return;
-    }
-
-    const signedToken = apiResponse.data as IMediaSignedToken;
-
-    const formData = new FormData();
-    formData.append("file", newAssetData.file);
-    formData.append("api_key", signedToken.apiKey);
-    formData.append("folder", signedToken.folder);
-    formData.append("public_id", newAssetData.name);
-    formData.append("timestamp", signedToken.timestamp);
-    formData.append("signature", signedToken.signature);
-
-    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${signedToken.cloudName}/image/upload`;
-
-    const cloudinaryResponse = await fetch(cloudinaryUrl, {
-      method: "POST",
-      body: formData,
-    });
-
-    const cloudinaryData = await cloudinaryResponse.json();
-
-    if (cloudinaryData.error) {
-      toast.error(cloudinaryData.error.message || "Cloudinary upload failed.");
-      console.log(cloudinaryData.error.message || "Cloudinary upload failed.");
-      return;
-    }
-
-    const apiResponse2 = await api("POST", "/media", {
-      body: {
-        publicId: cloudinaryData.public_id,
-        url: cloudinaryData.secure_url,
-      },
-    });
-
-    if (apiResponse2.action === null) {
-      toast.error("Server Error while adding new asset");
-    } else if (apiResponse2.action === false) {
-      toast.error(apiResponse2.statusCode + ": " + apiResponse2.message);
-      console.log(apiResponse2.statusCode + ": " + apiResponse2.message);
     } else {
-      fetchAssets();
-      setShowNewAssetModal(false);
-      setNewAssetData({
-        name: "",
-        file: null,
-      });
-      toast.success("Added new asset.");
+      refreshUser();
+      setInitialLinks(links);
+      setLinksEdit(false);
+      toast.success("Your links have been updated.");
     }
   };
 
-  const handleAssetDelete = async (id: string) => {
+  const cancelPersonal = () => {
+    setPersonal(initialPersonal);
+    setPersonalEdit(false);
+  };
+
+  const cancelLinks = () => {
+    setLinks(initialLinks);
+    setLinksEdit(false);
+  };
+
+  return (
+    <div className="w-full flex flex-col md:flex-row gap-5">
+      <form
+        onSubmit={handlePersonalSave}
+        className="flex-1 relative rounded-xl border border-slate-900 p-5 flex flex-col gap-4"
+      >
+        <button
+          type="button"
+          onClick={() => setPersonalEdit(true)}
+          className="absolute top-5 right-5 hover:cursor-pointer text-gray-500 hover:text-white"
+        >
+          <Pencil size={16} />
+        </button>
+
+        <div>
+          <h3 className={`text-white text-md ${fonts.heading.className}`}>
+            Personal Information
+          </h3>
+          <p className={`text-xs text-gray-500 ${fonts.paragraph.className}`}>
+            Update your personal details
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label
+            className={`text-xs text-gray-400 ${fonts.paragraph.className}`}
+          >
+            Name
+          </label>
+          <input
+            type="text"
+            disabled={!personalEdit}
+            value={user ? personal.name : ""}
+            placeholder={!user ? "Loading..." : ""}
+            onChange={(e) => setPersonal({ ...personal, name: e.target.value })}
+            className="w-full bg-transparent border border-slate-800 rounded-md px-3 py-2 text-sm text-white disabled:text-gray-400 outline-none focus:border-pink-500/40"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label
+            className={`text-xs text-gray-400 ${fonts.paragraph.className}`}
+          >
+            Phone Number
+          </label>
+          <input
+            type="text"
+            disabled={!personalEdit}
+            value={user ? personal.phone : ""}
+            placeholder={!user ? "Loading..." : ""}
+            onChange={(e) =>
+              setPersonal({ ...personal, phone: e.target.value })
+            }
+            className="w-full bg-transparent border border-slate-800 rounded-md px-3 py-2 text-sm text-white disabled:text-gray-400 outline-none focus:border-pink-500/40"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label
+            className={`text-xs text-gray-400 ${fonts.paragraph.className}`}
+          >
+            Email
+          </label>
+          <input
+            disabled
+            value={user ? personal.email : ""}
+            placeholder={!user ? "Loading..." : ""}
+            className="w-full bg-slate-900/40 border border-slate-800 rounded-md px-3 py-2 text-sm text-gray-500"
+          />
+        </div>
+
+        <div className="h-10 flex gap-3 items-center">
+          {personalEdit && (
+            <>
+              <button
+                type="submit"
+                className="px-4 py-2 text-sm text-white hover:cursor-pointer rounded-md bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30"
+              >
+                Save
+              </button>
+
+              <button
+                type="button"
+                onClick={cancelPersonal}
+                className="px-4 py-2 text-sm text-gray-400  hover:cursor-pointer border border-slate-800 rounded-md"
+              >
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
+      </form>
+
+      <form
+        onSubmit={handleLinksSave}
+        className="flex-1 relative rounded-xl border border-slate-900 p-5 flex flex-col gap-4"
+      >
+        <button
+          type="button"
+          onClick={() => setLinksEdit(true)}
+          className="absolute top-5 right-5 hover:cursor-pointer text-gray-500 hover:text-white"
+        >
+          <Pencil size={16} />
+        </button>
+
+        <div>
+          <h3 className={`text-white text-md ${fonts.heading.className}`}>
+            Social Links
+          </h3>
+          <p className={`text-xs text-gray-500 ${fonts.paragraph.className}`}>
+            Add links for your profile
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-400">Github</label>
+          <input
+            type="url"
+            disabled={!linksEdit}
+            value={links.github}
+            placeholder={!user ? "Loading..." : ""}
+            onChange={(e) => setLinks({ ...links, github: e.target.value })}
+            className="w-full bg-transparent border border-slate-800 rounded-md px-3 py-2 text-sm text-white disabled:text-gray-400 outline-none focus:border-pink-500/40"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-400">LinkedIn</label>
+          <input
+            type="url"
+            disabled={!linksEdit}
+            value={links.linkedin}
+            placeholder={!user ? "Loading..." : ""}
+            onChange={(e) => setLinks({ ...links, linkedin: e.target.value })}
+            className="w-full bg-transparent border border-slate-800 rounded-md px-3 py-2 text-sm text-white disabled:text-gray-400 outline-none focus:border-pink-500/40"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-400">Mail</label>
+          <input
+            type="url"
+            disabled={!linksEdit}
+            value={links.mail}
+            placeholder={!user ? "Loading..." : ""}
+            onChange={(e) => setLinks({ ...links, mail: e.target.value })}
+            className="w-full bg-transparent border border-slate-800 rounded-md px-3 py-2 text-sm text-white disabled:text-gray-400 outline-none focus:border-pink-500/40"
+          />
+        </div>
+
+        <div className="h-10 flex gap-3 items-center">
+          {linksEdit && (
+            <>
+              <button
+                type="submit"
+                className="px-4 py-2 text-sm text-white  hover:cursor-pointer rounded-md bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30"
+              >
+                Save
+              </button>
+
+              <button
+                type="button"
+                onClick={cancelLinks}
+                className="px-4 py-2 text-sm text-gray-400  hover:cursor-pointer border border-slate-800 rounded-md"
+              >
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+};
+
+const BlogsSection = () => {
+  const [showBlogUploadModal, setShowBlogUploadModal] = useState(false);
+  const [showBlogUpdateModal, setShowBlogUpdateModal] = useState(false);
+  const [updateBlogId, setUpdateBlogId] = useState<string | null>(null);
+
+  const { state, resetBlogs, resetAssets } = useDashboard();
+  const { upload } = useCloudinaryUpload();
+
+  const directCoverImgUpload = async (
+    file: File,
+  ): Promise<string | undefined> => {
+    try {
+      const { publicId, url } = await upload(file);
+
+      const response = await api("POST", "/media", {
+        body: { publicId, url },
+      });
+
+      if (response.action === null) {
+        toast.error("Server Error while adding new asset");
+        return;
+      } else if (response.action === false) {
+        toast.error(response.statusCode + ": " + response.message);
+        console.log(response.errors);
+        return;
+      }
+
+      resetAssets();
+      toast.success("Asset uploaded successfully!");
+      return url;
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Upload failed");
+      }
+    }
+  };
+
+  const handleNewBlogSubmit = async (data: {
+    title: string;
+    slug: string;
+    tags: string[];
+    coverImgUrl: string;
+    content: string;
+  }) => {
+    const apiResponse = await api("POST", "/blog", {
+      body: data,
+    });
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      resetBlogs();
+      toast.success("Added a new blog.");
+    }
+  };
+
+  const handleBlogUpdate = async (data: {
+    _id: string;
+    title: string;
+    slug: string;
+    tags: string[];
+    coverImgUrl: string;
+    content?: string;
+  }) => {
+    const apiResponse = await api("PATCH", `/blog/${data._id}`, {
+      body: data,
+    });
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      resetBlogs();
+      toast.success("Updated Blog.");
+    }
+  };
+
+  const handleBlogDelete = async (_id: string) => {
+    const apiResponse = await api("DELETE", `/blog/${_id}`);
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      resetBlogs();
+      toast.success("Removed blog.");
+    }
+  };
+
+  return (
+    <>
+      <div className="w-full flex flex-col items-center">
+        <div className="w-full max-w-[1100px] p-4 md:p-6 flex flex-col gap-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-semibold text-white">Blogs</h1>
+              <p className="text-gray-400 text-sm">
+                Create and manage your blogs
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowBlogUploadModal(true)}
+              className="px-3 py-1.5 text-sm rounded-md bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:shadow-lg hover:shadow-pink-500/30 transition"
+            >
+              New Blog
+            </button>
+          </div>
+
+          {state.blogs.length === 0 ? (
+            <p className="text-gray-400 mt-6">No blogs yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {state.blogs.map((blog) => (
+                <div
+                  key={blog._id}
+                  className="relative rounded-xl border border-white/10 bg-[#0f0f12] p-5 flex flex-col gap-4 transition hover:border-pink-400/50"
+                >
+                  <div className="absolute top-3 right-3 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setUpdateBlogId(blog._id);
+                        setShowBlogUpdateModal(true);
+                      }}
+                      className="flex hover:cursor-pointer items-center justify-center bg-black/60 backdrop-blur-sm rounded-md p-1.5 border border-transparent hover:border-amber-400 transition"
+                    >
+                      <Pencil size={15} className="text-amber-400" />
+                    </button>
+
+                    <button
+                      onClick={() => handleBlogDelete(blog._id)}
+                      className="flex hover:cursor-pointer items-center justify-center bg-black/60 backdrop-blur-sm rounded-md p-1.5 border border-transparent hover:border-red-500 transition"
+                    >
+                      <Trash2 size={15} className="text-red-400" />
+                    </button>
+                  </div>
+
+                  <h3 className="text-white font-semibold text-md line-clamp-1 pr-14">
+                    {blog.title}
+                  </h3>
+
+                  <p className="text-sm text-gray-400 line-clamp-3 leading-relaxed">
+                    Slug: {blog.slug}
+                  </p>
+
+                  <div className="border-t border-white/10"></div>
+
+                  <div className="flex items-center justify-between text-xs text-gray-400">
+                    <div className="flex flex-col gap-1">
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-white/10 bg-white/5 w-fit">
+                        <LucideCalendar className="w-3 h-3" /> Created{" "}
+                        {new Date(blog.createdAt).toLocaleDateString()}
+                      </span>
+
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-white/10 bg-white/5 w-fit">
+                        <LucideClock className="w-3 h-3" /> Updated{" "}
+                        {new Date(blog.updatedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {showBlogUploadModal && (
+        <NewBlogModal
+          open={showBlogUploadModal}
+          onClose={() => {
+            setShowBlogUploadModal(false);
+            setUpdateBlogId(null);
+          }}
+          onCreate={handleNewBlogSubmit}
+          onDirectCoverImgUpload={directCoverImgUpload}
+        />
+      )}
+
+      {showBlogUpdateModal && updateBlogId && (
+        <UpdateBlogModal
+          key={updateBlogId}
+          open={showBlogUpdateModal}
+          blogId={updateBlogId}
+          onClose={() => {
+            setShowBlogUpdateModal(false);
+            setUpdateBlogId(null);
+          }}
+          onDirectCoverImgUpload={directCoverImgUpload}
+          onUpdate={handleBlogUpdate}
+        />
+      )}
+    </>
+  );
+};
+
+const ProjectsSection = () => {
+  const [showProjectUploadModal, setShowProjectUploadModal] = useState(false);
+  const [showProjectUpdateModal, setShowProjectUpdateModal] = useState(false);
+  const [updateProjectId, setUpdateProjectId] = useState<string | null>(null);
+
+  const { state, resetAssets, resetProjects } = useDashboard();
+  const { upload } = useCloudinaryUpload();
+
+  const directCoverImgUpload = async (
+    file: File,
+  ): Promise<string | undefined> => {
+    try {
+      const { publicId, url } = await upload(file);
+
+      const response = await api("POST", "/media", {
+        body: { publicId, url },
+      });
+
+      if (response.action === null) {
+        toast.error("Server Error while adding new asset");
+        return;
+      } else if (response.action === false) {
+        toast.error(response.statusCode + ": " + response.message);
+        console.log(response.errors);
+        return;
+      }
+
+      resetAssets();
+      toast.success("Asset uploaded successfully!");
+
+      return url;
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Upload failed");
+      }
+    }
+  };
+
+  const handleNewProjectSubmit = async (data: {
+    title: string;
+    portfolio: "GAME" | "GRAPHICS" | "RND";
+    description: string;
+    tags: string[];
+    coverImgUrl: string;
+    links: Links[];
+  }) => {
+    const apiResponse = await api("POST", "/project", {
+      body: {
+        title: data.title,
+        portfolio: data.portfolio,
+        description: data.description,
+        tags: data.tags,
+        coverImgUrl: data.coverImgUrl,
+        links: data.links,
+      },
+    });
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      resetProjects();
+      toast.success("Added a new project.");
+    }
+  };
+
+  const handleProjectUpdate = async (data: {
+    _id: string;
+    title: string;
+    portfolio: "GAME" | "GRAPHICS" | "RND";
+    description: string;
+    tags: string[];
+    coverImgUrl: string;
+    links: Links[];
+  }) => {
+    const apiResponse = await api("PATCH", `/project/${data._id}`, {
+      body: {
+        title: data.title,
+        portfolio: data.portfolio,
+        description: data.description,
+        tags: data.tags,
+        coverImgUrl: data.coverImgUrl,
+        links: data.links,
+      },
+    });
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      resetProjects();
+      toast.success("Updated Project.");
+    }
+  };
+
+  const handleProjectDelete = async (_id: string) => {
+    const apiResponse = await api("DELETE", `/project/${_id}`);
+
+    if (apiResponse.action === null) {
+      toast.error("Server Error");
+    } else if (apiResponse.action === false) {
+      toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+    } else {
+      resetProjects();
+      toast.success("Removed project.");
+    }
+  };
+
+  return (
+    <>
+      <div className="w-full flex flex-col items-center">
+        <div className="w-full max-w-[1100px] p-4 md:p-6 flex flex-col gap-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-semibold text-white">Projects</h1>
+              <p className="text-gray-400 text-sm">
+                Create and manage your projects
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowProjectUploadModal(true)}
+              className="px-3 py-1.5 text-sm rounded-md bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:shadow-lg hover:shadow-pink-500/30 transition"
+            >
+              New Project
+            </button>
+          </div>
+
+          {state.projects.length === 0 ? (
+            <p className="text-gray-400 mt-6">No projects yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {state.projects.map((project) => (
+                <div
+                  key={project._id}
+                  className="relative rounded-xl border border-white/10 bg-[#0f0f12] p-5 flex flex-col gap-4 transition hover:border-pink-400/50"
+                >
+                  <div className="absolute top-3 right-3 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setUpdateProjectId(project._id);
+                        setShowProjectUpdateModal(true);
+                      }}
+                      className="flex hover:cursor-pointer items-center justify-center bg-black/60 backdrop-blur-sm rounded-md p-1.5 border border-transparent hover:border-amber-400 transition"
+                    >
+                      <Pencil size={15} className="text-amber-400" />
+                    </button>
+
+                    <button
+                      onClick={() => handleProjectDelete(project._id)}
+                      className="flex hover:cursor-pointer items-center justify-center bg-black/60 backdrop-blur-sm rounded-md p-1.5 border border-transparent hover:border-red-500 transition"
+                    >
+                      <Trash2 size={15} className="text-red-400" />
+                    </button>
+                  </div>
+
+                  <h3 className="text-white font-semibold text-md line-clamp-1 pr-14">
+                    {project.title}
+                  </h3>
+
+                  <p className="text-sm text-gray-400 line-clamp-3 leading-relaxed">
+                    {project.description || "No description provided."}
+                  </p>
+
+                  <div className="border-t border-white/10"></div>
+
+                  <div className="flex items-center justify-between text-xs text-gray-400">
+                    <div className="flex flex-col gap-1">
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-white/10 bg-white/5 w-fit">
+                        <LucideCalendar className="w-3 h-3" /> Created{" "}
+                        {new Date(project.createdAt).toLocaleDateString()}
+                      </span>
+
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-white/10 bg-white/5 w-fit">
+                        <LucideClock className="w-3 h-3" /> Updated{" "}
+                        {new Date(project.updatedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <span className="px-3 py-1 text-[10px] font-semibold rounded-md border border-pink-400/40 bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 tracking-wide">
+                      {project.portfolio}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {showProjectUploadModal && (
+        <NewProjectModal
+          open={showProjectUploadModal}
+          onClose={() => {
+            setShowProjectUploadModal(false);
+            setUpdateProjectId(null);
+          }}
+          onCreate={handleNewProjectSubmit}
+          onDirectCoverImgUpload={directCoverImgUpload}
+        />
+      )}
+
+      {showProjectUpdateModal && updateProjectId && (
+        <UpdateProjectModal
+          key={updateProjectId}
+          open={showProjectUpdateModal}
+          projectId={updateProjectId}
+          onClose={() => {
+            setShowProjectUpdateModal(false);
+            setUpdateProjectId(null);
+          }}
+          onDirectCoverImgUpload={directCoverImgUpload}
+          onUpdate={handleProjectUpdate}
+        />
+      )}
+    </>
+  );
+};
+
+const AssetsSection = () => {
+  const [showAssetUploadModal, setShowAssetUploadModal] = useState(false);
+  const [previewAsset, setPreviewAsset] = useState<string | null>(null);
+
+  const droppedFileRef = useRef<File | null>(null);
+
+  const { state, resetAssets } = useDashboard();
+  const { upload } = useCloudinaryUpload();
+
+  const handleMediaDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+      droppedFileRef.current = droppedFile;
+      setShowAssetUploadModal(true);
+    }
+  };
+
+  const handleNewAssetSubmit = async (
+    file: File,
+  ): Promise<string | undefined> => {
+    try {
+      const { publicId, url } = await upload(file);
+
+      const response = await api("POST", "/media", {
+        body: { publicId, url },
+      });
+
+      if (response.action === null) {
+        toast.error("Server Error while adding new asset");
+        return;
+      } else if (response.action === false) {
+        toast.error(response.statusCode + ": " + response.message);
+        return;
+      }
+
+      resetAssets();
+      toast.success("Asset uploaded successfully!");
+
+      return url;
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Upload failed");
+      }
+    }
+  };
+
+  const handleDelete = async (id: string) => {
     const apiResponse = await api("DELETE", `/media/${id}`);
 
     console.log(apiResponse);
@@ -676,1635 +1199,1349 @@ export default function Dashboard() {
     } else if (apiResponse.action === false) {
       toast.error(apiResponse.statusCode + ": " + apiResponse.message);
     } else {
-      fetchAssets();
+      resetAssets();
       toast.success("Removed asset.");
     }
   };
 
-  /* New state for quick upload loading */
-  const [isUploading, setIsUploading] = useState(false);
-
-  const copyAssetKey = async (assetKey: string) => {
+  const copyMediaUrl = async (url: string) => {
     try {
-      await navigator.clipboard.writeText(assetKey);
-
-      toast.success("Copied media key", { position: "bottom-right" });
+      await navigator.clipboard.writeText(url);
+      toast.success("Copied media URL", { position: "bottom-right" });
     } catch (err) {
-      console.error("Failed to copy asset key:", err);
-      toast.error("Failed to copy key. Please check browser permissions.");
-    }
-  };
-
-  const handleQuickUpload = async (e: React.ChangeEvent<HTMLInputElement>, setKeyCallback: (key: string) => void) => {
-    const file = e.target.files ? e.target.files[0] : null;
-    if (!file) return;
-
-    setIsUploading(true);
-    const toastId = toast.loading("Uploading image...");
-
-    try {
-      // 1. Sign
-      const uniqueName = `quick-upload-${Date.now()}`;
-      const signRes = await api("POST", "/media/sign", {
-        body: { publicId: uniqueName }
-      });
-
-      if (signRes.action !== true) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        throw new Error((signRes as any).message || "Failed to sign upload request");
-      }
-
-      const signedToken = signRes.data as IMediaSignedToken;
-
-      // 2. Upload to Cloudinary
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("api_key", signedToken.apiKey);
-      formData.append("folder", signedToken.folder);
-      formData.append("public_id", uniqueName);
-      formData.append("timestamp", signedToken.timestamp);
-      formData.append("signature", signedToken.signature);
-
-      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${signedToken.cloudName}/image/upload`;
-      const cloudinaryRes = await fetch(cloudinaryUrl, {
-        method: "POST",
-        body: formData,
-      });
-      const cloudinaryData = await cloudinaryRes.json();
-
-      if (cloudinaryData.error) {
-        throw new Error(cloudinaryData.error.message || "Cloudinary upload failed");
-      }
-
-      // 3. Create Media Record
-      const createMediaRes = await api("POST", "/media", {
-        body: {
-          publicId: cloudinaryData.public_id,
-          url: cloudinaryData.secure_url,
-        }
-      });
-
-      if (createMediaRes.action !== true) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        throw new Error((createMediaRes as any).message || "Failed to save asset record");
-      }
-
-      // Success
-      setKeyCallback(cloudinaryData.public_id);
-      toast.success("Image uploaded successfully!", { id: toastId });
-      fetchAssets(); // Refresh assets list
-    } catch (error) {
-      console.error(error);
-      toast.error((error as Error).message || "Upload failed", { id: toastId });
-    } finally {
-      setIsUploading(false);
-      // Clear input value so same file can be selected again if needed
-      e.target.value = "";
-    }
-  };
-
-  const renderContent = () => {
-    switch (activeSection) {
-      case "profile":
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
-                {/* <svg
-                  className="w-10 h-10 text-pink-400"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                </svg> */}
-                <Image
-                  src={prettySafeImage(user?.profileImgMediaKey ?? null)}
-                  alt=""
-                  width={64}
-                  height={64}
-                  className="relative z-10 rounded-full border-4 border-pink-500/20 group-hover:border-pink-500/70 transition-all duration-700 object-cover group-hover:scale-110"
-                />
-              </div>
-              <div>
-                <h2 className={`text-2xl text-white ${heading_font.className}`}>
-                  {user?.name ?? "Loading..."}
-                </h2>
-                <p className={`text-gray-400 ${paragraph_font.className}`}>
-                  {user?.team.name}
-                </p>
-                <p
-                  className={`text-gray-500 text-sm ${paragraph_font.className}`}
-                >
-                  Member since {user?.createdAt.getFullYear() ?? "Loading..."}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="glass rounded-xl p-5 relative">
-                <div className="flex items-center justify-between mb-4">
-                  <h3
-                    className={`text-lg text-white ${heading_font.className}`}
-                  >
-                    Personal Information
-                  </h3>
-                  <button
-                    onClick={() => setActiveSection("settings")}
-                    className="text-sm px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white transition-all backdrop-blur-sm border border-white/10"
-                  >
-                    Edit
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <label
-                      className={`text-gray-400 text-sm ${paragraph_font.className}`}
-                    >
-                      Email
-                    </label>
-                    <p className={`text-white ${paragraph_font.className}`}>
-                      {user?.email ?? "Loading..."}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label
-                      className={`text-gray-400 text-sm ${paragraph_font.className}`}
-                    >
-                      Phone
-                    </label>
-                    <p className={`text-white ${paragraph_font.className}`}>
-                      {user ? user.phoneNumber ?? "N/A" : "Loading..."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="glass rounded-xl p-5">
-                <h3
-                  className={`text-lg text-white mb-4 ${heading_font.className}`}
-                >
-                  Statistics
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span
-                      className={`text-gray-400 ${paragraph_font.className}`}
-                    >
-                      Projects
-                    </span>
-                    <span
-                      className={`text-pink-400 font-semibold ${paragraph_font.className}`}
-                    >
-                      {statistics.countProjects === -1
-                        ? "Loading"
-                        : statistics.countProjects}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span
-                      className={`text-gray-400 ${paragraph_font.className}`}
-                    >
-                      Blog Posts
-                    </span>
-                    <span
-                      className={`text-pink-400 font-semibold ${paragraph_font.className}`}
-                    >
-                      {statistics.countBlogs === -1
-                        ? "Loading"
-                        : statistics.countBlogs}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span
-                      className={`text-gray-400 ${paragraph_font.className}`}
-                    >
-                      Assets
-                    </span>
-                    <span
-                      className={`text-pink-400 font-semibold ${paragraph_font.className}`}
-                    >
-                      {statistics.countAssets === -1
-                        ? "Loading"
-                        : statistics.countAssets}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-      case "blog":
-        return (
-          <div className="space-y-4 lg:space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h2
-                className={`text-xl lg:text-2xl text-white ${heading_font.className}`}
-              >
-                Blog Posts
-              </h2>
-              <button
-                onClick={() => setShowNewPostModal(true)}
-                className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-transform duration-200"
-              >
-                New Post
-              </button>
-            </div>
-
-            <div className="grid gap-4">
-              {blogs.map((blog) => (
-                <div
-                  key={blog._id}
-                  className="glass rounded-xl p-6 hover:bg-white/15 transition-all duration-300 group"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3
-                        className={`text-lg text-white mb-2 group-hover:text-pink-400 transition-colors ${heading_font.className}`}
-                      >
-                        {blog.title}
-                      </h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>
-                          Published:{" "}
-                          {new Date(blog.createdAt)
-                            .toDateString()
-                            .split(" ")
-                            .slice(1)
-                            .join(" ")}
-                        </span>
-                        {blog.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-1 bg-pink-500/20 text-pink-400 rounded"
-                          >
-                            {tag.toLocaleLowerCase()}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                        onClick={() => {
-                          setShowBlogUpdateModal({
-                            id: blog._id,
-                            show: true,
-                          });
-                        }}
-                      >
-                        <svg
-                          className="w-4 h-4 text-gray-400 hover:text-white"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                        </svg>
-                      </button>
-                      <button
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                        onClick={() => handlePostDelete(blog._id)}
-                      >
-                        <svg
-                          className="w-4 h-4 text-gray-400 hover:text-red-400"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-
-      case "projects":
-        return (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className={`text-2xl text-white ${heading_font.className}`}>
-                Projects
-              </h2>
-              <button
-                onClick={() => setShowNewProjectModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-transform duration-200"
-              >
-                New Project
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {projects.map((project) => (
-                <div
-                  key={project._id}
-                  className="glass rounded-xl p-6 hover:scale-105 transition-all duration-300 group"
-                >
-                  <div className="w-full h-32 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-lg mb-4 flex items-center justify-center">
-                    <svg
-                      className="w-12 h-12 text-pink-400"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                  </div>
-
-                  <div className="flex justify-between items-start mb-2">
-                    <h3
-                      className={`text-lg text-white group-hover:text-pink-400 transition-colors ${heading_font.className}`}
-                    >
-                      {project.title}
-                    </h3>
-
-                    <div className="flex space-x-2 shrink-0 ml-4">
-                      <button
-                        className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-                        onClick={() => {
-                          setShowProjectUpdateModal({
-                            id: project._id,
-                            show: true,
-                          });
-                        }}
-                      >
-                        <svg
-                          className="w-4 h-4 text-gray-400 hover:text-white"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-                        </svg>
-                      </button>
-
-                      <button
-                        className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-                        onClick={() => handleProjectDelete(project._id)}
-                      >
-                        <svg
-                          className="w-4 h-4 text-gray-400 hover:text-red-400"
-                          fill="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  <p
-                    className={`text-gray-400 text-sm mb-3 ${paragraph_font.className}`}
-                  >
-                    {prettyDescription(project.description)}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-gray-500 text-sm ${paragraph_font.className}`}
-                    >
-                      {prettyDate(project.createdAt)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-
-      case "assets":
-        return (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className={`text-2xl text-white ${heading_font.className}`}>
-                Assets
-              </h2>
-              <button
-                onClick={() => setShowNewAssetModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-transform duration-200"
-              >
-                Upload Asset
-              </button>
-            </div>
-
-            <div className="flex flex-wrap gap-4">
-              {assets.map((asset) => (
-                <div
-                  key={asset._id}
-                  className="glass rounded-xl p-4 hover:scale-105 transition-all duration-300 group flex flex-col items-center justify-between relative" // Added relative for absolute positioning of button
-                >
-                  <button
-                    className="absolute top-2 right-2 p-1 hover:bg-white/10 rounded-lg transition-colors z-10" // z-10 ensures it's clickable over the image div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAssetDelete(asset._id);
-                    }}
-                  >
-                    <svg
-                      className="w-4 h-4 text-gray-400 hover:text-red-400"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      {/* Using a different delete icon (trash can) */}
-                      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
-                    </svg>
-                  </button>
-
-                  <div
-                    onClick={() => copyAssetKey(asset.key)}
-                    className="flex flex-col items-center w-full cursor-pointer"
-                  >
-                    <div className="w-40 h-40 rounded-lg mb-3 flex items-center justify-center overflow-hidden bg-white/5 relative">
-                      <Image
-                        src={asset.url}
-                        alt={asset.key.substring(
-                          asset.key.lastIndexOf("/") + 1
-                        )}
-                        fill
-                        className="object-contain"
-                        unoptimized
-                      />
-                    </div>
-                    <p
-                      className={`text-white text-sm text-center truncate w-full ${paragraph_font.className}`}
-                    >
-                      {asset.key.substring(asset.key.lastIndexOf("/") + 1)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-
-      case "settings":
-        return (
-          <div className="space-y-6">
-            <h2 className={`text-2xl text-white ${heading_font.className}`}>
-              Account Settings
-            </h2>
-
-            <div className="grid gap-6">
-              <div className="glass rounded-xl p-6">
-                <h3
-                  className={`text-lg text-white mb-4 ${heading_font.className}`}
-                >
-                  Profile Settings
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label
-                      className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                    >
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      value={user?.name ?? ""}
-                      disabled
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 placeholder-gray-500 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                    >
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={user?.email ?? ""}
-                      disabled
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 placeholder-gray-500 cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="glass rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3
-                    className={`text-lg text-white ${heading_font.className}`}
-                  >
-                    Personal Links
-                  </h3>
-                  <div>
-                    {isEditingLinks ? (
-                      <button
-                        onClick={addUserLinkField}
-                        className="flex items-center space-x-2 px-3 py-1.5 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors"
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span className="text-sm">Add Link</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => setIsEditingLinks(true)}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                          <path
-                            fillRule="evenodd"
-                            d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {userLinks.map((link, index) => {
-                    const usedLinks = userLinks.map((l) => l.text);
-
-                    return (
-                      <div
-                        key={index}
-                        className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2"
-                      >
-                        <select
-                          name="text"
-                          value={link.text}
-                          onChange={(e) => handleUserLinkChange(index, e)}
-                          disabled={!isEditingLinks}
-                          className={
-                            "w-full sm:flex-grow px-3 py-2 rounded-lg focus:outline-none focus:border-pink-400 appearance-none " +
-                            (isEditingLinks
-                              ? "bg-white/5 border border-white/10 text-white placeholder-gray-500"
-                              : "bg-white/5 border border-white/10 text-gray-500 cursor-not-allowed")
-                          }
-                        >
-                          {ALL_PERSONAL_LINK_TYPES.map((type) =>
-                            usedLinks.includes(type) &&
-                              link.text !== type ? null : (
-                              <option
-                                key={type}
-                                value={type}
-                                className="bg-gray-900 text-white"
-                              >
-                                {type}
-                              </option>
-                            )
-                          )}
-                        </select>
-
-                        <input
-                          type="url"
-                          name="url"
-                          value={link.url}
-                          onChange={(e) => handleUserLinkChange(index, e)}
-                          placeholder="URL"
-                          disabled={!isEditingLinks}
-                          className={
-                            isEditingLinks
-                              ? "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-pink-400"
-                              : "w-full sm:flex-grow px-3 py-2 bg-white/5 border border-white/10 rounded-lg placeholder-gray-500 focus:outline-none focus:border-pink-400 text-gray-500 cursor-not-allowed"
-                          }
-                        />
-                        {isEditingLinks && (
-                          <button
-                            onClick={() => removeUserLinkField(index)}
-                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
-                          >
-                            <svg
-                              className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                {isEditingLinks && (
-                  <div className="flex justify-end space-x-4 pt-4 mt-4 border-t border-white/10">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsEditingLinks(false);
-                        if (user?.links) setUserLinks(user.links);
-                      }}
-                      className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={updateChanges}
-                      className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-all duration-200"
-                    >
-                      Update Changes
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* <div className="glass rounded-xl p-6">
-                <h3
-                  className={`text-lg text-white mb-4 ${heading_font.className}`}
-                >
-                  Preferences
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className={`text-white ${paragraph_font.className}`}>
-                      Email Notifications
-                    </span>
-                    <button className="w-12 h-6 bg-pink-500 rounded-full relative">
-                      <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 transition-transform"></div>
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className={`text-white ${paragraph_font.className}`}>
-                      Dark Mode
-                    </span>
-                    <button className="w-12 h-6 bg-pink-500 rounded-full relative">
-                      <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5 transition-transform"></div>
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className={`text-white ${paragraph_font.className}`}>
-                      Public Profile
-                    </span>
-                    <button className="w-12 h-6 bg-gray-600 rounded-full relative">
-                      <div className="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5 transition-transform"></div>
-                    </button>
-                  </div>
-                </div>
-              </div> */}
-
-              <div className="glass rounded-xl p-6">
-                <h3
-                  className={`text-lg text-white mb-4 ${heading_font.className}`}
-                >
-                  Danger Zone
-                </h3>
-                <div className="space-y-4">
-                  <button className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors hover:cursor-not-allowed">
-                    Delete Account
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-
-      default:
-        return <div>Select a section</div>;
+      console.error("Failed to copy asset URL:", err);
+      toast.error("Failed to copy. Check browser permissions.");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-neutral-900 via-gray-950 to-black">
-      <div className="flex h-screen">
-        {/* Mobile Sidebar Overlay */}
-        {isMobileSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-            onClick={() => setIsMobileSidebarOpen(false)}
-          />
-        )}
-
-        {/* Left Sidebar */}
-        <div
-          className={`
-          ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 
-          glass border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out
-        `}
-        >
-          {/* Header */}
-          <div className="p-4 border-b border-white/10">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center">
-                <span
-                  className={`text-white font-bold ${paragraph_font.className}`}
-                >
-                  {user?.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("") ?? "LD"}
-                </span>
-              </div>
-              <div>
-                <h1 className={`text-white text-lg ${heading_font.className}`}>
-                  Dashboard
-                </h1>
-                <p
-                  className={`text-gray-400 text-sm ${paragraph_font.className}`}
-                >
-                  Welcome back!
-                </p>
-              </div>
+    <>
+      <div className="w-full flex flex-col items-center">
+        <div className="w-full max-w-[1000px] p-4 md:p-6 flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-semibold text-white">My Assets</h1>
+              <p className="text-gray-400 text-sm">
+                Upload and manage your media assets
+              </p>
             </div>
-          </div>
 
-          {/* Navigation Menu */}
-          <nav className="flex-1 p-4">
-            <div className="space-y-2">
-              <Link
-                href={"/"}
-                className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 ${"text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-                </svg>
-                <span className={paragraph_font.className}>Home</span>
-              </Link>
-              {menuItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveSection(item.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 ${activeSection === item.id
-                    ? "bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-400 border border-pink-500/30"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                    }`}
-                >
-                  {item.icon}
-                  <span className={paragraph_font.className}>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          </nav>
-
-          {/* Footer */}
-          <div className="p-4 border-t border-white/10">
             <button
-              onClick={handleSignOut}
-              className="w-full flex items-center cursor-pointer space-x-3 px-4 py-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+              onClick={() => setShowAssetUploadModal(true)}
+              className="px-3 py-1.5 text-sm hover:cursor-pointer rounded-md bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:shadow-lg hover:shadow-pink-500/30 transition"
             >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5z" />
-              </svg>
-              <span className={paragraph_font.className}>Logout</span>
+              Upload Asset
             </button>
           </div>
-        </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col lg:ml-0">
-          {/* Top Bar -- THIS IS THE MODIFIED SECTION */}
-          <div className="glass border-b border-white/10 p-3 lg:p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                {/* Hamburger Menu Button - Mobile Only */}
-                <button
-                  onClick={() => setIsMobileSidebarOpen(true)}
-                  className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition-colors"
+          <div
+            className="w-full border border-dashed border-white/15 rounded-xl h-36 flex flex-col items-center justify-center text-gray-400 hover:border-pink-500/50 hover:bg-white/[0.02] transition cursor-pointer"
+            onDrop={handleMediaDrop}
+            onDragOver={(e) => e.preventDefault()}
+          >
+            <p className="text-sm">Drag and drop files here</p>
+          </div>
+
+          {state.assets.length === 0 ? (
+            <p className="text-gray-400 text-sm mt-6">
+              No assets uploaded yet.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+              {state.assets.map((asset) => (
+                <div
+                  key={asset._id}
+                  className="relative rounded-xl border border-white/10 bg-[#0f0f12] p-2 transition hover:border-pink-400/50"
                 >
-                  <svg
-                    className="w-6 h-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  </svg>
-                </button>
+                  <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
+                    <button
+                      onClick={() => copyMediaUrl(asset.url)}
+                      className="flex hover:cursor-pointer items-center gap-1 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 text-xs text-gray-300 border border-transparent hover:border-lime-300 hover:text-lime-300 transition"
+                      aria-label="Copy URL"
+                      type="button"
+                    >
+                      <Copy size={14} />
+                    </button>
 
-                <div>
-                  <h1
-                    className={`text-xl lg:text-2xl text-white ${heading_font.className} capitalize`}
-                  >
-                    {activeSection}
-                  </h1>
-                  <p
-                    className={`text-gray-400 text-sm lg:text-base ${paragraph_font.className} hidden sm:block`}
-                  >
-                    Manage your {activeSection} settings and content
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 lg:space-x-4">
-                {/* Notification Bell REMOVED */}
-
-                {/* START: Profile Dropdown */}
-                <Menu as="div" className="relative ">
-                  <div>
-                    <Menu.Button className="w-9 h-9 bg-gray-800 rounded-full flex items-center justify-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-950 focus:ring-pink-500">
-                      <span className="sr-only">Open user menu</span>
-                      {user?.profileImgMediaKey ? (
-                        <Image
-                          className="rounded-full object-cover"
-                          src={prettySafeImage(user.profileImgMediaKey)}
-                          alt="Profile"
-                          width={36}
-                          height={36}
-                        />
-                      ) : (
-                        <span
-                          className={`text-white font-medium ${paragraph_font.className}`}
-                        >
-                          {user?.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("") ?? "U"}
-                        </span>
-                      )}
-                    </Menu.Button>
+                    <button
+                      onClick={() => handleDelete(asset._id)}
+                      className="flex hover:cursor-pointer items-center gap-1 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 text-xs text-gray-300 border border-transparent hover:border-red-500 hover:text-red-400 transition"
+                      aria-label="Delete Asset"
+                      type="button"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                  <Transition
-                    as={Fragment}
-                    enter="transition ease-out duration-100"
-                    enterFrom="transform opacity-0 scale-95"
-                    enterTo="transform opacity-100 scale-100"
-                    leave="transition ease-in duration-75"
-                    leaveFrom="transform opacity-100 scale-100"
-                    leaveTo="transform opacity-0 scale-95"
-                  >
-                    <Menu.Items className="origin-top-right absolute right-0 mt-2 w-48 bg-gray-950/80 backdrop-blur-md rounded-xl shadow-lg py-1 border border-white/10 focus:outline-none z-[1000]">
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={() => setActiveSection("profile")}
-                            className={`${active
-                              ? "bg-white/10 text-white"
-                              : "text-gray-300"
-                              } group flex items-center w-full px-4 py-2 text-sm ${paragraph_font.className
-                              } transition-colors`}
-                          >
-                            Your Profile
-                          </button>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={() => setActiveSection("settings")}
-                            className={`${active
-                              ? "bg-white/10 text-white"
-                              : "text-gray-300"
-                              } group flex items-center w-full px-4 py-2 text-sm ${paragraph_font.className
-                              } transition-colors`}
-                          >
-                            Settings
-                          </button>
-                        )}
-                      </Menu.Item>
-                      <div className="py-1">
-                        <div className="h-[1px] bg-white/10 mx-2"></div>
-                      </div>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={handleSignOut}
-                            className={`${active
-                              ? "bg-red-500/20 text-red-400"
-                              : "text-gray-300"
-                              } group flex items-center w-full px-4 py-2 text-sm ${paragraph_font.className
-                              } hover:bg-red-500/10 hover:text-red-400 transition-colors`}
-                          >
-                            Sign out
-                          </button>
-                        )}
-                      </Menu.Item>
-                    </Menu.Items>
-                  </Transition>
-                </Menu>
-                {/* END: Profile Dropdown */}
-              </div>
+                  <img
+                    src={asset.url}
+                    alt={asset.key}
+                    onClick={() => setPreviewAsset(asset.url)}
+                    className="w-full h-28 sm:h-32 md:h-36 lg:h-40 object-cover rounded-lg cursor-pointer transition duration-300 hover:scale-[1.05] hover:shadow-[0_0_18px_rgba(217,70,239,0.35)]"
+                  />
+                </div>
+              ))}
             </div>
-          </div>
-          {/* END Top Bar -- THIS IS THE MODIFIED SECTION */}
-
-          {/* Content */}
-          <div className="flex-1 p-4 lg:p-6 overflow-y-auto">
-            {renderContent()}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* New Post Modal */}
-      {showNewPostModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className={`text-2xl text-white ${heading_font.className}`}>
-                Create New Post
-              </h2>
-              <button
-                onClick={() => setShowNewPostModal(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <svg
-                  className="w-6 h-6 text-gray-400 hover:text-white"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <form onSubmit={handleNewPostSubmit} className="p-6 space-y-6">
-              {/* Title Field */}
-              <div>
-                <label
-                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                >
-                  Post Title
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={newPostData.title}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                  placeholder="Enter your post title..."
-                  required
-                />
-              </div>
-
-              {/* Slug Field */}
-              <div>
-                <label
-                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                >
-                  Slug
-                </label>
-                <input
-                  type="text"
-                  name="slug"
-                  value={newPostData.slug}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                  placeholder="Enter your post slug...."
-                  required
-                />
-              </div>
-
-              {/* Cover Image Media Key */}
-              <div>
-                <label
-                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                >
-                  Cover Image Media Key
-                </label>
-                <input
-                  type="text"
-                  name="coverImgMediaKey"
-                  value={newPostData.coverImgMediaKey}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                  placeholder="Enter cover image media key..."
-                  required
-                />
-                <div className="mt-2">
-                  <span className={`text-xs text-gray-500 mb-1 block ${paragraph_font.className}`}>Or upload directly:</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={isUploading}
-                    onChange={(e) => handleQuickUpload(e, (key) => setNewPostData(prev => ({ ...prev, coverImgMediaKey: key })))}
-                    className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              {/* Tags Field */}
-              <div>
-                <label
-                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                >
-                  Tags
-                </label>
-                <input
-                  type="text"
-                  name="tags"
-                  value={newPostData.tags}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                  placeholder="Enter tags separated by commas (e.g., unity, physics, tutorial)"
-                />
-              </div>
-
-              {/* Content Field */}
-              <div>
-                <label
-                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                >
-                  Content
-                </label>
-                <textarea
-                  name="content"
-                  value={newPostData.content}
-                  onChange={handleInputChange}
-                  rows={12}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300 resize-none"
-                  placeholder="Write your blog post content here..."
-                  required
-                />
-                <div className="flex items-center justify-between mt-2">
-                  <p
-                    className={`text-gray-500 text-sm ${paragraph_font.className}`}
-                  >
-                    Supports Markdown formatting
-                  </p>
-                  <p
-                    className={`text-gray-500 text-sm ${paragraph_font.className}`}
-                  >
-                    {newPostData.content.length} characters
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 pt-4 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setShowNewPostModal(false)}
-                  className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-all duration-200 relative overflow-hidden group"
-                >
-                  {/* Button Shimmer Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                  <span className="relative z-10">Publish Post</span>
-                </button>
-              </div>
-            </form>
-          </div>
+      {previewAsset && (
+        <div
+          onClick={() => setPreviewAsset(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+        >
+          <img
+            src={previewAsset}
+            className="max-h-[90vh] max-w-[90vw] rounded-xl"
+            alt="Preview"
+          />
         </div>
       )}
 
-      {/* Blog Update Modal */}
-      {showBlogUpdateModal.show && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <form onSubmit={handleBlogUpdateSubmit}>
-              {/* Modal Header */}
-              <div className="flex items-center justify-between p-6 border-b border-white/10">
-                <h2 className={`text-xl text-white ${heading_font.className}`}>
-                  Update Cover Image Key
-                </h2>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowBlogUpdateModal((prev) => {
-                      return {
-                        show: false,
-                        id: prev.id,
-                      };
-                    })
-                  }
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                >
-                  <svg
-                    className="w-6 h-6 text-gray-400 hover:text-white"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                  </svg>
-                </button>
-              </div>
+      <AssetUploadModal
+        open={showAssetUploadModal}
+        onClose={() => setShowAssetUploadModal(false)}
+        onUpload={handleNewAssetSubmit}
+        defaultFile={droppedFileRef.current}
+      />
+    </>
+  );
+};
 
-              {/* Modal Content - Single Field */}
-              <div className="p-6 space-y-6">
-                {/* Cover Image Media Key Field */}
-                <div>
-                  <label
-                    className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                  >
-                    Cover Image Media Key (e.g., user-assets/user-id/asset-name)
-                  </label>
-                  <input
-                    type="text"
-                    name="coverImgMediaKey"
-                    value={blogUpdate.coverImgMediaKey}
-                    onChange={handleBlogUpdateInputChange}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                    placeholder="Paste the asset key here..."
-                    required
-                  />
-                  <div className="mt-2">
-                    <span className={`text-xs text-gray-500 mb-1 block ${paragraph_font.className}`}>Or upload directly:</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      disabled={isUploading}
-                      onChange={(e) => handleQuickUpload(e, (key) => setBlogUpdate(prev => ({ ...prev, coverImgMediaKey: key })))}
-                      className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-              </div>
+const useCloudinaryUpload = () => {
+  const [loading, setLoading] = useState(false);
 
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 p-6 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowBlogUpdateModal(() => {
-                      return {
-                        show: false,
-                        id: null,
-                      };
-                    })
-                  }
-                  className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-all duration-200 relative overflow-hidden group"
-                >
-                  {/* Button Shimmer Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                  <span className="relative z-10">Save Key</span>
-                </button>
-              </div>
-            </form>
+  const upload = async (file: File) => {
+    setLoading(true);
+
+    try {
+      const result = await uploadToCloudinary(file);
+      return result;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { upload, loading };
+};
+
+interface ModalProps {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}
+
+const Modal = (props: ModalProps) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  if (!props.open) return null;
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      props.onClose();
+    }
+  };
+
+  return (
+    <div
+      onMouseDown={handleBackdropClick}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+    >
+      <div
+        ref={modalRef}
+        className="w-full max-w-xl bg-[#000000] border border-white/10 rounded-xl shadow-xl"
+      >
+        <div className="flex items-start justify-between p-5 border-b border-white/10">
+          <div>
+            <h2 className="text-lg font-semibold text-white">{props.title}</h2>
+
+            {props.subtitle && (
+              <p className="text-sm text-gray-400 mt-1">{props.subtitle}</p>
+            )}
           </div>
+
+          <button
+            onClick={props.onClose}
+            className="p-2 rounded-md hover:bg-white/10 transition hover:cursor-pointer"
+          >
+            <X size={18} className="text-gray-400" />
+          </button>
         </div>
-      )}
 
-      {/* New Project Modal */}
-      {showNewProjectModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className={`text-2xl text-white ${heading_font.className}`}>
-                Create New Project
-              </h2>
-              <button
-                onClick={() => setShowNewProjectModal(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <svg
-                  className="w-6 h-6 text-gray-400 hover:text-white"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <form onSubmit={handleNewProjectSubmit} className="p-6 space-y-6">
-              {/* Project Name Field */}
-              <div>
-                <label
-                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                >
-                  Project Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={newProjectData.name}
-                  onChange={handleProjectInputChange}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                  placeholder="Enter your project name..."
-                  required
-                />
-              </div>
-
-              {/* Portfolio & Tags Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Portfolio Field (Replaced Project Type/Technology) */}
-                <div>
-                  <label
-                    className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                  >
-                    Portfolio Type
-                  </label>
-                  <Listbox
-                    value={newProjectData.portfolio}
-                    onChange={(value) =>
-                      setNewProjectData((prev) => ({
-                        ...prev,
-                        portfolio: value,
-                      }))
-                    }
-                  >
-                    <div className="relative">
-                      {/* Button showing selected value */}
-                      <Listbox.Button
-                        className={`w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300`}
-                      >
-                        {newProjectData.portfolio || "Select a portfolio..."}
-                      </Listbox.Button>
-
-                      {/* Dropdown menu */}
-                      <Listbox.Options className="absolute mt-2 w-full rounded-xl bg-[#1a1a1a] border border-white/10 shadow-lg overflow-hidden z-20">
-                        {["GAME", "GRAPHICS", "RND"].map((item) => (
-                          <Listbox.Option
-                            key={item}
-                            value={item}
-                            className={({ active }) =>
-                              `px-4 py-2 cursor-pointer transition text-white ${active ? "bg-pink-600/40" : "bg-[#1a1a1a]"
-                              }`
-                            }
-                          >
-                            {item}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
-                    </div>
-                  </Listbox>
-                </div>
-
-                <div>
-                  <label
-                    className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                  >
-                    Tags
-                  </label>
-                  <input
-                    type="text"
-                    name="tags"
-                    value={newProjectData.tags}
-                    onChange={handleProjectInputChange}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                    placeholder="e.g., Unreal Engine, C++, Multiplayer (one line)"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Cover Image Media Key */}
-              <div>
-                <label
-                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                >
-                  Cover Image Media Key
-                </label>
-                <input
-                  type="text"
-                  name="coverImgMediaKey"
-                  value={newProjectData.coverImgMediaKey}
-                  onChange={handleProjectInputChange}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                  placeholder="Enter cover image media key..."
-                  required
-                />
-                <div className="mt-2">
-                  <span className={`text-xs text-gray-500 mb-1 block ${paragraph_font.className}`}>Or upload directly:</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={isUploading}
-                    onChange={(e) => handleQuickUpload(e, (key) => setNewProjectData(prev => ({ ...prev, coverImgMediaKey: key })))}
-                    className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              {/* Description Field (Unchanged) */}
-              <div>
-                <label
-                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                >
-                  Project Description
-                </label>
-                <textarea
-                  name="description"
-                  value={newProjectData.description}
-                  onChange={handleProjectInputChange}
-                  rows={6}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300 resize-none"
-                  placeholder="Describe your project, its goals, features, and any other relevant details..."
-                  required
-                />
-                <div className="flex items-center justify-between mt-2">
-                  <p
-                    className={`text-gray-500 text-sm ${paragraph_font.className}`}
-                  >
-                    Be descriptive about your project&apos;s purpose and scope
-                  </p>
-                  <p
-                    className={`text-gray-500 text-sm ${paragraph_font.className}`}
-                  >
-                    {newProjectData.description.length} characters
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <div className="flex items-center justify-between mb-4">
-                  <label
-                    className={`block text-gray-300 text-sm font-medium ${paragraph_font.className}`}
-                  >
-                    Project Links
-                  </label>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex gap-4 items-center mb-2">
-                    <input
-                      type="text"
-                      value="live-demo"
-                      disabled
-                      className="w-1/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 opacity-70 cursor-not-allowed"
-                    />
-                    <input
-                      type="url"
-                      placeholder="Live Demo URL (https://...)"
-                      value={
-                        newProjectData.links.find((l) => l.text === "live-demo")
-                          ?.url || ""
-                      }
-                      onChange={(e) => {
-                        const newUrl = e.target.value;
-                        setNewProjectData((prev) => ({
-                          ...prev,
-                          links: prev.links.map((link) =>
-                            link.text === "live-demo"
-                              ? { ...link, url: newUrl }
-                              : link
-                          ),
-                        }));
-                      }}
-                      className="w-2/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                    />
-                  </div>
-
-                  <div className="flex gap-4 items-center mb-2">
-                    <input
-                      type="text"
-                      value="github"
-                      disabled
-                      className="w-1/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 opacity-70 cursor-not-allowed"
-                    />
-                    <input
-                      type="url"
-                      placeholder="GitHub URL (https://...)"
-                      value={
-                        newProjectData.links.find((l) => l.text === "github")
-                          ?.url || ""
-                      }
-                      onChange={(e) => {
-                        const newUrl = e.target.value;
-                        setNewProjectData((prev) => ({
-                          ...prev,
-                          links: prev.links.map((link) =>
-                            link.text === "github"
-                              ? { ...link, url: newUrl }
-                              : link
-                          ),
-                        }));
-                      }}
-                      className="w-2/3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 pt-4 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setShowNewProjectModal(false)}
-                  className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-all duration-200 relative overflow-hidden group"
-                >
-                  {/* Button Shimmer Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                  <span className="relative z-10">Create Project</span>
-                </button>
-              </div>
-            </form>
-          </div>
+        <div className="p-5 space-y-5 max-h-[70vh] overflow-y-auto">
+          {props.children}
         </div>
-      )}
-
-      {/* Project Update Modal */}
-      {showProjectUpdateModal.show && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <form onSubmit={handleProjectUpdateSubmit}>
-              {/* Modal Header */}
-              <div className="flex items-center justify-between p-6 border-b border-white/10">
-                <h2 className={`text-xl text-white ${heading_font.className}`}>
-                  Update Project Cover Image Key
-                </h2>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowProjectUpdateModal((prev) => {
-                      return {
-                        show: false,
-                        id: prev.id,
-                      };
-                    })
-                  }
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                >
-                  <svg
-                    className="w-6 h-6 text-gray-400 hover:text-white"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Modal Content - Single Field */}
-              <div className="p-6 space-y-6">
-                {/* Cover Image Media Key Field */}
-                <div>
-                  <label
-                    className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                  >
-                    Cover Image Media Key (e.g., user-assets/user-id/asset-name)
-                  </label>
-                  <input
-                    type="text"
-                    name="coverImgMediaKey"
-                    value={projectUpdate.coverImgMediaKey}
-                    onChange={handleProjectUpdateInputChange}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                    placeholder="Paste the asset key here..."
-                    required
-                  />
-                  <div className="mt-2">
-                    <span className={`text-xs text-gray-500 mb-1 block ${paragraph_font.className}`}>Or upload directly:</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      disabled={isUploading}
-                      onChange={(e) => handleQuickUpload(e, (key) => setProjectUpdate(prev => ({ ...prev, coverImgMediaKey: key })))}
-                      className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 p-6 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowProjectUpdateModal(() => {
-                      return {
-                        show: false,
-                        id: null,
-                      };
-                    })
-                  }
-                  className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-all duration-200 relative overflow-hidden group"
-                >
-                  {/* Button Shimmer Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                  <span className="relative z-10">Save Key</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* New Asset Modal */}
-      {showNewAssetModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className={`text-2xl text-white ${heading_font.className}`}>
-                Upload New Asset
-              </h2>
-              <button
-                onClick={() => setShowNewAssetModal(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <svg
-                  className="w-6 h-6 text-gray-400 hover:text-white"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Modal Content */}
-            <form onSubmit={handleNewAssetSubmit} className="p-6 space-y-6">
-              {/* Asset Name Field */}
-              <div>
-                <label
-                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                  htmlFor="asset-name"
-                >
-                  Asset Name
-                </label>
-                <input
-                  id="asset-name"
-                  type="text"
-                  name="name"
-                  value={newAssetData.name} // Assumes newAssetData.name state
-                  onChange={handleAssetInputChange} // Assumes handler for text inputs
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300"
-                  placeholder="Enter a name for your asset..."
-                  required
-                />
-              </div>
-
-              {/* File Upload Field (Image Only) */}
-              <div>
-                <label
-                  className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
-                  htmlFor="asset-file"
-                >
-                  Image File
-                </label>
-                <input
-                  id="asset-file"
-                  type="file"
-                  name="file"
-                  accept="image/*" // Restricts to image types
-                  onChange={handleAssetFileChange} // Assumes handler for file input
-                  className="block w-full text-sm text-gray-400
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-full file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-pink-500/10 file:text-pink-400
-                  hover:file:bg-pink-500/20
-                  transition-all duration-300"
-                  required
-                />
-                {newAssetData.file && (
-                  <p
-                    className={`mt-2 text-xs text-gray-400 ${paragraph_font.className}`}
-                  >
-                    Selected: {newAssetData.file.name}
-                  </p>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 pt-4 border-t border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setShowNewAssetModal(false)}
-                  className="px-6 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:scale-105 transition-all duration-200 relative overflow-hidden group"
-                >
-                  {/* Button Shimmer Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                  <span className="relative z-10">Upload Asset</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
+};
+
+interface AssetUploadProps {
+  open: boolean;
+  onClose: () => void;
+  onUpload: (file: File) => Promise<string | void>;
+  defaultFile?: File | null;
 }
+
+const AssetUploadModal = (props: AssetUploadProps) => {
+  const [file, setFile] = useState<File | null>(props.defaultFile || null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!props.open) {
+      setFile(null);
+      setLoading(false);
+    }
+  }, [props.open]);
+
+  useEffect(() => {
+    if (props.defaultFile) {
+      setFile(props.defaultFile);
+    }
+  }, [props.defaultFile]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      await props.onUpload(file);
+      setFile(null);
+      props.onClose();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal
+      open={props.open}
+      onClose={props.onClose}
+      title="Upload Asset"
+      subtitle="Add a new image to the media library."
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">Image File</label>
+
+          {!props.defaultFile ? (
+            <input
+              type="file"
+              accept="image/*"
+              required={!file}
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  setFile(e.target.files[0]);
+                }
+              }}
+              className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm
+            file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300s"
+            />
+          ) : null}
+
+          {file && (
+            <p
+              className={`${props.defaultFile ? "text-md text-gray-300" : "text-xs text-gray-500"}  mt-2`}
+            >
+              Selected: {file.name}
+            </p>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-4 pt-5 border-t border-white/10">
+          <button
+            type="button"
+            onClick={props.onClose}
+            className="px-5 py-2 rounded-lg text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 backdrop-blur-md
+              border border-white/10 transition-all duration-200 hover:cursor-pointer"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-6 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium hover:scale-105
+              hover:shadow-lg hover:shadow-pink-500/30 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200 relative
+              overflow-hidden group hover:cursor-pointer"
+          >
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full
+              group-hover:translate-x-full transition-transform duration-700"
+            ></div>
+            <span className="relative z-10">
+              {loading ? "Uploading..." : "Upload Asset"}
+            </span>
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+interface NewProjectModalProps {
+  open: boolean;
+  onClose: () => void;
+  onDirectCoverImgUpload: (file: File) => Promise<string | void>;
+  onCreate: (data: {
+    title: string;
+    portfolio: "GAME" | "GRAPHICS" | "RND";
+    description: string;
+    tags: string[];
+    coverImgUrl: string;
+    links: Links[];
+  }) => Promise<void>;
+}
+
+const NewProjectModal = (props: NewProjectModalProps) => {
+  const [title, setTitle] = useState("");
+  const [portfolio, setPortfolio] = useState<"GAME" | "GRAPHICS" | "RND">(
+    "GAME",
+  );
+  const [description, setDescription] = useState("");
+  const [tags, setTags] = useState("");
+  const [coverImgUrl, setCoverImgUrl] = useState("");
+  const [uploadingImg, setUploadingImg] = useState(false);
+
+  const [githubUrl, setGithubUrl] = useState("");
+  const [liveUrl, setLiveUrl] = useState("");
+  const [extraLinks, setExtraLinks] = useState<Links[]>([]);
+
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!props.open) {
+      cleanModalData();
+    }
+  }, [props.open]);
+
+  const cleanModalData = () => {
+    setTitle("");
+    setDescription("");
+    setTags("");
+    setCoverImgUrl("");
+
+    setGithubUrl("");
+    setLiveUrl("");
+    setExtraLinks([]);
+
+    setPortfolio("GAME");
+  };
+
+  const addExtraLink = () => {
+    setExtraLinks([...extraLinks, { text: "", url: "" }]);
+  };
+
+  const removeExtraLink = (index: number) => {
+    setExtraLinks(extraLinks.filter((_, i) => i !== index));
+  };
+
+  const updateExtraLink = (index: number, key: keyof Links, value: string) => {
+    const updated = [...extraLinks];
+    updated[index][key] = value;
+    setExtraLinks(updated);
+  };
+
+  const handleCoverUpload = async (file: File) => {
+    setUploadingImg(true);
+
+    if (!file) return;
+
+    try {
+      const url = await props.onDirectCoverImgUpload(file);
+
+      if (!url) {
+        toast.error("Uploading failed");
+      } else {
+        setCoverImgUrl(url);
+      }
+    } finally {
+      setUploadingImg(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setLoading(true);
+    const links: Links[] = [];
+
+    if (githubUrl.trim()) {
+      links.push({ text: "github", url: githubUrl });
+    }
+    if (liveUrl.trim()) {
+      links.push({ text: "live-link", url: liveUrl });
+    }
+    extraLinks.forEach((l) => {
+      if (l.text && l.url) {
+        links.push(l);
+      }
+    });
+
+    await props.onCreate({
+      title: title,
+      portfolio,
+      description,
+      tags: tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+      coverImgUrl,
+      links,
+    });
+
+    setLoading(false);
+    props.onClose();
+  };
+
+  return (
+    <Modal
+      open={props.open}
+      onClose={props.onClose}
+      title="Create Project"
+      subtitle="Add a new project to your portfolio."
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Project Title
+          </label>
+          <input
+            value={title}
+            required
+            onChange={(e) => setTitle(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Portfolio Type
+          </label>
+
+          <Listbox value={portfolio} onChange={setPortfolio}>
+            <div className="relative">
+              <Listbox.Button className="form-input text-left">
+                {portfolio}
+              </Listbox.Button>
+
+              <Listbox.Options className="absolute mt-1 w-full bg-[#1a1a1a] border border-white/10 rounded-lg overflow-hidden z-10">
+                <Listbox.Option
+                  value="GAME"
+                  className={({ active }) =>
+                    `px-4 py-2 cursor-pointer ${
+                      active ? "bg-pink-600/40 text-white" : "text-white"
+                    }`
+                  }
+                >
+                  Game
+                </Listbox.Option>
+
+                <Listbox.Option
+                  value="GRAPHICS"
+                  className={({ active }) =>
+                    `px-4 py-2 cursor-pointer ${
+                      active ? "bg-pink-600/40 text-white" : "text-white"
+                    }`
+                  }
+                >
+                  Graphics
+                </Listbox.Option>
+
+                <Listbox.Option
+                  value="RND"
+                  className={({ active }) =>
+                    `px-4 py-2 cursor-pointer ${
+                      active ? "bg-pink-600/40 text-white" : "text-white"
+                    }`
+                  }
+                >
+                  R&D
+                </Listbox.Option>
+              </Listbox.Options>
+            </div>
+          </Listbox>
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Tags (comma separated)
+          </label>
+          <input
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="three.js, multiplayer, shaders"
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Description
+          </label>
+          <textarea
+            rows={4}
+            value={description}
+            required
+            onChange={(e) => setDescription(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Cover Image URL or upload directly
+          </label>
+
+          <div className="flex flex-col gap-1">
+            <input
+              value={coverImgUrl}
+              onChange={(e) => setCoverImgUrl(e.target.value)}
+              className="form-input"
+            />
+
+            <label className="block text-xs text-gray-500 m-0.5">
+              Or upload directly
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  handleCoverUpload(e.target.files[0]);
+                }
+              }}
+              className="block hover:cursor-pointer w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm
+            file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300s"
+            />
+
+            {uploadingImg && (
+              <div className="w-full h-1 bg-white/10 rounded mt-2 overflow-hidden">
+                <div className="h-full w-1/3 bg-gradient-to-r from-pink-500 to-purple-500 animate-[uploadbar_1s_linear_infinite]" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-3">Links</label>{" "}
+          <div className="space-y-3">
+            <div className="flex gap-2 items-center">
+              <input
+                value="github"
+                disabled
+                className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-gray-400"
+              />
+              <input
+                value={githubUrl}
+                onChange={(e) => setGithubUrl(e.target.value)}
+                placeholder="https://github.com/..."
+                className="form-input flex-1"
+              />
+              <div className="w-6"></div>
+            </div>
+
+            <div className="flex gap-2 items-center">
+              <input
+                value="live-link"
+                disabled
+                className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-gray-400"
+              />
+              <input
+                value={liveUrl}
+                onChange={(e) => setLiveUrl(e.target.value)}
+                placeholder="https://example.com/..."
+                className="form-input flex-1"
+              />
+              <div className="w-6"></div>
+            </div>
+
+            {extraLinks.map((link, index) => (
+              <div key={index} className="flex gap-2 items-center">
+                <input
+                  value={link.text}
+                  onChange={(e) =>
+                    updateExtraLink(index, "text", e.target.value)
+                  }
+                  placeholder="type"
+                  className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white"
+                />
+                <input
+                  value={link.url}
+                  onChange={(e) =>
+                    updateExtraLink(index, "url", e.target.value)
+                  }
+                  placeholder="https://..."
+                  className="form-input flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeExtraLink(index)}
+                  className="text-red-400 hover:text-red-300 px-2"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={addExtraLink}
+            className="mt-3 text-sm text-pink-400 hover:text-pink-300"
+          >
+            + Add Link
+          </button>
+        </div>
+
+        <div className="flex justify-end gap-4 pt-5 border-t border-white/10">
+          <button
+            type="button"
+            onClick={props.onClose}
+            className="px-5 py-2 rounded-lg text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={loading || uploadingImg}
+            className="px-6 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium"
+          >
+            {loading ? "Creating..." : "Create Project"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+interface UpdateProjectModalProps {
+  projectId: string;
+  open: boolean;
+  onClose: () => void;
+  onDirectCoverImgUpload: (file: File) => Promise<string | void>;
+  onUpdate: (data: {
+    _id: string;
+    title: string;
+    portfolio: "GAME" | "GRAPHICS" | "RND";
+    description: string;
+    tags: string[];
+    coverImgUrl: string;
+    links: Links[];
+  }) => Promise<void>;
+}
+
+const UpdateProjectModal = (props: UpdateProjectModalProps) => {
+  console.log("project ", props.projectId);
+
+  const [title, setTitle] = useState("");
+  const [portfolio, setPortfolio] = useState<"GAME" | "GRAPHICS" | "RND">(
+    "GAME",
+  );
+  const [description, setDescription] = useState("");
+  const [tags, setTags] = useState("");
+  const [coverImgUrl, setCoverImgUrl] = useState("");
+  const [uploadingImg, setUploadingImg] = useState(false);
+
+  const [githubUrl, setGithubUrl] = useState("");
+  const [liveUrl, setLiveUrl] = useState("");
+  const [extraLinks, setExtraLinks] = useState<Links[]>([]);
+
+  const [loading, setLoading] = useState(false);
+
+  const { state } = useDashboard();
+  const project = state.projects.find((p) => p._id === props.projectId);
+
+  useEffect(() => {
+    if (project) {
+      resetModalData();
+    }
+  }, [project]);
+
+  const resetModalData = () => {
+    if (!project) return;
+
+    setTitle(project.title);
+    setPortfolio(project.portfolio);
+    setDescription(project.description);
+    setTags(project.tags.join(", "));
+    setCoverImgUrl(project.coverImgUrl || "");
+
+    const github = project.links.find((link) => link.text === "github");
+    const live = project.links.find((link) => link.text === "live-link");
+
+    setGithubUrl(github?.url || "");
+    setLiveUrl(live?.url || "");
+
+    setExtraLinks(
+      project.links.filter(
+        (link) => link.text !== "github" && link.text !== "live-link",
+      ),
+    );
+  };
+
+  const addExtraLink = () => {
+    setExtraLinks([...extraLinks, { text: "", url: "" }]);
+  };
+
+  const removeExtraLink = (index: number) => {
+    setExtraLinks(extraLinks.filter((_, i) => i !== index));
+  };
+
+  const updateExtraLink = (index: number, key: keyof Links, value: string) => {
+    const updated = [...extraLinks];
+    updated[index][key] = value;
+    setExtraLinks(updated);
+  };
+
+  const handleCoverUpload = async (file: File) => {
+    setUploadingImg(true);
+
+    if (!file) return;
+
+    try {
+      const url = await props.onDirectCoverImgUpload(file);
+
+      if (!url) {
+        toast.error("Uploading failed");
+      } else {
+        setCoverImgUrl(url);
+      }
+    } finally {
+      setUploadingImg(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setLoading(true);
+    const links: Links[] = [];
+
+    if (githubUrl.trim()) {
+      links.push({ text: "github", url: githubUrl });
+    }
+    if (liveUrl.trim()) {
+      links.push({ text: "live-link", url: liveUrl });
+    }
+    extraLinks.forEach((l) => {
+      if (l.text && l.url) {
+        links.push(l);
+      }
+    });
+
+    await props.onUpdate({
+      _id: props.projectId,
+      title,
+      portfolio,
+      description,
+      tags: tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+      coverImgUrl,
+      links,
+    });
+
+    setLoading(false);
+    props.onClose();
+  };
+
+  return (
+    <Modal
+      open={props.open}
+      onClose={props.onClose}
+      title="Update Project"
+      subtitle="Update your project information."
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Project Title
+          </label>
+          <input
+            value={title}
+            required
+            onChange={(e) => setTitle(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Portfolio Type
+          </label>
+
+          <Listbox value={portfolio} onChange={setPortfolio}>
+            <div className="relative">
+              <Listbox.Button className="form-input text-left">
+                {portfolio}
+              </Listbox.Button>
+
+              <Listbox.Options className="absolute mt-1 w-full bg-[#1a1a1a] border border-white/10 rounded-lg overflow-hidden z-10">
+                <Listbox.Option
+                  value="GAME"
+                  className={({ active }) =>
+                    `px-4 py-2 cursor-pointer ${
+                      active ? "bg-pink-600/40 text-white" : "text-white"
+                    }`
+                  }
+                >
+                  Game
+                </Listbox.Option>
+
+                <Listbox.Option
+                  value="GRAPHICS"
+                  className={({ active }) =>
+                    `px-4 py-2 cursor-pointer ${
+                      active ? "bg-pink-600/40 text-white" : "text-white"
+                    }`
+                  }
+                >
+                  Graphics
+                </Listbox.Option>
+
+                <Listbox.Option
+                  value="RND"
+                  className={({ active }) =>
+                    `px-4 py-2 cursor-pointer ${
+                      active ? "bg-pink-600/40 text-white" : "text-white"
+                    }`
+                  }
+                >
+                  R&D
+                </Listbox.Option>
+              </Listbox.Options>
+            </div>
+          </Listbox>
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Tags (comma separated)
+          </label>
+          <input
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="three.js, multiplayer, shaders"
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Description
+          </label>
+          <textarea
+            rows={4}
+            value={description}
+            required
+            onChange={(e) => setDescription(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Cover Image URL or upload directly
+          </label>
+
+          <div className="flex flex-col gap-1">
+            <input
+              value={coverImgUrl}
+              onChange={(e) => setCoverImgUrl(e.target.value)}
+              className="form-input"
+            />
+
+            <label className="block text-xs text-gray-500 m-0.5">
+              Or upload directly
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  handleCoverUpload(e.target.files[0]);
+                }
+              }}
+              className="block hover:cursor-pointer w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm
+            file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300s"
+            />
+
+            {uploadingImg && (
+              <div className="w-full h-1 bg-white/10 rounded mt-2 overflow-hidden">
+                <div className="h-full w-1/3 bg-gradient-to-r from-pink-500 to-purple-500 animate-[uploadbar_1s_linear_infinite]" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-3">Links</label>{" "}
+          <div className="space-y-3">
+            <div className="flex gap-2 items-center">
+              <input
+                value="github"
+                disabled
+                className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-gray-400"
+              />
+              <input
+                value={githubUrl}
+                onChange={(e) => setGithubUrl(e.target.value)}
+                placeholder="https://github.com/..."
+                className="form-input flex-1"
+              />
+              <div className="w-6"></div>
+            </div>
+
+            <div className="flex gap-2 items-center">
+              <input
+                value="live-link"
+                disabled
+                className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-gray-400"
+              />
+              <input
+                value={liveUrl}
+                onChange={(e) => setLiveUrl(e.target.value)}
+                placeholder="https://example.com/..."
+                className="form-input flex-1"
+              />
+              <div className="w-6"></div>
+            </div>
+
+            {extraLinks.map((link, index) => (
+              <div key={index} className="flex gap-2 items-center">
+                <input
+                  value={link.text}
+                  onChange={(e) =>
+                    updateExtraLink(index, "text", e.target.value)
+                  }
+                  placeholder="type"
+                  className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white"
+                />
+                <input
+                  value={link.url}
+                  onChange={(e) =>
+                    updateExtraLink(index, "url", e.target.value)
+                  }
+                  placeholder="https://..."
+                  className="form-input flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeExtraLink(index)}
+                  className="text-red-400 hover:text-red-300 px-2"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={addExtraLink}
+            className="mt-3 text-sm text-pink-400 hover:text-pink-300"
+          >
+            + Add Link
+          </button>
+        </div>
+
+        <div className="flex justify-end gap-4 pt-5 border-t border-white/10">
+          <button
+            type="button"
+            onClick={props.onClose}
+            className="px-5 py-2 rounded-lg text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={loading || uploadingImg}
+            className="px-6 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium"
+          >
+            {loading ? "Updating..." : "Update Project"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+interface NewBlogModalProps {
+  open: boolean;
+  onClose: () => void;
+  onDirectCoverImgUpload: (file: File) => Promise<string | void>;
+  onCreate: (data: {
+    title: string;
+    slug: string;
+    tags: string[];
+    coverImgUrl: string;
+    content: string;
+  }) => Promise<void>;
+}
+
+const NewBlogModal = (props: NewBlogModalProps) => {
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [tags, setTags] = useState("");
+  const [coverImgUrl, setCoverImgUrl] = useState("");
+  const [content, setContent] = useState("");
+
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!props.open) {
+      resetModal();
+    }
+  }, [props.open]);
+
+  const resetModal = () => {
+    setTitle("");
+    setSlug("");
+    setTags("");
+    setCoverImgUrl("");
+    setContent("");
+  };
+
+  const handleCoverUpload = async (file: File) => {
+    setUploadingImg(true);
+
+    try {
+      const url = await props.onDirectCoverImgUpload(file);
+
+      if (!url) {
+        toast.error("Uploading failed");
+      } else {
+        setCoverImgUrl(url);
+      }
+    } finally {
+      setUploadingImg(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    setLoading(true);
+    await props.onCreate({
+      title,
+      slug,
+      coverImgUrl,
+      content,
+      tags: tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+    });
+
+    props.onClose();
+    setLoading(false);
+  };
+
+  return (
+    <Modal
+      open={props.open}
+      onClose={props.onClose}
+      title="Create Blog"
+      subtitle="Write a new blog post."
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">Title</label>
+          <input
+            value={title}
+            required
+            onChange={(e) => setTitle(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">Slug</label>
+          <input
+            value={slug}
+            required
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="url-safe-identifier-for-your-blog"
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Tags (comma separated)
+          </label>
+          <input
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="game-dev, rendering, multiplayer"
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Cover Image URL or upload
+          </label>
+
+          <div className="flex flex-col gap-1">
+            <input
+              value={coverImgUrl}
+              onChange={(e) => setCoverImgUrl(e.target.value)}
+              className="form-input"
+            />
+
+            <label className="text-xs text-gray-500 m-0.5">
+              Or upload directly
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  handleCoverUpload(e.target.files[0]);
+                }
+              }}
+              className="block w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm
+              file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300 hover:cursor-pointer"
+            />
+
+            {uploadingImg && (
+              <div className="w-full h-1 bg-white/10 rounded mt-2 overflow-hidden">
+                <div className="h-full w-1/3 bg-gradient-to-r from-pink-500 to-purple-500 animate-[uploadbar_1s_linear_infinite]" />
+              </div>
+            )}
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Blog Content (Markdown)
+          </label>
+          <textarea
+            rows={10}
+            required
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="form-input font-mono"
+            placeholder="Write your blog in markdown..."
+          />
+        </div>
+
+        <div className="flex justify-end gap-4 pt-5 border-t border-white/10">
+          <button
+            type="button"
+            onClick={props.onClose}
+            className="px-5 py-2 rounded-lg text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={loading || uploadingImg}
+            className="px-6 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium"
+          >
+            {loading ? "Creating..." : "Create Blog"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+interface UpdateBlogModalProps {
+  blogId: string;
+  open: boolean;
+  onClose: () => void;
+  onDirectCoverImgUpload: (file: File) => Promise<string | void>;
+  onUpdate: (data: {
+    _id: string;
+    title: string;
+    slug: string;
+    tags: string[];
+    coverImgUrl: string;
+    content?: string;
+  }) => Promise<void>;
+}
+
+const UpdateBlogModal = (props: UpdateBlogModalProps) => {
+  const { state } = useDashboard();
+  const blog = state.blogs.find((b) => b._id === props.blogId);
+
+  const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
+  const [tags, setTags] = useState("");
+  const [coverImgUrl, setCoverImgUrl] = useState("");
+  const [uploadingImg, setUploadingImg] = useState(false);
+  const [content, setContent] = useState("");
+  const [editContent, setEditContent] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (blog) {
+      setTitle(blog.title);
+      setSlug(blog.slug);
+      setTags(blog.tags.join(", "));
+      setCoverImgUrl(blog.coverImgUrl || "");
+      setContent("");
+      setEditContent(false);
+    }
+  }, [blog]);
+
+  const handleCoverUpload = async (file: File) => {
+    setUploadingImg(true);
+    try {
+      const url = await props.onDirectCoverImgUpload(file);
+      if (!url) toast.error("Uploading failed");
+      else setCoverImgUrl(url);
+    } finally {
+      setUploadingImg(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    await props.onUpdate({
+      _id: props.blogId,
+      title,
+      slug,
+      coverImgUrl,
+      ...(editContent ? { content } : {}),
+      tags: tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+    });
+
+    setLoading(false);
+    props.onClose();
+  };
+
+  return (
+    <Modal
+      open={props.open}
+      onClose={props.onClose}
+      title="Update Blog"
+      subtitle="Update your blog information. Content update is optional."
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">Title</label>
+          <input
+            value={title}
+            required
+            onChange={(e) => setTitle(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">Slug</label>
+          <input
+            value={slug}
+            required
+            onChange={(e) => setSlug(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Tags (comma separated)
+          </label>
+          <input
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="tech, javascript, react"
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-300 mb-2">
+            Cover Image URL or upload directly
+          </label>
+
+          <div className="flex flex-col gap-1">
+            <input
+              value={coverImgUrl}
+              onChange={(e) => setCoverImgUrl(e.target.value)}
+              className="form-input"
+            />
+
+            <label className="block text-xs text-gray-500 m-0.5">
+              Or upload directly
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files?.[0]) {
+                  handleCoverUpload(e.target.files[0]);
+                }
+              }}
+              className="block hover:cursor-pointer w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm
+            file:font-semibold file:bg-pink-500/10 file:text-pink-400 hover:file:bg-pink-500/20 transition-all duration-300s"
+            />
+
+            {uploadingImg && (
+              <div className="w-full h-1 bg-white/10 rounded mt-2 overflow-hidden">
+                <div className="h-full w-1/3 bg-gradient-to-r from-pink-500 to-purple-500 animate-[uploadbar_1s_linear_infinite]" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <button
+            type="button"
+            onClick={() => setEditContent(!editContent)}
+            className="text-sm text-pink-400 hover:text-pink-300"
+          >
+            {editContent ? "Cancel" : "Edit Content"}
+          </button>
+
+          {editContent && (
+            <textarea
+              rows={6}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Paste new markdown content here..."
+              className="form-input mt-2 font-mono"
+            />
+          )}
+        </div>
+
+        <div className="flex justify-end gap-4 pt-5 border-t border-white/10">
+          <button
+            type="button"
+            onClick={props.onClose}
+            className="px-5 py-2 rounded-lg text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            disabled={loading || uploadingImg}
+            className="px-6 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium"
+          >
+            {loading ? "Updating..." : "Update Blog"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+};

@@ -19,7 +19,7 @@ const UserSchema = new Schema<IUser>({
         type: Schema.Types.String,
         default: null,
     },
-    profileImgMediaKey: {
+    profileImgUrl: {
         type: Schema.Types.String,
         default: null,
     },

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { ITeamExportable } from "../types/domain.types";
-import TeamCard from "./TeamCard";
+import MemberCard from "./TeamCard";
 import DesignationFilter from "./DesignationFilter";
 
 interface TeamPageClientProps {
@@ -11,7 +11,7 @@ interface TeamPageClientProps {
 
 export default function TeamPageClient({ allTeams }: TeamPageClientProps) {
   const [selectedDesignation, setSelectedDesignation] = useState<string | null>(
-    "SENIOR"
+    "SENIOR",
   );
 
   // Filter teams based on selected designation
@@ -24,7 +24,7 @@ export default function TeamPageClient({ allTeams }: TeamPageClientProps) {
       .map((team) => ({
         ...team,
         members: team.members.filter(
-          (member) => member.designation === selectedDesignation
+          (member) => member.designation === selectedDesignation,
         ),
       }))
       .filter((team) => team.members.length > 0); // Only show teams that have members with the selected designation
@@ -36,7 +36,7 @@ export default function TeamPageClient({ allTeams }: TeamPageClientProps) {
       <DesignationFilter onFilterChange={setSelectedDesignation} />
 
       {/* Team Cards Section */}
-      <section className="py-20 px-4 sm:px-8 md:px-16 lg:px-24 relative bg-gradient-to-b from-black via-black to-pink-900/10 overflow-hidden">
+      <section className="py-20 px-4 sm:px-8 md:px-16 lg:px-24 relative [background-image:linear-gradient(to_bottom,black_0%,black_60%,#831843_100%)] overflow-hidden">
         {/* Enhanced animated background effects */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Particle effect overlay */}
@@ -44,7 +44,7 @@ export default function TeamPageClient({ allTeams }: TeamPageClientProps) {
             className="absolute inset-0"
             style={{
               backgroundImage:
-                "radial-gradient(circle at center, rgba(236,72,153,0.1) 0%, transparent 8%)",
+                "radial-gradient(circle at center, rgba(236,72,153,0.16) 0%, transparent 8%)",
               backgroundSize: "120px 120px",
               animation: "particleFade 4s ease-in-out infinite alternate",
             }}
@@ -67,7 +67,7 @@ export default function TeamPageClient({ allTeams }: TeamPageClientProps) {
                       key={member._id || `${index1}-${index2}`}
                       className="lg:max-w-[320px] 2xl:max-w-[360px] mx-auto w-full"
                     >
-                      <TeamCard
+                      <MemberCard
                         member={{
                           ...member,
                           teamName: team.name,

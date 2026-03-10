@@ -23,7 +23,7 @@ const teamValidator = {
         _id: allIbDField._id,
         name: allIbDField.shortString.optional(),
         description: allIbDField.longString.optional(),
-        coverImageMediaKey: allIbDField.shortString.optional(),
+        coverImageUrl: allIbDField.shortString.optional(),
     }),
     editMembers: z.object({
         _id: allIbDField._id,

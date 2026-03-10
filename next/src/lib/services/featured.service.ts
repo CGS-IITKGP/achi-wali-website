@@ -133,7 +133,7 @@ const getHighlight: ServiceSignature<
             type: "BLOG",
             title: blog.title,
             tags: blog.tags,
-            coverImgMediaKey: blog.coverImgMediaKey,
+            coverImgUrl: blog.coverImgUrl,
             readUrl: "/blog/" + blog.slug
         });
     });
@@ -153,7 +153,7 @@ const getHighlight: ServiceSignature<
             type: project.portfolio,
             title: project.title,
             tags: project.tags,
-            coverImgMediaKey: project.coverImgMediaKey,
+            coverImgUrl: project.coverImgUrl,
             githubLink: githubLink ? githubLink.url : null,
             liveDemoLink: liveDemoLink ? liveDemoLink.url : null
         });

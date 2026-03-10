@@ -18,7 +18,7 @@ const TeamSchema = new Schema<ITeam>({
         type: Schema.Types.ObjectId,
         ref: 'User',
     }],
-    coverImageMediaKey: {
+    coverImageUrl: {
         type: Schema.Types.String,
         default: null,
     },

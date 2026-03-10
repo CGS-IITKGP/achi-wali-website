@@ -1,4 +1,5 @@
 import cloudinary from "@/lib/utils/cloudinary";
+import { createId } from "@paralleldrive/cuid2";
 import {
     ServiceSignature,
     EUserRole,
@@ -8,7 +9,6 @@ import {
 } from "@/lib/types/index.types";
 import getEnvVariable from "../utils/envVariable";
 import mediaRepository from "../database/repos/media.repo";
-import userRepository from "../database/repos/user.repo";
 
 
 const get: ServiceSignature<
@@ -36,14 +36,16 @@ const sign: ServiceSignature<
     SDIn.Media.Sign,
     SDOut.Media.Sign,
     true
-> = async (data, session) => {
+> = async (_data, session) => {
     const timestamp = Math.round(new Date().getTime() / 1000);
     const folder = "user-assets/" + session.userId.toHexString();
+    const publicId = createId();
 
-    // Note: These should be alphabetically sorted for signature to match.
+    // These should be alphabetically sorted for signature to match.
+    // In cloudinary, final public_id will be concatenation of folder and public_id.
     const paramsToSign = {
         folder,
-        public_id: data.publicId,
+        public_id: publicId,
         timestamp: timestamp,
     };
 
@@ -58,6 +60,7 @@ const sign: ServiceSignature<
             signature,
             timestamp: timestamp.toString(),
             folder,
+            publicId,
             cloudName: getEnvVariable("CLOUDINARY_CLOUD_NAME", true),
             apiKey: getEnvVariable("CLOUDINARY_API_KEY", true)
         }
@@ -91,14 +94,6 @@ const create: ServiceSignature<
         url: data.url,
         uploadedBy: session.userId
     });
-
-    // Note: Last minute change to have the ability to set profile image
-    //       for users. May be turned long term.
-    if (data.publicId.trim().split('/').pop()?.trim() === 'profileImage') {
-        await userRepository.updateById(session.userId, {
-            profileImgMediaKey: `user-assets/${session.userId.toHexString()}/profileImage`
-        });
-    }
 
     return {
         success: true,

@@ -1,16 +1,16 @@
 export const dynamic = "force-dynamic";
 
-import createServiceOnlyHandler from "@/lib/handler";
+import createHandler from "@/lib/handler";
 import authValidator from "@/lib/validators/auth.validator";
 import authService from "@/lib/services/auth.service";
 import { cookieOptions } from "@/lib/utils/cookie";
 import { SESSION_COOKIE_NAME } from "@/lib/config/constants";
 
-const POST = createServiceOnlyHandler({
-  validationSchema: authValidator.signOut,
-  requireAuth: false,
+const POST = createHandler({
+  requireAuth: true,
+  validationSchema: authValidator.refreshSession,
   options: {
-    service: authService.signOut,
+    service: authService.refreshSession,
     onSuccess: (sDOut) => {
       return {
         responseData: {},

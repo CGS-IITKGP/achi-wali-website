@@ -8,10 +8,10 @@ import { ClientSession, FilterQuery } from "mongoose";
 class ProjectRepository extends GenericRepository<
     IProject,
     Pick<IProject, "portfolio" | "title" | "description" | "tags" | "author"
-        | "collaborators" | "links" | "coverImgMediaKey" | "media"
+        | "collaborators" | "links" | "coverImgUrl" | "media"
     >,
     Pick<IProject, "portfolio" | "title" | "description" | "tags" | "collaborators"
-        | "links" | "coverImgMediaKey" | "media"
+        | "links" | "coverImgUrl" | "media"
     >
 > {
     constructor() {

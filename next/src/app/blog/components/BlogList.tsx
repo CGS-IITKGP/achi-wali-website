@@ -6,10 +6,7 @@ import { Search, Calendar, ArrowRight, Clock } from "lucide-react";
 import Link from "next/link";
 import { Righteous } from "next/font/google";
 import { IBlogOfList } from "@/app/types/index.types";
-import {
-  prettyDate,
-  prettySafeImage,
-} from "../../utils/pretty";
+import { prettyDate, prettySafeImage } from "../../utils/pretty";
 import Image from "next/image";
 
 const righteousFont = Righteous({ weight: "400", subsets: ["latin"] });
@@ -89,7 +86,7 @@ export default function BlogList({ posts }: BlogListProps) {
                   <div className="bg-gray-900/50 backdrop-blur-xl rounded-2xl border border-gray-800 overflow-hidden hover:border-pink-500/50 transition-all duration-500 h-full">
                     <div className="relative w-full h-48 overflow-hidden bg-white/5">
                       <Image
-                        src={prettySafeImage(blog.coverImgMediaKey)}
+                        src={prettySafeImage(blog.coverImgUrl)}
                         alt={blog.title}
                         fill
                         className="object-cover group-hover:scale-110 transition-transform duration-700"

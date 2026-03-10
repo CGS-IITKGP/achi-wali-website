@@ -17,7 +17,7 @@ const _userExportLimitedInfo = (user: IUser) => {
         _id: user._id.toHexString(),
         name: user.name,
         email: user.email,
-        profileImgMediaKey: user.profileImgMediaKey,
+        profileImgMediaKey: user.profileImgUrl,
         roles: user.roles,
         teamId: user.teamId?.toHexString() ?? null,
         links: user.links,
@@ -30,7 +30,7 @@ const _userExportUnrestrictedInfo = (user: IUser) => {
         _id: user._id.toHexString(),
         name: user.name,
         email: user.email,
-        profileImgMediaKey: user.profileImgMediaKey,
+        profileImgMediaKey: user.profileImgUrl,
         phoneNumber: user.phoneNumber,
         roles: user.roles,
         teamId: user.teamId?.toHexString() ?? null,
@@ -48,11 +48,11 @@ const get: ServiceSignature<
     if (data.target === APIControl.User.Get.Target.PUBLIC_ALL) {
         return getPublicAll(data, session);
     }
-    
+
     if (data.target === APIControl.User.Get.Target.PUBLIC_SINGLE) {
         return getPublicOne(data, session);
     }
-    
+
     if (!session || !session.userRoles.includes(EUserRole.ADMIN)) {
         return {
             success: false,
@@ -89,7 +89,7 @@ const getAll: ServiceSignature<
                     _id: user._id.toHexString(),
                     name: user.name,
                     email: user.email,
-                    profileImgMediaKey: user.profileImgMediaKey,
+                    profileImgUrl: user.profileImgUrl,
                     roles: user.roles,
                     designation: user.designation,
                     teamId: user.teamId?.toHexString() ?? null,
@@ -294,8 +294,8 @@ const getPublicAll: ServiceSignature<
                 return {
                     _id: user._id.toHexString(),
                     name: user.name,
-                    email: user.email, 
-                    profileImgMediaKey: user.profileImgMediaKey,
+                    email: user.email,
+                    profileImgUrl: user.profileImgUrl,
                     roles: user.roles,
                     designation: user.designation,
                     teamId: user.teamId?.toHexString() ?? null,
@@ -336,7 +336,7 @@ const getPublicOne: ServiceSignature<
             _id: user._id.toHexString(),
             name: user.name,
             email: user.email,
-            profileImgMediaKey: user.profileImgMediaKey,
+            profileImgUrl: user.profileImgUrl,
             phoneNumber: null,
             links: user.links,
             team: {

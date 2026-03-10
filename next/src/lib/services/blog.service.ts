@@ -141,7 +141,7 @@ const create: ServiceSignature<
         content: data.content,
         tags: data.tags,
         author: session.userId,
-        coverImgMediaKey: data.coverImgMediaKey,
+        coverImgUrl: data.coverImgUrl,
         collaborators: [],
     });
 

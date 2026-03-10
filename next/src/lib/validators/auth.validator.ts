@@ -8,6 +8,7 @@ const authValidator = {
         email: allIbDField.email,
         password: allIbDField.password,
     }),
+    refreshSession: z.object({}),
     googleOAuth: z.object({
         code: allIbDField.longString,
         scope: allIbDField.longString,

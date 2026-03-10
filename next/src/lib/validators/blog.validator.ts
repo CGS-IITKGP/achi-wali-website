@@ -24,7 +24,7 @@ const blogValidator = {
         slug: allIbDField.slug,
         content: allIbDField.bigString,
         tags: allIbDField.tags,
-        coverImgMediaKey: allIbDField.mediaKeyNotNullable,
+        coverImgUrl: allIbDField.mediaKeyNotNullable,
     }),
     update: z.object({
         _id: allIbDField._id,
@@ -33,7 +33,7 @@ const blogValidator = {
         content: allIbDField.longString.optional(),
         tags: allIbDField.tags.optional(),
         collaborators: z.array(allIbDField._id).optional(),
-        coverImgMediaKey: allIbDField.mediaKey.optional(),
+        coverImgUrl: allIbDField.mediaKey.optional(),
     }),
     remove: z.object({
         _id: allIbDField._id,
