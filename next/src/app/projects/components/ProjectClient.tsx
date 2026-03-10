@@ -85,6 +85,20 @@ export default function ProjectsClient({
     setTimer(0);
   };
 
+  const detailsVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.12,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0 },
+  };
+
   useEffect(() => {
     setTimer(0);
     const interval = setInterval(() => {
@@ -144,18 +158,18 @@ export default function ProjectsClient({
         <div className="relative z-10 w-full max-w-7xl mx-auto pt:8 px-4 sm:px-20 lg:px-16 flex flex-col">
           <div className="flex flex-col gap-8 mb-8 items-center">
             <motion.div
-              className="w-full lg:w-auto mx-auto bg-gray-900/70 backdrop-blur-xl border border-pink-500/30 rounded-3xl sm:rounded-3xl p-3 shadow-[0_0_30px_-10px_rgba(236,72,153,0.4)] relative"
+              className="w-full max-w-[700px] mx-auto bg-gray-900/70 backdrop-blur-xl border border-pink-500/30 rounded-3xl p-4 shadow-[0_0_30px_-10px_rgba(236,72,153,0.4)] relative"
               initial={{ opacity: 0, y: -30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              {/* 🌐 Desktop Navbar */}
-              <div className="hidden lg:flex lg:min-w-xl lg:overflow-x-hidden lg:justify-evenly relative z-10">
+              {/* Desktop Navbar */}
+              <div className="hidden lg:flex justify-center gap-3 relative z-10 flex-wrap max-w-xl mx-auto">
                 {featuredProjects.map((proj, index) => (
                   <motion.button
                     key={proj._id || index}
                     onClick={() => handleSelect(index)}
-                    className={`relative w-auto overflow-hidden px-2 py-2 sm:px-4 sm:py-2.5 rounded-3xl font-semibold transition-all duration-300 whitespace-nowrap text-[0.6rem] sm:text-lg lg:text-base tracking-wide ${
+                    className={`relative px-4 py-2 rounded-3xl font-semibold transition-all duration-300 whitespace-nowrap text-sm lg:text-base tracking-wide ${
                       currentIndex === index
                         ? "text-white"
                         : "text-gray-400 hover:text-white"
@@ -177,7 +191,8 @@ export default function ProjectsClient({
                 ))}
               </div>
 
-              <div className="flex items-center justify-between gap-4 w-full lg:hidden bg-transparent border-none p-0">
+              {/* Mobile Carousel */}
+              <div className="flex items-center justify-between gap-3 w-full lg:hidden">
                 <motion.button
                   aria-label="Previous project"
                   whileHover={{ scale: 1.08, x: -2 }}
@@ -189,10 +204,7 @@ export default function ProjectsClient({
                         featuredProjects.length,
                     )
                   }
-                  className="flex-shrink-0 p-2 sm:p-3 rounded-full
-               bg-gray-900/70 border border-fuchsia-500/20 backdrop-blur-sm
-               shadow-sm hover:shadow-[0_0_18px_rgba(236,72,153,0.35)]
-               text-fuchsia-300 hover:text-white transition-all duration-200"
+                  className="p-2 rounded-full bg-gray-900/70 border border-fuchsia-500/20 backdrop-blur-sm shadow-sm hover:shadow-[0_0_18px_rgba(236,72,153,0.35)] text-fuchsia-300 hover:text-white transition-all duration-200"
                 >
                   <FaChevronLeft size={18} />
                 </motion.button>
@@ -202,13 +214,11 @@ export default function ProjectsClient({
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.22 }}
-                  className="px-3 sm:px-5 py-2 w-[90%] rounded-xl flex-0 flex-grow-0
-               min-w-[160px] sm:min-w-[200px]  text-center"
+                  className="px-4 py-2 flex-1 text-center rounded-xl bg-gray-900/20 max-w-xs mx-auto"
+                  style={{ maxHeight: 60 }}
                 >
                   <h2
-                    className={`text-sm  sm:text-base font-semibold 
-                 bg-gradient-to-r from-pink-400 via-fuchsia-400 to-purple-400
-                 bg-clip-text text-transparent ${righteousFont.className}`}
+                    className={`text-sm sm:text-base font-semibold bg-gradient-to-r from-pink-400 via-fuchsia-400 to-purple-400 bg-clip-text text-transparent ${righteousFont.className}`}
                   >
                     {featuredProjects[currentIndex]?.title ||
                       "Untitled Project"}
@@ -224,23 +234,18 @@ export default function ProjectsClient({
                       (prev) => (prev + 1) % featuredProjects.length,
                     )
                   }
-                  className="flex-shrink-0 p-2 sm:p-3 rounded-full
-               bg-gray-900/70 border border-fuchsia-500/20 backdrop-blur-sm
-               shadow-sm hover:shadow-[0_0_18px_rgba(236,72,153,0.35)]
-               text-fuchsia-300 hover:text-white transition-all duration-200"
+                  className="p-2 rounded-full bg-gray-900/70 border border-fuchsia-500/20 backdrop-blur-sm shadow-sm hover:shadow-[0_0_18px_rgba(236,72,153,0.35)] text-fuchsia-300 hover:text-white transition-all duration-200"
                 >
                   <FaChevronRight size={18} />
                 </motion.button>
               </div>
 
+              {/* Progress Bar */}
               <motion.div
                 key={currentIndex}
-                className="absolute bottom-[-15px] left-5 right-4 sm:left-8 sm:right-8 h-1 rounded-full overflow-hidden bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 shadow-[0_0_20px_5px_rgba(236,72,153,0.7)]"
+                className="absolute bottom-[-12px] left-1/2 transform -translate-x-1/2 h-1 w-[80%] rounded-full overflow-hidden bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 shadow-[0_0_20px_5px_rgba(236,72,153,0.7)]"
                 initial={{ width: 0 }}
-                animate={{
-                  width: "calc(97% - 32px)",
-                  opacity: [0.7, 1, 0.7],
-                }}
+                animate={{ width: "100%", opacity: [0.7, 1, 0.7] }}
                 transition={{ duration: 5, ease: "linear" }}
               >
                 <motion.div
@@ -258,108 +263,86 @@ export default function ProjectsClient({
             {currentProject && (
               <motion.div
                 key={currentIndex}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 40, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                whileHover={{ y: -6 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
-                className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center mt-10 rounded-3xl border border-pink-500/40 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800/90 backdrop-blur-2xl shadow-[0_0_50px_-10px_rgba(236,72,153,0.5)] p-4 sm:p-6 lg:p-10 overflow-hidden"
+                className="group relative mt-10 w-full max-w-[600px] overflow-hidden rounded-3xl border border-pink-500/30 bg-gray-900/70 p-4 sm:p-6 lg:p-8 transition-all duration-500 hover:border-pink-400/60 hover:shadow-[0_0_40px_rgba(236,72,153,0.15)]"
               >
-                <div className="relative group w-full">
-                  <motion.div
-                    key={currentIndex}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                    className="relative h-[300px] sm:h-[300px] lg:h-[500px] rounded-2xl overflow-hidden shadow-inner shadow-pink-700/20 bg-gray-900/10 transition-all duration-500 border-[2px] border-transparent hover:shadow-[0_0_30px_1px_rgba(255,105,180,0.3)] hover:rounded-[20px] hover:scale-105"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(163deg, #ff79c6 0%, #ff0080 100%)",
-                    }}
-                  >
-                    <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 animate-subtle-gradient pointer-events-none z-20">
-                      <div className="absolute inset-0 bg-gray-900/10 rounded-2xl m-[2px]">
-                        <Image
-                          src={prettySafeImage(currentProject.coverImgUrl)}
-                          alt={currentProject.title}
-                          fill
-                          className="object-cover transition-transform duration-700 group-hover:scale-105 rounded-2xl z-10 relative"
-                          priority
-                        />
-                      </div>
-                    </div>
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-pink-900/30 to-transparent opacity-60 rounded-2xl z-10"></div>
-                  </motion.div>
-                </div>
+                <motion.div
+                  aria-hidden
+                  className="pointer-events-none absolute -inset-1 opacity-0 blur-2xl bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-pink-500/20 group-hover:opacity-100 transition-opacity duration-700"
+                />
 
                 <motion.div
-                  key={currentIndex}
-                  className="flex flex-col justify-between space-y-4 sm:space-y-6 text-left px-2 relative"
-                  variants={detailsVariants}
-                  initial="hidden"
-                  animate="visible"
-                >
-                  <motion.h2
-                    variants={itemVariants}
-                    className={`text-3xl sm:text-4xl lg:text-6xl font-extrabold bg-gradient-to-r from-pink-400 via-fuchsia-400 to-purple-400 bg-clip-text text-transparent tracking-tight leading-tight animate-gradient drop-shadow-[0_0_25px_rgba(236,72,153,0.4)] ${righteousFont.className}`}
-                  >
-                    {currentProject.title}
-                  </motion.h2>
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-pink-500/10 to-transparent"
+                  initial={{ x: "-100%", opacity: 0 }}
+                  animate={{ x: "100%", opacity: [0, 0.25, 0] }}
+                  transition={{ duration: 1.4, ease: "easeInOut" }}
+                />
 
-                  <motion.p
-                    variants={itemVariants}
-                    className={`text-base sm:text-lg lg:text-xl text-gray-300 leading-relaxed ${robotoFont.className}`}
+                <div className="flex-1 relative z-10 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
+                  <motion.div
+                    key={currentIndex}
+                    initial={{ opacity: 0, scale: 0.9, x: -30 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className="relative w-full sm:w-[240px] h-52 sm:h-64 shrink-0 overflow-hidden rounded-2xl border border-pink-500/20"
                   >
-                    {currentProject.description}
-                  </motion.p>
+                    <Image
+                      src={prettySafeImage(currentProject.coverImgUrl)}
+                      alt={currentProject.title}
+                      fill
+                      priority
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                  </motion.div>
 
                   <motion.div
-                    variants={itemVariants}
-                    className="flex flex-wrap gap-2 sm:gap-3 pt-2"
+                    key={currentIndex}
+                    className="flex-1 flex h-full flex-col gap-3 text-left sm:gap-4"
+                    variants={detailsVariants}
+                    initial="hidden"
+                    animate="visible"
                   >
-                    {currentProject.tags.map((tag: string, i: number) => (
-                      <span
-                        key={i}
-                        className="rounded-full border border-pink-400/40 bg-gradient-to-r from-pink-900/50 via-fuchsia-900/40 to-purple-900/40 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium text-pink-300 shadow-inner shadow-pink-700/30 backdrop-blur-sm animate-gradient transition-transform duration-300 hover:scale-110 cursor-default"
+                    {/* Title */}
+                    <motion.h2
+                      variants={itemVariants}
+                      whileHover={{ x: 4 }}
+                      transition={{ type: "spring", stiffness: 200 }}
+                      className={`text-2xl sm:text-3xl lg:text-4xl font-bold text-white ${righteousFont.className}`}
+                    >
+                      {currentProject.title}
+                    </motion.h2>
+
+                    {/* Description */}
+                    <motion.p
+                      variants={itemVariants}
+                      className={`text-sm sm:text-base lg:text-lg text-gray-300 leading-relaxed ${robotoFont.className}`}
+                    >
+                      {currentProject.description}
+                    </motion.p>
+
+                    {/* Author */}
+                    <motion.div
+                      variants={itemVariants}
+                      className="mt-auto border-t border-pink-500/20 pt-3"
+                    >
+                      <p
+                        className={`text-xs uppercase tracking-wide text-pink-300/80 ${robotoFont.className}`}
                       >
-                        {tag}
-                      </span>
-                    ))}
+                        Author
+                      </p>
+                      <p
+                        className={`mt-1 text-sm sm:text-base text-pink-200 ${robotoFont.className}`}
+                      >
+                        {currentProject.author?.name || "Anonymous"}
+                      </p>
+                    </motion.div>
                   </motion.div>
-
-                  <motion.div
-                    variants={itemVariants}
-                    className="flex flex-wrap gap-3 sm:gap-4 pt-4"
-                  >
-                    {currentProject.links.map((link, i) => {
-                      const isGithub = link.text
-                        .toLowerCase()
-                        .includes("github");
-                      const primaryButton =
-                        "bg-gradient-to-r from-pink-500 via-fuchsia-500 to-purple-500 shadow-[0_0_15px_rgba(236,72,153,0.6)] hover:shadow-[0_0_25px_rgba(236,72,153,0.8)] text-white";
-                      const secondaryButton =
-                        "bg-gray-800/50 border border-purple-400/50 text-purple-200 shadow-inner shadow-purple-700/20 backdrop-blur-sm hover:bg-gray-800 hover:border-purple-400";
-
-                      return (
-                        <a
-                          key={i}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`group flex items-center justify-center gap-2.5 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full font-semibold transition-all duration-300 hover:scale-105 text-sm sm:text-base ${
-                            isGithub ? secondaryButton : primaryButton
-                          }`}
-                        >
-                          {link.text}
-                          {isGithub ? (
-                            <Github className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:rotate-12" />
-                          ) : (
-                            <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                          )}
-                        </a>
-                      );
-                    })}
-                  </motion.div>
-                </motion.div>
+                </div>
               </motion.div>
             )}
           </div>
@@ -380,7 +363,7 @@ export default function ProjectsClient({
           </motion.h2>
         </div>
 
-        <div className="grid lg:p-2 md:p-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-14">
+        <div className="grid lg:p-2 md:p-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 md:gap-14">
           {[...projects].reverse().map((proj, idx) => (
             <motion.div
               key={idx}
