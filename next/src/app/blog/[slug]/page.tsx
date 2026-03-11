@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import "../lib/mdx.css";
 import { remark } from "remark";
 import Link from "next/link";
+import Image from "next/image";
 import api from "@/app/axiosApi";
 import { IBlog } from "@/app/types/domain.types";
 import remarkRehype from "remark-rehype";
@@ -11,12 +12,7 @@ import rehypeStringify from "rehype-stringify";
 import rehypePrettyCode from "rehype-pretty-code";
 import { prettyDate } from "@/app/utils/pretty";
 import ShareButton from "../components/ShareButton";
-
-interface BlogPostPageProps {
-  params: {
-    slug: string;
-  };
-}
+import Footer from "@/app/footer";
 
 const fetchBlog = async (slug: string): Promise<IBlog> => {
   const apiResponse = await api("GET", `/blog/view/${slug}`);
@@ -42,8 +38,13 @@ const fetchBlog = async (slug: string): Promise<IBlog> => {
   }
 };
 
-export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const blog = await fetchBlog((await params).slug);
+interface BlogPostPageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function BlogPostPage(props: BlogPostPageProps) {
+  const slug = (await props.params).slug;
+  const blog = await fetchBlog(slug);
 
   if (!blog) return notFound();
 
@@ -137,32 +138,23 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <header className="mb-12">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8 leading-tight tracking-tight">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-8 leading-tight tracking-tight">
             {blog.title}
           </h1>
 
-          <p className="text-xl md:text-2xl text-gray-400 mb-8 leading-relaxed font-light">
-            {"Exploring the latest in technology and innovation"}
-          </p>
-
           <div className="flex items-center justify-between flex-wrap gap-4 py-6 border-t border-b border-gray-800">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-lg">
-                  {blog.author.name
-                    .split(" ")[0][0].toUpperCase()}
-                </span>
-              </div>
+              <Image
+                src={blog.author.profileImgUrl || "/default-fallback-image.png"}
+                alt="Profile Image"
+                className="w-10 h-10 object-cover rounded-full border-2 border-pink-500/20"
+                width={40}
+                height={40}
+              />
               <div>
                 <div className="text-white font-medium">{blog.author.name}</div>
                 <div className="text-gray-400 text-sm flex items-center space-x-4">
                   <span>{prettyDate(blog.createdAt)}</span>
-                  {/* <span>·</span>
-                  <span>5 min read</span>
-                  <span>·</span>
-                  <button className="text-pink-400 hover:text-pink-300 transition-colors">
-                    Follow
-                  </button> */}
                 </div>
               </div>
             </div>
@@ -216,7 +208,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   />
                 </svg>
               </button> */}
-              <ShareButton title={blog.title} slug={params.slug} />
+              <ShareButton title={blog.title} slug={slug} />
               {/* More options button */}
               {/* <button className="p-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-pink-400 transition-all duration-200">
                 <svg
@@ -236,154 +228,19 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           dangerouslySetInnerHTML={{ __html: blog.content }}
         />
 
-        <footer className="mt-16 pt-8 border-t border-gray-800">
-          <div className="mb-8">
-            <div className="flex flex-wrap gap-2">
-              {blog.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Upvotes, Comments and Shares Section */}
-          {/* <div className="flex items-center justify-between py-6 border-t border-b border-gray-800">
-            <div className="flex items-center space-x-6">
-              <button className="flex items-center space-x-2 px-4 py-2 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors group">
-                <svg
-                  className="w-5 h-5 text-gray-400 group-hover:text-pink-400 transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"
-                  />
-                </svg>
-                <span className="text-gray-300 group-hover:text-white transition-colors">
-                  124
-                </span>
-              </button>
-              <button className="flex items-center space-x-2 px-4 py-2 rounded-full hover:bg-gray-800 transition-colors group">
-                <svg
-                  className="w-5 h-5 text-gray-400 group-hover:text-pink-400 transition-colors"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-                <span className="text-gray-300 group-hover:text-white transition-colors">
-                  12
-                </span>
-              </button>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <button className="p-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-pink-400 transition-all duration-200">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                  />
-                </svg>
-              </button>
-              <button className="p-2 rounded-full hover:bg-gray-800 text-gray-400 hover:text-pink-400 transition-all duration-200">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div> */}
-
-          {/* Follow CGS banner */}
-          {/* <div className="mt-8 p-6 bg-gray-900/50 rounded-2xl border border-gray-800">
-            <div className="flex items-start space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-xl">CGS</span>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-white mb-2">
-                  Computer Graphics Society
-                </h3>
-                <p className="text-gray-400 mb-4 leading-relaxed">
-                  We are a passionate community of developers, designers, and
-                  innovators exploring the frontiers of computer graphics and
-                  interactive technology.
-                </p>
-                <button className="px-6 py-2 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-medium transition-colors">
-                  Follow
-                </button>
-              </div>
-            </div>
-          </div> */}
-        </footer>
+        <div className="py-6 border-t border-gray-800 flex flex-wrap gap-2">
+          {blog.tags.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors cursor-pointer"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
       </div>
 
-      {/* Social Share Buttons / Left Bar */}
-      {/* <div className="fixed left-4 top-1/2 transform -translate-y-1/2 hidden lg:flex flex-col space-y-4 z-40">
-        <button className="p-3 rounded-full bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 text-gray-400 hover:text-pink-400 transition-all duration-200 shadow-lg">
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"
-            />
-          </svg>
-        </button>
-        <div className="text-xs text-gray-500 text-center">124</div>
-        <button className="p-3 rounded-full bg-gray-800/80 backdrop-blur-sm hover:bg-gray-700 text-gray-400 hover:text-pink-400 transition-all duration-200 shadow-lg">
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-        </button>
-        <div className="text-xs text-gray-500 text-center">12</div>
-      </div> */}
+      <Footer />
     </main>
   );
 }

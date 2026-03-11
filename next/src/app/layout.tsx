@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <head>
         <link rel="shortcut icon" href={Logo.src} type="image/x-icon" />
         <title>Computer Graphics Society</title>

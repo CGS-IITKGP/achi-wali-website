@@ -5,20 +5,22 @@ import Logo from "../assets/logo.png";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "../context/authContext";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  const navItems = [
+  const { user } = useAuth();
+
+  const [navItems, setNavItems] = useState([
     { name: "Home", href: "/" },
     { name: "Games", href: "/games" },
     { name: "Projects", href: "/projects" },
     { name: "Blog", href: "/blog" },
     { name: "Team", href: "/team" },
     { name: "Sign In", href: "/auth/sign-in" },
-    // { name: "Contact", href: "/contact" },
-  ];
+  ]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,6 +40,23 @@ export default function Navbar() {
       document.body.style.overflow = "unset";
     };
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    setNavItems(() => {
+      return [
+        ...[
+          { name: "Home", href: "/" },
+          { name: "Games", href: "/games" },
+          { name: "Projects", href: "/projects" },
+          { name: "Blog", href: "/blog" },
+          { name: "Team", href: "/team" },
+        ],
+        user
+          ? { name: "Dashboard", href: "/dashboard" }
+          : { name: "Sign In", href: "/auth/sign-in" },
+      ];
+    });
+  }, [user]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);

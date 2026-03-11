@@ -100,10 +100,12 @@ export interface IProjectExportable extends Omit<IProject, 'author' | "collabora
     author: {
         _id: Types.ObjectId;
         name: string;
+        profileImgUrl: string | null;
     };
     collaborators: {
         _id: Types.ObjectId;
         name: string;
+        profileImgUrl: string | null;
     }[];
 }
 
@@ -124,10 +126,12 @@ export interface IBlogExportable extends Omit<IBlog, 'author' | "collaborators">
     author: {
         _id: Types.ObjectId;
         name: string;
+        profileImgUrl: string | null;
     };
     collaborators: {
         _id: Types.ObjectId;
         name: string;
+        profileImgUrl: string | null;
     }[];
 }
 
@@ -139,6 +143,9 @@ export interface IMedia {
     _id: Types.ObjectId;
     key: string;
     url: string;
+    sizeBytes: number;
+    format: string;
+    resourceType: string;
     uploadedBy: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;

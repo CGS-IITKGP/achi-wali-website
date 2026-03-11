@@ -25,7 +25,7 @@ class ProjectRepository extends GenericRepository<
         try {
             return await this.model.find(filter).populate({
                 path: "author",
-                select: "name",
+                select: "name profileImgUrl",
             }).session(session || null).lean<IProjectExportable[]>().exec();
         } catch (error) {
             throw new AppError('Failed to find document.', {

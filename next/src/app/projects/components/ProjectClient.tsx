@@ -119,7 +119,7 @@ export default function ProjectsClient({
       setFlippedCardIndex(flippedCardIndex === index ? null : index);
     }
   };
-  const currentProject = featuredProjects[currentIndex];
+  const currentFeaturedProject = featuredProjects[currentIndex];
 
   const getIconByType = (type: "BLOG" | "GAME" | "GRAPHICS" | "RND") => {
     if (type === "GRAPHICS") {
@@ -260,7 +260,7 @@ export default function ProjectsClient({
               </motion.div>
             </motion.div>
 
-            {currentProject && (
+            {currentFeaturedProject && (
               <motion.div
                 key={currentIndex}
                 initial={{ opacity: 0, y: 40, scale: 0.98 }}
@@ -292,8 +292,8 @@ export default function ProjectsClient({
                     className="relative w-full sm:w-[240px] h-52 sm:h-64 shrink-0 overflow-hidden rounded-2xl border border-pink-500/20"
                   >
                     <Image
-                      src={prettySafeImage(currentProject.coverImgUrl)}
-                      alt={currentProject.title}
+                      src={prettySafeImage(currentFeaturedProject.coverImgUrl)}
+                      alt={currentFeaturedProject.title}
                       fill
                       priority
                       className="object-cover transition-transform duration-700 group-hover:scale-110"
@@ -314,7 +314,7 @@ export default function ProjectsClient({
                       transition={{ type: "spring", stiffness: 200 }}
                       className={`text-2xl sm:text-3xl lg:text-4xl font-bold text-white ${righteousFont.className}`}
                     >
-                      {currentProject.title}
+                      {currentFeaturedProject.title}
                     </motion.h2>
 
                     {/* Description */}
@@ -322,7 +322,7 @@ export default function ProjectsClient({
                       variants={itemVariants}
                       className={`text-sm sm:text-base lg:text-lg text-gray-300 leading-relaxed ${robotoFont.className}`}
                     >
-                      {currentProject.description}
+                      {currentFeaturedProject.description}
                     </motion.p>
 
                     {/* Author */}
@@ -338,7 +338,7 @@ export default function ProjectsClient({
                       <p
                         className={`mt-1 text-sm sm:text-base text-pink-200 ${robotoFont.className}`}
                       >
-                        {currentProject.author?.name || "Anonymous"}
+                        {currentFeaturedProject.author?.name || "Anonymous"}
                       </p>
                     </motion.div>
                   </motion.div>

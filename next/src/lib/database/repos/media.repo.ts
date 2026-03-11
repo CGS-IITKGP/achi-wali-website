@@ -5,7 +5,7 @@ import { EmptyObject, IMedia } from "@/lib/types/index.types";
 
 class MediaRepository extends GenericRepository<
     IMedia,
-    Pick<IMedia, "key" | "url" | "uploadedBy">,
+    Pick<IMedia, "key" | "url" | "sizeBytes" | "format" | "resourceType" | "uploadedBy">,
     EmptyObject
 > {
     constructor() {

@@ -9,13 +9,16 @@ import { Righteous, Roboto } from "next/font/google";
 import api from "../axiosApi";
 import toast from "react-hot-toast";
 import CGSLogo from "../assets/logo.png";
-import { LucideCalendar, LucideClock, Pencil } from "lucide-react";
-import { prettySafeImage } from "../utils/pretty";
+import { LucideCalendar, LucideClock, Pencil, UserStar } from "lucide-react";
 import { uploadToCloudinary } from "../utils/cloudinary";
-import { X, Trash2, Copy } from "lucide-react";
+import { X, Trash2, Copy, Edit2 } from "lucide-react";
 import { DashboardProvider, useDashboard } from "../context/dashboardContext";
-import { Links } from "../types/domain.types";
+import { EUserRole, Links } from "../types/domain.types";
 import { Listbox } from "@headlessui/react";
+import {
+  MAX_ASSET_UPLOAD_FILE_SIZE,
+  MAX_ASSET_PREVIEW_SIZE,
+} from "../utils/config";
 
 type AllSections = "BLOGS" | "PROJECTS" | "PROFILE" | "ASSETS";
 
@@ -160,7 +163,7 @@ interface SidebarProps {
 }
 
 const SideBar = (props: SidebarProps) => {
-  const { refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const router = useRouter();
 
   const menuItems: {
@@ -219,7 +222,6 @@ const SideBar = (props: SidebarProps) => {
       toast.error("Server Error");
     } else if (apiResponse.action === false) {
       toast.error(apiResponse.message);
-      console.log(apiResponse);
     } else {
       toast.success("Signed out");
       refreshUser();
@@ -276,6 +278,16 @@ const SideBar = (props: SidebarProps) => {
             <span className={fonts.paragraph.className}>Home</span>
           </Link>
 
+          {user?.roles.includes(EUserRole.ADMIN) && (
+            <Link
+              href="/admin"
+              className="flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200"
+            >
+              <UserStar className="w-5 h-5" />
+              <span className={fonts.paragraph.className}>Admin Panel</span>
+            </Link>
+          )}
+
           {menuItems.map((item) => (
             <button
               key={item.id}
@@ -310,11 +322,48 @@ const SideBar = (props: SidebarProps) => {
 };
 
 const ProfileSection = () => {
-  const { user } = useAuth();
-  const { state: dashboardState } = useDashboard();
+  const [hovering, setHovering] = useState(false);
+  const [uploadingNewProfileImg, setUploadingNewProfileImg] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { user, refreshUser } = useAuth();
+  const { directAssetUpload } = useCloudinaryUpload();
+  const { state: dashboardState, resetAssets } = useDashboard();
 
   const correctCount = (count: number) => {
     return count === -1 ? "Loading..." : count;
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setUploadingNewProfileImg(true);
+
+    try {
+      const url = await directAssetUpload(file);
+      if (!url) toast.error("Uploading failed");
+
+      const apiResponse = await api("PATCH", "/user", {
+        body: {
+          profileImgUrl: url,
+        },
+      });
+
+      if (apiResponse.action === null) {
+        toast.error("Server Error");
+      } else if (apiResponse.action === false) {
+        toast.error(apiResponse.statusCode + ": " + apiResponse.message);
+      } else {
+        refreshUser();
+        toast.success("Profile photo updated.");
+      }
+    } finally {
+      setUploadingNewProfileImg(false);
+    }
   };
 
   return (
@@ -322,19 +371,49 @@ const ProfileSection = () => {
       <div className="w-full flex flex-col items-center">
         <div className="w-full max-w-[1000px] p-4 md:p-6 flex flex-col gap-5">
           <div className="w-full mt-2 px-6 h-28 rounded-lg flex flex-row gap-6 items-center border border-slate-900">
-            <Image
-              src={prettySafeImage(user?.profileImgUrl)}
-              alt=""
-              width={64}
-              height={64}
-              className="w-16 h-16 rounded-full border-2 border-pink-500/20"
-            />
+            <div
+              className="relative w-16 h-16"
+              onMouseEnter={() => setHovering(true)}
+              onMouseLeave={() => setHovering(false)}
+            >
+              <Image
+                src={user?.profileImgUrl || "/default-fallback-image.png"}
+                alt="Profile Image"
+                className="w-16 h-16 object-cover rounded-full border-2 border-pink-500/20"
+                width={64}
+                height={64}
+              />
+
+              {hovering && (
+                <div
+                  className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Edit2 size={20} className="text-white" />
+                </div>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+
+              {uploadingNewProfileImg && (
+                <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/40">
+                  <div className="w-6 h-6 border-2 border-transparent border-t-pink-500 border-r-purple-500 rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
+
             <div className="flex-1 flex flex-col gap-2">
               <h2 className={`text-md text-white ${fonts.heading.className}`}>
                 {user?.name ?? "Loading..."}
               </h2>
 
-              <div className="flex justify-between">
+              <div className="flex justify-between flex-col gap-0.5 sm:flex-row">
                 <div className="flex gap-3 items-center">
                   <p
                     className={`text-sm text-gray-500 ${fonts.paragraph.className}`}
@@ -355,6 +434,7 @@ const ProfileSection = () => {
               </div>
             </div>
           </div>
+
           <div className="w-full flex flex-row justify-between gap-3">
             <div className="flex-1 h-24 px-4 flex flex-col justify-around rounded-xl border border-slate-900">
               <p
@@ -387,6 +467,7 @@ const ProfileSection = () => {
               </p>
             </div>
           </div>
+
           <PersonalInfoAndLinksSubSection />
         </div>
       </div>
@@ -520,7 +601,6 @@ const PersonalInfoAndLinksSubSection = () => {
     if (apiResponse.action === null) {
       toast.error("Server Error");
     } else if (apiResponse.action === false) {
-      console.log(apiResponse.errors);
       toast.error(apiResponse.statusCode + ": " + apiResponse.message);
     } else {
       refreshUser();
@@ -719,39 +799,8 @@ const BlogsSection = () => {
   const [showBlogUpdateModal, setShowBlogUpdateModal] = useState(false);
   const [updateBlogId, setUpdateBlogId] = useState<string | null>(null);
 
-  const { state, resetBlogs, resetAssets } = useDashboard();
-  const { upload } = useCloudinaryUpload();
-
-  const directCoverImgUpload = async (
-    file: File,
-  ): Promise<string | undefined> => {
-    try {
-      const { publicId, url } = await upload(file);
-
-      const response = await api("POST", "/media", {
-        body: { publicId, url },
-      });
-
-      if (response.action === null) {
-        toast.error("Server Error while adding new asset");
-        return;
-      } else if (response.action === false) {
-        toast.error(response.statusCode + ": " + response.message);
-        console.log(response.errors);
-        return;
-      }
-
-      resetAssets();
-      toast.success("Asset uploaded successfully!");
-      return url;
-    } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("Upload failed");
-      }
-    }
-  };
+  const { state, resetBlogs } = useDashboard();
+  const { directAssetUpload } = useCloudinaryUpload();
 
   const handleNewBlogSubmit = async (data: {
     title: string;
@@ -895,7 +944,7 @@ const BlogsSection = () => {
             setUpdateBlogId(null);
           }}
           onCreate={handleNewBlogSubmit}
-          onDirectCoverImgUpload={directCoverImgUpload}
+          onDirectCoverImgUpload={directAssetUpload}
         />
       )}
 
@@ -908,7 +957,7 @@ const BlogsSection = () => {
             setShowBlogUpdateModal(false);
             setUpdateBlogId(null);
           }}
-          onDirectCoverImgUpload={directCoverImgUpload}
+          onDirectCoverImgUpload={directAssetUpload}
           onUpdate={handleBlogUpdate}
         />
       )}
@@ -921,40 +970,8 @@ const ProjectsSection = () => {
   const [showProjectUpdateModal, setShowProjectUpdateModal] = useState(false);
   const [updateProjectId, setUpdateProjectId] = useState<string | null>(null);
 
-  const { state, resetAssets, resetProjects } = useDashboard();
-  const { upload } = useCloudinaryUpload();
-
-  const directCoverImgUpload = async (
-    file: File,
-  ): Promise<string | undefined> => {
-    try {
-      const { publicId, url } = await upload(file);
-
-      const response = await api("POST", "/media", {
-        body: { publicId, url },
-      });
-
-      if (response.action === null) {
-        toast.error("Server Error while adding new asset");
-        return;
-      } else if (response.action === false) {
-        toast.error(response.statusCode + ": " + response.message);
-        console.log(response.errors);
-        return;
-      }
-
-      resetAssets();
-      toast.success("Asset uploaded successfully!");
-
-      return url;
-    } catch (err) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("Upload failed");
-      }
-    }
-  };
+  const { state, resetProjects } = useDashboard();
+  const { directAssetUpload } = useCloudinaryUpload();
 
   const handleNewProjectSubmit = async (data: {
     title: string;
@@ -1118,7 +1135,7 @@ const ProjectsSection = () => {
             setUpdateProjectId(null);
           }}
           onCreate={handleNewProjectSubmit}
-          onDirectCoverImgUpload={directCoverImgUpload}
+          onDirectCoverImgUpload={directAssetUpload}
         />
       )}
 
@@ -1131,7 +1148,7 @@ const ProjectsSection = () => {
             setShowProjectUpdateModal(false);
             setUpdateProjectId(null);
           }}
-          onDirectCoverImgUpload={directCoverImgUpload}
+          onDirectCoverImgUpload={directAssetUpload}
           onUpdate={handleProjectUpdate}
         />
       )}
@@ -1192,8 +1209,6 @@ const AssetsSection = () => {
   const handleDelete = async (id: string) => {
     const apiResponse = await api("DELETE", `/media/${id}`);
 
-    console.log(apiResponse);
-
     if (apiResponse.action === null) {
       toast.error("Server Error while deleting asset");
     } else if (apiResponse.action === false) {
@@ -1248,38 +1263,57 @@ const AssetsSection = () => {
             </p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-              {state.assets.map((asset) => (
-                <div
-                  key={asset._id}
-                  className="relative rounded-xl border border-white/10 bg-[#0f0f12] p-2 transition hover:border-pink-400/50"
-                >
-                  <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
-                    <button
-                      onClick={() => copyMediaUrl(asset.url)}
-                      className="flex hover:cursor-pointer items-center gap-1 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 text-xs text-gray-300 border border-transparent hover:border-lime-300 hover:text-lime-300 transition"
-                      aria-label="Copy URL"
-                      type="button"
-                    >
-                      <Copy size={14} />
-                    </button>
+              {state.assets.map((asset) => {
+                const sizeBytes =
+                  typeof asset.sizeBytes === "number" ? asset.sizeBytes : -1;
 
-                    <button
-                      onClick={() => handleDelete(asset._id)}
-                      className="flex hover:cursor-pointer items-center gap-1 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 text-xs text-gray-300 border border-transparent hover:border-red-500 hover:text-red-400 transition"
-                      aria-label="Delete Asset"
-                      type="button"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                const canPreview =
+                  sizeBytes !== -1 && sizeBytes <= MAX_ASSET_PREVIEW_SIZE;
+                return (
+                  <div
+                    key={asset._id}
+                    className="relative rounded-xl border border-white/10 bg-[#0f0f12] p-2 transition hover:border-pink-400/50"
+                  >
+                    <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
+                      <button
+                        onClick={() => copyMediaUrl(asset.url)}
+                        className="flex hover:cursor-pointer items-center gap-1 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 text-xs text-gray-300 border border-transparent hover:border-lime-300 hover:text-lime-300 transition"
+                        aria-label="Copy URL"
+                        type="button"
+                      >
+                        <Copy size={14} />
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(asset._id)}
+                        className="flex hover:cursor-pointer items-center gap-1 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1 text-xs text-gray-300 border border-transparent hover:border-red-500 hover:text-red-400 transition"
+                        aria-label="Delete Asset"
+                        type="button"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+
+                    {canPreview ? (
+                      <Image
+                        src={asset.url}
+                        alt={asset.key}
+                        width={112}
+                        height={112}
+                        onClick={() => setPreviewAsset(asset.url)}
+                        loading="lazy"
+                        className="w-full h-28 sm:h-32 md:h-36 lg:h-40 object-cover rounded-lg cursor-pointer transition duration-300 hover:scale-[1.05] hover:shadow-[0_0_18px_rgba(217,70,239,0.35)]"
+                      />
+                    ) : (
+                      <div className="w-full h-28 sm:h-32 md:h-36 lg:h-40 flex items-center justify-center rounded-lg bg-gray-800 text-gray-400 text-xs text-center p-2 cursor-default">
+                        {sizeBytes === -1
+                          ? "Size unknown, preview disabled"
+                          : `File too large (${(sizeBytes / (1024 * 1024)).toFixed(2)} MB) to preview`}
+                      </div>
+                    )}
                   </div>
-                  <img
-                    src={asset.url}
-                    alt={asset.key}
-                    onClick={() => setPreviewAsset(asset.url)}
-                    className="w-full h-28 sm:h-32 md:h-36 lg:h-40 object-cover rounded-lg cursor-pointer transition duration-300 hover:scale-[1.05] hover:shadow-[0_0_18px_rgba(217,70,239,0.35)]"
-                  />
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -1311,7 +1345,13 @@ const AssetsSection = () => {
 const useCloudinaryUpload = () => {
   const [loading, setLoading] = useState(false);
 
+  const { resetAssets } = useDashboard();
+
   const upload = async (file: File) => {
+    if (file.size >= MAX_ASSET_UPLOAD_FILE_SIZE) {
+      throw new Error("File size too big. Max allowed size is 10MB.");
+    }
+
     setLoading(true);
 
     try {
@@ -1322,7 +1362,36 @@ const useCloudinaryUpload = () => {
     }
   };
 
-  return { upload, loading };
+  const directAssetUpload = async (file: File): Promise<string | undefined> => {
+    try {
+      const { publicId, url } = await upload(file);
+
+      const response = await api("POST", "/media", {
+        body: { publicId, url },
+      });
+
+      if (response.action === null) {
+        toast.error("Server Error while adding new asset");
+        return;
+      } else if (response.action === false) {
+        toast.error(response.statusCode + ": " + response.message);
+        return;
+      }
+
+      resetAssets();
+      toast.success("Asset uploaded successfully!");
+
+      return url;
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Upload failed");
+      }
+    }
+  };
+
+  return { upload, directAssetUpload, loading };
 };
 
 interface ModalProps {
@@ -1837,8 +1906,6 @@ interface UpdateProjectModalProps {
 }
 
 const UpdateProjectModal = (props: UpdateProjectModalProps) => {
-  console.log("project ", props.projectId);
-
   const [title, setTitle] = useState("");
   const [portfolio, setPortfolio] = useState<"GAME" | "GRAPHICS" | "RND">(
     "GAME",
@@ -2246,6 +2313,17 @@ const NewBlogModal = (props: NewBlogModalProps) => {
     setLoading(false);
   };
 
+  const generateSlugFromTitle = (title?: string) => {
+    return title
+      ? title
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-")
+      : "please-make-slug-manually";
+  };
+
   return (
     <Modal
       open={props.open}
@@ -2259,7 +2337,10 @@ const NewBlogModal = (props: NewBlogModalProps) => {
           <input
             value={title}
             required
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setSlug(generateSlugFromTitle(e.target.value));
+            }}
             className="form-input"
           />
         </div>
@@ -2428,6 +2509,17 @@ const UpdateBlogModal = (props: UpdateBlogModalProps) => {
     props.onClose();
   };
 
+  const generateSlugFromTitle = (title?: string) => {
+    return title
+      ? title
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-")
+      : "please-make-slug-manually";
+  };
+
   return (
     <Modal
       open={props.open}
@@ -2451,7 +2543,10 @@ const UpdateBlogModal = (props: UpdateBlogModalProps) => {
           <input
             value={slug}
             required
-            onChange={(e) => setSlug(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setSlug(generateSlugFromTitle(e.target.value));
+            }}
             className="form-input"
           />
         </div>

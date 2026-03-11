@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateJWToken } from "./lib/services/core/jwt.core.service";
 import { EUserRole } from "./lib/types/domain.types";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const token = request.cookies.get("session")?.value || "";
 

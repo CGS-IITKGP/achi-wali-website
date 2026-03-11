@@ -142,6 +142,7 @@ export default function MemberCard({ member, index }: TeamCardProps) {
             src={prettySafeImage(member.profileImgUrl)}
             alt={member.name}
             fill
+            loading="lazy"
             className="relative z-10 rounded-full border-4 border-pink-500/20 group-hover:border-pink-500/70 transition-all duration-700 object-cover group-hover:scale-110"
           />
         </div>

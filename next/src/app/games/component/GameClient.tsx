@@ -12,7 +12,6 @@ import {
   Github,
   Gamepad2,
 } from "lucide-react";
-import { RxAvatar } from "react-icons/rx";
 import { IProject } from "@/app/types/index.types";
 import { prettySafeImage } from "@/app/utils/pretty";
 
@@ -553,19 +552,20 @@ export default function GameClient({
                   </div>
                 </div>
 
-                {/* This footer is pushed to the bottom by `flex-1` above */}
                 <div className="flex items-center justify-between pt-4 border-t border-gray-700/50">
                   <div className="flex items-center gap-4 text-sm text-gray-400">
-                    {/* <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>2 hrs ago</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Download className="w-4 h-4" />
-                      <span>1.2k</span>
-                    </div> */}
-                    <div className="flex items-center gap-1">
-                      <RxAvatar className="w-4 h-4" />
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src={
+                          game.author?.profileImgUrl ||
+                          "/default-fallback-image.png"
+                        }
+                        alt="Author Profile"
+                        className="w-6 h-6 rounded-full object-cover border border-pink-500/20"
+                        width={24}
+                        height={24}
+                      />
+
                       <span>{game.author?.name || "Anonymous"}</span>
                     </div>
                   </div>
@@ -580,7 +580,7 @@ export default function GameClient({
                         rel="noopener noreferrer"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={(e) => e.stopPropagation()} // Prevents event bubbling
+                        onClick={(e) => e.stopPropagation()}
                         className="w-8 h-8 bg-gray-800/60 hover:bg-pink-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-pink-300 transition-all duration-300"
                       >
                         <Github className="w-4 h-4" />
@@ -596,35 +596,6 @@ export default function GameClient({
             </motion.div>
           ))}
         </div>
-
-        {/* <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-20"
-        >
-          {[
-            { label: "Total Games", value: _Projects.length, icon: Gamepad },
-            { label: "Downloads", value: "12.4k", icon: Download },
-            { label: "Average Rating", value: "4.8", icon: Star },
-            { label: "Active Players", value: "2.1k", icon: Award },
-          ].map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 hover:border-pink-500/30 transition-all duration-300 text-center group"
-            >
-              <div className="text-2xl lg:text-3xl font-bold text-white mb-1">
-                {stat.value}
-              </div>
-              <div className="text-gray-40m-2">{stat.label}</div>
-            </motion.div>
-          ))}
-        </motion.div> */}
       </div>
     </div>
   );

@@ -124,20 +124,21 @@ export default function BlogList({ posts }: BlogListProps) {
                               {prettyDate(blog.createdAt)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            <span>5 min</span>
-                          </div>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-md font-semibold">
-                              {blog.author.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
+                          <Image
+                            src={
+                              blog.author.profileImgUrl ||
+                              "/default-fallback-image.png"
+                            }
+                            alt="Profile Image"
+                            className="w-10 h-10 object-cover rounded-full border-2 border-pink-500/20"
+                            width={40}
+                            height={40}
+                          />
                           <span className="text-gray-400 text-sm">
                             {blog.author.name}
                           </span>
@@ -173,7 +174,7 @@ export default function BlogList({ posts }: BlogListProps) {
         </div>
       </section>
 
-      <section className="py-16 border-t border-gray-800">
+      {/* <section className="py-16 border-t border-gray-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -204,7 +205,7 @@ export default function BlogList({ posts }: BlogListProps) {
             </div>
           </motion.div>
         </div>
-      </section>
+      </section> */}
     </>
   );
 }
