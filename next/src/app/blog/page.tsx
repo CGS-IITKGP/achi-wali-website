@@ -174,20 +174,21 @@ export default async function Blog() {
                                 {prettyDate(blog.createdAt)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              <span>5 min</span>
-                            </div>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
-                              <span className="text-white font-semibold">
-                                {blog.author.name.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
+                            <Image
+                              src={
+                                blog.author.profileImgUrl ||
+                                "/default-fallback-image.png"
+                              }
+                              alt="Profile Image"
+                              className="w-10 h-10 object-cover rounded-full border-2 border-pink-500/20"
+                              width={40}
+                              height={40}
+                            />
                             <div>
                               <div className="text-white font-medium">
                                 {blog.author.name}

@@ -389,6 +389,7 @@ export namespace SDOut {
             author: {
                 _id: string;
                 name: string;
+                profileImgUrl: string | null;
             };
             collaborators: {
                 _id: string;
@@ -426,6 +427,7 @@ export namespace SDOut {
             author: {
                 _id: string;
                 name: string;
+                profileImgUrl: string | null;
             };
             collaborators: {
                 _id: string;
@@ -447,6 +449,7 @@ export namespace SDOut {
             author: {
                 _id: string;
                 name: string;
+                profileImgUrl: string | null;
             };
             collaborators: {
                 _id: string;
@@ -478,6 +481,7 @@ export namespace SDOut {
             author: {
                 _id: string;
                 name: string;
+                profileImgUrl: string | null;
             };
             collaborators: {
                 _id: string;
@@ -497,6 +501,7 @@ export namespace SDOut {
             author: {
                 _id: string;
                 name: string;
+                profileImgUrl: string | null;
             };
             collaborators: {
                 _id: string;
@@ -543,6 +548,9 @@ export namespace SDOut {
             _id: string;
             key: string;
             url: string;
+            sizeBytes: number;
+            format: string;
+            resourceType: string;
         }[];
 
         export type Sign = {

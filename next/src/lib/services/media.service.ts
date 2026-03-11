@@ -27,6 +27,9 @@ const get: ServiceSignature<
                 _id: media._id.toHexString(),
                 key: media.key,
                 url: media.url,
+                sizeBytes: media.sizeBytes,
+                format: media.format,
+                resourceType: media.resourceType
             }
         })
     }
@@ -89,9 +92,26 @@ const create: ServiceSignature<
         }
     }
 
+    let sizeBytes = -1;
+    let format = "unknown";
+    let resourceType = "unknown";
+
+    try {
+        const cloudinaryResource = await cloudinary.api.resource(data.publicId);
+
+        sizeBytes = cloudinaryResource.bytes ?? -1;
+        format = cloudinaryResource.format ?? "unknown";
+        resourceType = cloudinaryResource.resource_type ?? "unknown";
+    } catch {
+        // I will think about it later.
+    }
+
     await mediaRepository.insert({
         key: data.publicId,
         url: data.url,
+        sizeBytes,
+        format,
+        resourceType,
         uploadedBy: session.userId
     });
 

@@ -48,10 +48,12 @@ export interface IBlog {
   author: {
     _id: string;
     name: string;
+    profileImgUrl: string | null;
   };
   collaborators: {
     _id: string;
     name: string;
+    profileImgUrl: string | null;
   }[];
   coverImgUrl: string | null;
   createdAt: string;
@@ -77,10 +79,12 @@ export interface IProject {
   author: {
     _id: string;
     name: string;
+    profileImgUrl: string | null;
   };
   collaborators: {
     _id: string;
     name: string;
+    profileImgUrl: string | null;
   }[];
   links: {
     text: string;
@@ -114,6 +118,9 @@ export type IMedia = {
   _id: string;
   key: string;
   url: string;
+  sizeBytes: number;
+  format: string;
+  resourceType: string;
 };
 
 export type IMediaSignedToken = {

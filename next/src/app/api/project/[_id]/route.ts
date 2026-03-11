@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import createHandler from '@/lib/handler';
 import projectValidator from '@/lib/validators/project.validator';
 import projectServices from '@/lib/services/project.service';

@@ -5,7 +5,7 @@ import { Righteous, Roboto } from "next/font/google";
 import Navbar from "./components/navbar";
 import FeaturedContent from "./featuredprojects";
 import Footer from "./footer";
-import HeroCard from "./components/HeroCard"
+import HeroCard from "./components/HeroCard";
 import api from "./axiosApi";
 import { IRecentFeaturedContent } from "./types/domain.types";
 
@@ -31,12 +31,12 @@ const fetchRecentFeatured = async () => {
     return apiResponse.data as IRecentFeaturedContent[];
   } else if (apiResponse.action === null) {
     console.log(
-      "Internal Server Error while fetching featured graphics projects."
+      "Internal Server Error while fetching featured graphics projects.",
     );
   } else if (apiResponse.action === false) {
     console.error(
       "API response error while fetching featured graphics projects.",
-      apiResponse
+      apiResponse,
     );
   }
   return [];
