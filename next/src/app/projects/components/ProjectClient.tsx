@@ -3,7 +3,7 @@
 import Image from "next/image";
 // import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { motion, Variants } from "framer-motion";
+import { motion /*Variants*/ } from "framer-motion";
 import { righteousFont, robotoFont } from "../../fonts";
 import { ExternalLink, FlaskConical, Github } from "lucide-react";
 import { Image as GraphicsIcon } from "lucide-react";
@@ -13,18 +13,18 @@ import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { IProject } from "@/app/types/domain.types";
 import { prettySafeImage } from "@/app/utils/pretty";
 
-const detailsVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
-  },
-};
+// const detailsVariants = {
+//   hidden: { opacity: 0 },
+//   visible: {
+//     opacity: 1,
+//     transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+//   },
+// };
 
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } },
-};
+// const itemVariants: Variants = {
+//   hidden: { opacity: 0, y: 20 },
+//   visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } },
+// };
 
 interface ProjectsClientProps {
   projects: IProject[];

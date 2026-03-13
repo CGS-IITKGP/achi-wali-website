@@ -50,7 +50,6 @@ export interface ITeam {
     name: string;
     description: string;
     members: Types.ObjectId[];
-    coverImageUrl: string | null;
     createdAt: Date;
     updatedAt: Date;
 }

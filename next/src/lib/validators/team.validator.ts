@@ -23,12 +23,6 @@ const teamValidator = {
         _id: allIbDField._id,
         name: allIbDField.shortString.optional(),
         description: allIbDField.longString.optional(),
-        coverImageUrl: allIbDField.shortString.optional(),
-    }),
-    editMembers: z.object({
-        _id: allIbDField._id,
-        target: z.enum(APIControl.Team.EditMembers.Target),
-        memberIds: z.array(allIbDField._id),
     }),
     remove: z.object({
         _id: allIbDField._id,

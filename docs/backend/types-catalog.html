@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Types Catalog</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">CGS Backend</div>
+      <div class="tagline">Reference for shared types and enums</div>
+    </header>
+
+    <div class="layout">
+      <nav class="side-nav">
+        <div class="nav-title">Docs</div>
+        <a href="index.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="code-walkthrough.html">Code walkthrough</a>
+        <a class="active" href="types-catalog.html">Types catalog</a>
+        <a href="folder-structure.html">Folder structure</a>
+        <a href="api-routes.html">API routes</a>
+        <a href="auth-flow.html">Auth flow</a>
+        <a href="database.html">Database</a>
+        <a href="adding-features.html">Adding features</a>
+        <div class="nav-meta">
+          System map: <a href="system_map.md">system_map.md</a>
+        </div>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <h1>Types catalog</h1>
+          <p>
+            Shared types in <code>lib/types</code>. If you understand these,
+            everything else in the backend flows naturally.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>APIControl</h2>
+          <p>
+            <code>APIControl</code> enumerates target strings used in query-driven
+            endpoints.
+          </p>
+          <pre class="tree">export namespace APIControl {
+  export namespace Project {
+    export namespace Get {
+      export enum Target { ALL, ALL_AS_LIST, MY }
+      export enum Portfolio { ANY, GAME, GRAPHICS, RND }
+    }
+  }
+}
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Service data</h2>
+          <p>
+            Service inputs and outputs are namespaced by feature. Inputs live in
+            <code>SDIn</code> (ServiceDataIn), outputs in <code>SDOut</code> (ServiceDataOut).
+          </p>
+          <pre class="tree">export namespace SDIn {
+  export namespace Blog {
+    export type Create = {
+      title: string;
+      slug: string;
+      content: string;
+      tags: string[];
+      coverImgUrl: string | null;
+    };
+  }
+}
+
+export namespace SDOut {
+  export namespace Blog {
+    export type GetAsList = { _id: string; title: string }[];
+  }
+}
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Service signatures</h2>
+          <p>
+            Every service follows the same function signature and returns a
+            discriminated union.
+          </p>
+          <pre class="tree">export type ServiceSignature<SDIn, SDOut, RequireSession extends boolean> =
+  (data: SDIn, session: RequireSession extends true ? ISession : ISession | null)
+    => Promise<IServiceResolve<SDOut>>;
+
+export type IServiceResolve<SDOut> =
+  | { success: true; data: SDOut }
+  | { success: false; errorCode: ESECs; errorMessage?: string };
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Error codes (ESECs)</h2>
+          <p>
+            <code>ESECs</code> is an enum of service error codes. The <code>E</code>
+            prefix denotes enums in this codebase.
+          </p>
+          <pre class="tree">export enum ESECs {
+  USER_NOT_FOUND,
+  INVALID_CREDENTIALS,
+  FORBIDDEN,
+  PROJECT_NOT_FOUND,
+  BLOG_NOT_FOUND,
+  MEDIA_NOT_FOUND,
+}
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Response enums</h2>
+          <pre class="tree">export enum SuccessResponseCodesEnum {
+  OK = 200,
+  CREATED = 201,
+  ACCEPTED = 202,
+}
+
+export enum FailedResponseCodeEnum {
+  BAD_REQUEST = 400,
+  UNAUTHORIZED = 401,
+  FORBIDDEN = 403,
+  NOT_FOUND = 404,
+  CONFLICT = 409,
+  TOO_MANY_REQUESTS = 429,
+}
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Sessions and JWT payload</h2>
+          <pre class="tree">export interface ISession {
+  userId: Types.ObjectId;
+  userEmail: string;
+  userRoles: EUserRole[];
+}
+
+export interface JWTPayload {
+  _id: string;
+  roles: EUserRole[];
+}
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Domain enums</h2>
+          <pre class="tree">export enum EUserRole { GUEST, MEMBER, ADMIN, ROOT }
+export enum EUserDesignation { NONE, JUNIOR, SENIOR, EXECUTIVE, HEAD, ADVISOR }
+export enum EProjectPortfolio { GAME, GRAPHICS, RND }
+export enum EFeaturedType { BLOG, GAME, GRAPHICS, RND }
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Domain models</h2>
+          <pre class="tree">export interface IUser {
+  _id: Types.ObjectId;
+  email: string;
+  profileImgUrl: string | null;
+  teamId: Types.ObjectId | null;
+  roles: EUserRole[];
+}
+
+export interface ITeam {
+  _id: Types.ObjectId;
+  name: string;
+  description: string;
+  members: Types.ObjectId[];
+}
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Pagination helpers</h2>
+          <pre class="tree">export interface PaginationOptions {
+  page?: number;
+  limit?: number;
+  sort?: Record<string, 1 | -1>;
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+</pre>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,103 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 16px;
+  font-family: "Times New Roman", serif;
+}
+
+.site-header {
+  margin-bottom: 16px;
+}
+
+.brand {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.tagline {
+  margin-top: 4px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.side-nav {
+  position: sticky;
+  top: 16px;
+}
+
+.nav-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.side-nav a {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.nav-meta {
+  margin-top: 12px;
+}
+
+.hero {
+  margin-bottom: 16px;
+}
+
+.card {
+  margin-bottom: 16px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.tree {
+  white-space: pre;
+  font-family: "Courier New", monospace;
+  overflow-x: auto;
+}
+
+.diagram img {
+  max-width: 100%;
+  height: auto;
+}
+
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+table.data th,
+table.data td {
+  text-align: left;
+  padding: 6px 4px;
+  vertical-align: top;
+}
+
+.badge {
+  font-weight: bold;
+}
+
+footer {
+  margin-top: 24px;
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .side-nav {
+    position: static;
+  }
+}

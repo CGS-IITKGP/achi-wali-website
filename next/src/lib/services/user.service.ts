@@ -17,7 +17,7 @@ const _userExportLimitedInfo = (user: IUser) => {
         _id: user._id.toHexString(),
         name: user.name,
         email: user.email,
-        profileImgMediaKey: user.profileImgUrl,
+        profileImgUrl: user.profileImgUrl,
         roles: user.roles,
         teamId: user.teamId?.toHexString() ?? null,
         links: user.links,
@@ -30,7 +30,7 @@ const _userExportUnrestrictedInfo = (user: IUser) => {
         _id: user._id.toHexString(),
         name: user.name,
         email: user.email,
-        profileImgMediaKey: user.profileImgUrl,
+        profileImgUrl: user.profileImgUrl,
         phoneNumber: user.phoneNumber,
         roles: user.roles,
         teamId: user.teamId?.toHexString() ?? null,
@@ -259,7 +259,7 @@ const remove: ServiceSignature<
                 user.teamId,
                 {
                     $pull: {
-                        memberIds: data._id,
+                        members: data._id,
                     },
                 },
                 dbSession

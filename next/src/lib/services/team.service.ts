@@ -19,7 +19,7 @@ const get: ServiceSignature<
 > = async (data) => {
     if (data.target === APIControl.Team.Get.Target.ONE) {
         const team = await teamRepository.findExportable({
-            teamId: data._id
+            _id: data._id
         });
         if (!team) {
             return {
@@ -118,51 +118,6 @@ const create: ServiceSignature<
     };
 };
 
-const editMembers: ServiceSignature<
-    SDIn.Team.EditMembers,
-    SDOut.Team.EditMembers,
-    true
-> = async (data, session) => {
-    if (!session.userRoles.includes(EUserRole.ADMIN)) {
-        return {
-            success: false,
-            errorCode: ESECs.FORBIDDEN,
-            errorMessage: "Only admin can add team members.",
-        };
-    }
-
-    const team = await teamRepository.findById(data._id);
-    if (!team) {
-        return {
-            success: false,
-            errorCode: ESECs.TEAM_NOT_FOUND,
-            errorMessage: "Team not found.",
-        };
-    }
-
-    await withSession(async (dbSession) => {
-        const teamUpdate =
-            data.action === APIControl.Team.EditMembers.Target.ADD
-                ? { $addToSet: { members: { $each: data.memberIds } } }
-                : { $pull: { members: { $in: data.memberIds } } };
-
-        const userUpdate =
-            data.action === APIControl.Team.EditMembers.Target.ADD
-                ? { $set: { teamId: data._id } }
-                : { $unset: { teamId: "" } };
-
-        await Promise.all([
-            teamRepository.updateById(data._id, teamUpdate, dbSession),
-            userRepository.updateMany({ _id: { $in: data.memberIds } }, userUpdate, dbSession),
-        ]);
-    });
-
-    return {
-        success: true,
-        data: {},
-    };
-};
-
 const update: ServiceSignature<
     SDIn.Team.Update,
     SDOut.Team.Update,
@@ -188,7 +143,6 @@ const update: ServiceSignature<
     await teamRepository.updateById(data._id, {
         name: data.name,
         description: data.description,
-        coverImageMediaKey: data.coverImageUrl,
     });
 
     return {
@@ -223,7 +177,7 @@ const remove: ServiceSignature<
         await teamRepository.removeById(data._id, dbSession);
         await userRepository.updateMany(
             {
-                _id: data._id,
+                teamId: data._id,
             },
             {
                 $set: {
@@ -244,7 +198,6 @@ const teamServices = {
     get,
     create,
     update,
-    editMembers,
     remove
 };
 

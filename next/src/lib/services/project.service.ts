@@ -134,12 +134,12 @@ const update: ServiceSignature<
 
     if (
         !session.userRoles.includes(EUserRole.ADMIN) &&
-        !!(project._id.toHexString() === session.userId.toHexString())
+        project.author.toHexString() !== session.userId.toHexString()
     ) {
         return {
             success: false,
             errorCode: ESECs.FORBIDDEN,
-            errorMessage: "Only admin or author can remove a project.",
+            errorMessage: "Only admin or author can update a project.",
         };
     }
 
@@ -169,12 +169,12 @@ const remove: ServiceSignature<
 
     if (
         !session.userRoles.includes(EUserRole.ADMIN) &&
-        !(project.author._id.toHexString() === session.userId.toHexString())
+        project.author.toHexString() !== session.userId.toHexString()
     ) {
         return {
             success: false,
             errorCode: ESECs.FORBIDDEN,
-            errorMessage: "Only admin or author can remove a project.",
+            errorMessage: "Only admin or author can delete a project.",
         };
     }
 

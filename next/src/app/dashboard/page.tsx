@@ -328,7 +328,7 @@ const ProfileSection = () => {
 
   const { user, refreshUser } = useAuth();
   const { directAssetUpload } = useCloudinaryUpload();
-  const { state: dashboardState, resetAssets } = useDashboard();
+  const { state: dashboardState } = useDashboard();
 
   const correctCount = (count: number) => {
     return count === -1 ? "Loading..." : count;

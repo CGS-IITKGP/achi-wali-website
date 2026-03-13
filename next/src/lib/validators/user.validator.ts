@@ -33,7 +33,7 @@ const userValidator = {
     }),
     updateTeam: z.object({
         _id: allIbDField._id,
-        teamId: allIbDField._id,
+        teamId: allIbDField._id.nullable(),
     }),
     updateAssignment: z.object({
         _id: allIbDField._id,
