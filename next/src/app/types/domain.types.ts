@@ -146,7 +146,6 @@ export type ITeamExportable = {
     profileImgUrl: string | null;
     designation: string;
   }[];
-  coverImageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 };

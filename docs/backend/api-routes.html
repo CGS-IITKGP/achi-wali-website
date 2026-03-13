@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Backend API Routes</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">CGS Backend</div>
+      <div class="tagline">Endpoint inventory with auth rules</div>
+    </header>
+
+    <div class="layout">
+      <nav class="side-nav">
+        <div class="nav-title">Docs</div>
+        <a href="index.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="code-walkthrough.html">Code walkthrough</a>
+        <a href="types-catalog.html">Types catalog</a>
+        <a href="folder-structure.html">Folder structure</a>
+        <a class="active" href="api-routes.html">API routes</a>
+        <a href="auth-flow.html">Auth flow</a>
+        <a href="database.html">Database</a>
+        <a href="adding-features.html">Adding features</a>
+        <div class="nav-meta">
+          System map: <a href="system_map.md">system_map.md</a>
+        </div>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <h1>API routes</h1>
+          <p>Routes, inputs, and authorization levels across the backend.</p>
+        </section>
+
+        <section class="card">
+          <h2>Auth</h2>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Auth</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge post">POST</span></td>
+                <td><code>/api/auth/sign-in</code></td>
+                <td>Public</td>
+                <td>Sets <code>session</code> cookie on success.</td>
+              </tr>
+              <tr>
+                <td><span class="badge post">POST</span></td>
+                <td><code>/api/auth/sign-out</code></td>
+                <td>Public</td>
+                <td>Overwrites <code>session</code> cookie.</td>
+              </tr>
+              <tr>
+                <td><span class="badge post">POST</span></td>
+                <td><code>/api/auth/sign-up</code></td>
+                <td>Public</td>
+                <td>Deprecated OTP sign-up flow.</td>
+              </tr>
+              <tr>
+                <td><span class="badge patch">PATCH</span></td>
+                <td><code>/api/auth/change-password</code></td>
+                <td>Session</td>
+                <td>Requires a valid session cookie.</td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/auth/me</code></td>
+                <td>Session</td>
+                <td>Returns the current user summary.</td>
+              </tr>
+              <tr>
+                <td><span class="badge post">POST</span></td>
+                <td><code>/api/auth/refresh-session</code></td>
+                <td>Session</td>
+                <td>Rotates the JWT cookie.</td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/auth/google</code></td>
+                <td>Public</td>
+                <td>Redirects to Google OAuth consent.</td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/auth/google/callback</code></td>
+                <td>Public</td>
+                <td>Exchanges code for session and redirects.</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Examples</h3>
+          <pre class="tree">
+POST /api/auth/sign-in
+{
+  "email": "user@cgs.example",
+  "password": "secret"
+}
+
+200 OK
+{
+  "action": true,
+  "data": {}
+}
+
+POST /api/auth/refresh-session
+{}
+
+200 OK
+{
+  "action": true,
+  "data": {}
+}
+</pre
+          >
+          <div class="note">
+            Sign-in and refresh-session set the <code>session</code> cookie in
+            the response headers.
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Blog</h2>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Auth</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/blog?target=all</code></td>
+                <td>Public</td>
+                <td>Returns a list view of all blogs.</td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/blog?target=my</code></td>
+                <td>Session</td>
+                <td>Returns blogs authored by the session user.</td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/blog/view/:slug</code></td>
+                <td>Public</td>
+                <td>Full blog content by slug.</td>
+              </tr>
+              <tr>
+                <td><span class="badge post">POST</span></td>
+                <td><code>/api/blog</code></td>
+                <td>Member</td>
+                <td>Creates a new blog.</td>
+              </tr>
+              <tr>
+                <td><span class="badge patch">PATCH</span></td>
+                <td><code>/api/blog/:id</code></td>
+                <td>Admin or author</td>
+                <td>Updates title, slug, content, tags, or cover image.</td>
+              </tr>
+              <tr>
+                <td><span class="badge delete">DELETE</span></td>
+                <td><code>/api/blog/:id</code></td>
+                <td>Admin or author</td>
+                <td>Deletes a blog.</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Examples</h3>
+          <pre class="tree">
+GET /api/blog?target=all
+
+200 OK
+{
+  "action": true,
+  "data": [
+    {
+      "_id": "64f...",
+      "title": "Shader Notes",
+      "slug": "shader-notes",
+      "tags": ["graphics", "rendering"],
+      "author": { "_id": "64a...", "name": "A. Author", "profileImgUrl": null },
+      "collaborators": [],
+      "coverImgUrl": null,
+      "createdAt": "2026-03-13T10:12:00.000Z",
+      "updatedAt": "2026-03-13T10:12:00.000Z"
+    }
+  ]
+}
+
+POST /api/blog
+{
+  "title": "Shader Notes",
+  "slug": "shader-notes",
+  "content": "# Intro...",
+  "tags": ["graphics", "rendering"],
+  "coverImgUrl": null
+}
+
+200 OK
+{
+  "action": true,
+  "data": {}
+}
+</pre
+          >
+        </section>
+
+        <section class="card">
+          <h2>Project</h2>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Auth</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/project?target=all&amp;portfolio=any</code></td>
+                <td>Public</td>
+                <td>
+                  Supports <code>portfolio</code>: any, game, graphics, rnd.
+                </td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/project?target=my</code></td>
+                <td>Session</td>
+                <td>Returns projects authored by the session user.</td>
+              </tr>
+              <tr>
+                <td><span class="badge post">POST</span></td>
+                <td><code>/api/project</code></td>
+                <td>Member</td>
+                <td>Creates a new project.</td>
+              </tr>
+              <tr>
+                <td><span class="badge patch">PATCH</span></td>
+                <td><code>/api/project/:id</code></td>
+                <td>Admin or author</td>
+                <td>Updates project metadata and media references.</td>
+              </tr>
+              <tr>
+                <td><span class="badge delete">DELETE</span></td>
+                <td><code>/api/project/:id</code></td>
+                <td>Admin or author</td>
+                <td>Removes a project.</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Examples</h3>
+          <pre class="tree">
+GET /api/project?target=all&amp;portfolio=any
+
+200 OK
+{
+  "action": true,
+  "data": [
+    {
+      "_id": "650...",
+      "portfolio": "GAME",
+      "title": "Sky Runner",
+      "description": "Arcade runner",
+      "tags": ["game", "unity"],
+      "author": { "_id": "64a...", "name": "A. Author", "profileImgUrl": null },
+      "collaborators": [],
+      "links": [{ "text": "github", "url": "https://github.com/example" }],
+      "coverImgUrl": null,
+      "media": [],
+      "createdAt": "2026-03-13T10:12:00.000Z",
+      "updatedAt": "2026-03-13T10:12:00.000Z"
+    }
+  ]
+}
+
+POST /api/project
+{
+  "portfolio": "GAME",
+  "title": "Sky Runner",
+  "description": "Arcade runner",
+  "tags": ["game", "unity"],
+  "links": [{ "text": "github", "url": "https://github.com/example" }],
+  "coverImgUrl": null
+}
+
+200 OK
+{
+  "action": true,
+  "data": {}
+}
+</pre
+          >
+        </section>
+
+        <section class="card">
+          <h2>Team</h2>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Auth</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/team?target=all</code></td>
+                <td>Public</td>
+                <td>Returns full team list with members.</td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/team?target=all_as_list</code></td>
+                <td>Public</td>
+                <td>Returns a slim list of teams.</td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/team/:id</code></td>
+                <td>Public</td>
+                <td>Returns a single team with members.</td>
+              </tr>
+              <tr>
+                <td><span class="badge post">POST</span></td>
+                <td><code>/api/team</code></td>
+                <td>Admin</td>
+                <td>Creates a team.</td>
+              </tr>
+              <tr>
+                <td><span class="badge patch">PATCH</span></td>
+                <td><code>/api/team/:id</code></td>
+                <td>Admin</td>
+                <td>Updates team name or description.</td>
+              </tr>
+              <tr>
+                <td><span class="badge delete">DELETE</span></td>
+                <td><code>/api/team/:id</code></td>
+                <td>Admin</td>
+                <td>Deletes a team and clears user memberships.</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Examples</h3>
+          <pre class="tree">
+POST /api/team
+{
+  "name": "Graphics",
+  "description": "Rendering and visual systems"
+}
+
+200 OK
+{
+  "action": true,
+  "data": {}
+}
+
+GET /api/team/650d...
+
+200 OK
+{
+  "action": true,
+  "data": {
+    "_id": "650d...",
+    "name": "Graphics",
+    "description": "Rendering and visual systems",
+    "members": [
+      { "_id": "64a...", "name": "A. Artist", "links": [], "profileImgUrl": null }
+    ],
+    "createdAt": "2026-03-13T10:12:00.000Z",
+    "updatedAt": "2026-03-13T10:12:00.000Z"
+  }
+}
+</pre
+          >
+        </section>
+
+        <section class="card">
+          <h2>User</h2>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Auth</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td>
+                  <code
+                    >/api/user?target=public_all&amp;page=1&amp;limit=20</code
+                  >
+                </td>
+                <td>Public</td>
+                <td>Paginated public list of users.</td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/user?target=public_single&amp;id=:id</code></td>
+                <td>Public</td>
+                <td>Public profile for one user.</td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td>
+                  <code>/api/user?target=all&amp;page=1&amp;limit=20</code>
+                </td>
+                <td>Admin</td>
+                <td>Admin view of all users.</td>
+              </tr>
+              <tr>
+                <td><span class="badge patch">PATCH</span></td>
+                <td><code>/api/user</code></td>
+                <td>Session</td>
+                <td>Updates the current user profile.</td>
+              </tr>
+              <tr>
+                <td><span class="badge patch">PATCH</span></td>
+                <td><code>/api/user/team</code></td>
+                <td>Admin</td>
+                <td>
+                  Assigns or unassigns a team (<code>teamId</code> can be null).
+                </td>
+              </tr>
+              <tr>
+                <td><span class="badge patch">PATCH</span></td>
+                <td><code>/api/user/assign</code></td>
+                <td>Admin</td>
+                <td>Updates roles and designation.</td>
+              </tr>
+              <tr>
+                <td><span class="badge delete">DELETE</span></td>
+                <td><code>/api/user</code></td>
+                <td>Admin</td>
+                <td>Removes a user and clears team membership.</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Examples</h3>
+          <pre class="tree">
+PATCH /api/user/team
+{
+  "_id": "64a...",
+  "teamId": null
+}
+
+200 OK
+{
+  "action": true,
+  "data": {}
+}
+
+GET /api/user?target=public_single&amp;id=64a...
+
+200 OK
+{
+  "action": true,
+  "data": {
+    "_id": "64a...",
+    "name": "A. Member",
+    "email": "member@cgs.example",
+    "profileImgUrl": null,
+    "phoneNumber": null,
+    "links": [],
+    "team": { "_id": "", "name": "Unknown" },
+    "roles": ["MEMBER"],
+    "designation": "SENIOR",
+    "memberSince": "March 2026"
+  }
+}
+</pre
+          >
+        </section>
+
+        <section class="card">
+          <h2>Featured</h2>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Auth</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/featured?target=highlight</code></td>
+                <td>Public</td>
+                <td>Returns highlight cards.</td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/featured?target=all_as_list</code></td>
+                <td>Public</td>
+                <td>Admin-friendly list format.</td>
+              </tr>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td>
+                  <code>/api/featured?target=blog|game|graphics|rnd</code>
+                </td>
+                <td>Public</td>
+                <td>Returns featured items by type.</td>
+              </tr>
+              <tr>
+                <td><span class="badge post">POST</span></td>
+                <td><code>/api/featured</code></td>
+                <td>Admin</td>
+                <td>Adds a featured item.</td>
+              </tr>
+              <tr>
+                <td><span class="badge delete">DELETE</span></td>
+                <td><code>/api/featured/:id</code></td>
+                <td>Admin</td>
+                <td>Removes a featured item.</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Examples</h3>
+          <pre class="tree">
+GET /api/featured?target=highlight
+
+200 OK
+{
+  "action": true,
+  "data": [
+    {
+      "_id": "651...",
+      "type": "BLOG",
+      "title": "Shader Notes",
+      "tags": ["graphics"],
+      "coverImgUrl": null,
+      "readUrl": "/blog/shader-notes"
+    }
+  ]
+}
+</pre
+          >
+        </section>
+
+        <section class="card">
+          <h2>Media</h2>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Auth</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/media</code></td>
+                <td>Session</td>
+                <td>Returns media uploaded by the session user.</td>
+              </tr>
+              <tr>
+                <td><span class="badge post">POST</span></td>
+                <td><code>/api/media/sign</code></td>
+                <td>Session</td>
+                <td>Returns a Cloudinary upload signature.</td>
+              </tr>
+              <tr>
+                <td><span class="badge post">POST</span></td>
+                <td><code>/api/media</code></td>
+                <td>Member</td>
+                <td>Stores uploaded media metadata.</td>
+              </tr>
+              <tr>
+                <td><span class="badge delete">DELETE</span></td>
+                <td><code>/api/media/:id</code></td>
+                <td>Admin or uploader</td>
+                <td>Deletes media and invalidates Cloudinary asset.</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Examples</h3>
+          <pre class="tree">
+POST /api/media/sign
+{}
+
+200 OK
+{
+  "action": true,
+  "data": {
+    "signature": "...",
+    "timestamp": "1710000000",
+    "folder": "user-assets/64a...",
+    "publicId": "ckl...",
+    "cloudName": "example",
+    "apiKey": "123..."
+  }
+}
+
+POST /api/media
+{
+  "publicId": "user-assets/64a.../ckl...",
+  "url": "https://res.cloudinary.com/example/image/upload/..."
+}
+
+200 OK
+{
+  "action": true,
+  "data": {}
+}
+</pre
+          >
+        </section>
+
+        <section class="card">
+          <h2>Misc</h2>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Auth</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge get">GET</span></td>
+                <td><code>/api/misc/health</code></td>
+                <td>Public</td>
+                <td>Checks MongoDB and SMTP health.</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>Examples</h3>
+          <pre class="tree">
+GET /api/misc/health
+
+200 OK
+{
+  "serverStatus": "ONLINE",
+  "databaseConnection": "CONNECTED",
+  "smtpConnected": "CONNECTED"
+}
+</pre
+          >
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

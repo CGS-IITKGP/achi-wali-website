@@ -160,18 +160,20 @@ const update: ServiceSignature<
     if (!blog) {
         return {
             success: false,
-            errorCode: ESECs.PROJECT_NOT_FOUND,
-            errorMessage: "Project not found;",
+            errorCode: ESECs.BLOG_NOT_FOUND,
+            errorMessage: "Blog not found;",
         };
     }
 
-    if (!session.userRoles.includes(EUserRole.ADMIN) &&
-        !(blog.author._id.toHexString() === session.userId.toHexString())) {
+    if (
+        !session.userRoles.includes(EUserRole.ADMIN) &&
+        blog.author._id.toHexString() !== session.userId.toHexString()
+    ) {
         return {
             success: false,
             errorCode: ESECs.FORBIDDEN,
-            errorMessage: "Only admin or author can remove a blog."
-        }
+            errorMessage: "Only admin or author can update a blog."
+        };
     }
 
     const { _id, ...updateDoc } = data;
@@ -198,13 +200,15 @@ const remove: ServiceSignature<
         };
     }
 
-    if (!session.userRoles.includes(EUserRole.ADMIN) &&
-        !(blog.author._id.toHexString() === session.userId.toHexString())) {
+    if (
+        !session.userRoles.includes(EUserRole.ADMIN) &&
+        blog.author._id.toHexString() !== session.userId.toHexString()
+    ) {
         return {
             success: false,
             errorCode: ESECs.FORBIDDEN,
             errorMessage: "Only admin or author can remove a blog."
-        }
+        };
     }
 
     await blogRepository.removeById(data._id);

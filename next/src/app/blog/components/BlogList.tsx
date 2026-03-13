@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Calendar, ArrowRight, Clock } from "lucide-react";
+import { Search, Calendar, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Righteous } from "next/font/google";
 import { IBlogOfList } from "@/app/types/index.types";

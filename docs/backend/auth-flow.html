@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Authentication Flow</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">CGS Backend</div>
+      <div class="tagline">Google OAuth and session lifecycle</div>
+    </header>
+
+    <div class="layout">
+      <nav class="side-nav">
+        <div class="nav-title">Docs</div>
+        <a href="index.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="code-walkthrough.html">Code walkthrough</a>
+        <a href="types-catalog.html">Types catalog</a>
+        <a href="folder-structure.html">Folder structure</a>
+        <a href="api-routes.html">API routes</a>
+        <a class="active" href="auth-flow.html">Auth flow</a>
+        <a href="database.html">Database</a>
+        <a href="adding-features.html">Adding features</a>
+        <div class="nav-meta">
+          System map: <a href="system_map.md">system_map.md</a>
+        </div>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <h1>Authentication flow</h1>
+          <p>
+            How Google OAuth creates a session and how JWT cookies are used.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Google OAuth flow</h2>
+          <ol>
+            <li>Client hits <code>/api/auth/google</code> to start OAuth.</li>
+            <li>User authenticates with Google and is redirected back.</li>
+            <li>
+              <code>/api/auth/google/callback</code> exchanges the code for an
+              ID token.
+            </li>
+            <li>Server verifies the ID token and creates or fetches a user.</li>
+            <li>
+              A <code>session</code> JWT cookie is set and the user is
+              redirected.
+            </li>
+          </ol>
+          <div class="diagram">
+            <img src="diagrams/auth-flow.svg" alt="Google OAuth flow" />
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Session lifecycle</h2>
+          <ul>
+            <li>JWTs are signed with <code>BACKEND_JWT_SECRET_KEY</code>.</li>
+            <li>
+              Protected routes check the cookie via
+              <code>authService.extractSession</code>.
+            </li>
+            <li><code>/api/auth/refresh-session</code> rotates the token.</li>
+            <li>
+              <code>/api/auth/sign-out</code> overwrites the session cookie.
+            </li>
+          </ul>
+          <div class="note">
+            Email/password sign-up exists for legacy users but is deprecated.
+            New accounts should use Google OAuth.
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

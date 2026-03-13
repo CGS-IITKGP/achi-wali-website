@@ -111,14 +111,7 @@ export namespace SDIn {
             _id: Types.ObjectId,
             name?: string,
             description?: string,
-            coverImageUrl?: string,
         }
-
-        export type EditMembers = {
-            _id: Types.ObjectId,
-            action: APIControl.Team.EditMembers.Target,
-            memberIds: Types.ObjectId[],
-        };
 
         export type RemoveMembers = {
             _id: Types.ObjectId,
@@ -361,7 +354,6 @@ export namespace SDOut {
                 }[];
                 profileImgUrl: string | null;
             }[];
-            coverImageUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
         }
@@ -375,7 +367,6 @@ export namespace SDOut {
 
         export type Create = EmptyObject;
         export type Update = EmptyObject;
-        export type EditMembers = EmptyObject;
         export type Remove = EmptyObject;
     }
 

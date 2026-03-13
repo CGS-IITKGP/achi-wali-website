@@ -8,7 +8,7 @@ import { ClientSession, FilterQuery } from "mongoose";
 class TeamRepository extends GenericRepository<
     ITeam,
     Pick<ITeam, "name" | "description">,
-    Pick<ITeam, "name" | "description" | "members" | "coverImageUrl">
+    Pick<ITeam, "name" | "description" | "members">
 > {
     constructor() {
         super(TeamModel);
@@ -20,7 +20,7 @@ class TeamRepository extends GenericRepository<
 
         try {
             return await this.model.findOne(filter).populate({
-                path: "authors",
+                path: "members",
                 select: "name links profileImgUrl designation",
             }).session(session || null).lean<ITeamExportable>().exec();
         } catch (error) {

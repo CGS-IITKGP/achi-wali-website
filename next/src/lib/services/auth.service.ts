@@ -226,12 +226,7 @@ const googleOAuth: ServiceSignature<
 
         if (userPicture) {
             await userRepository.updateById(user._id, {
-                profileImgMediaKey: userPicture
-            });
-        }
-        else {
-            await userRepository.updateById(user._id, {
-                profileImgMediaKey: `user-assets/${user._id.toHexString()}/profileImage`
+                profileImgUrl: userPicture
             });
         }
     }
