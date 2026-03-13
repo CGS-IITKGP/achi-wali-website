@@ -125,10 +125,17 @@ export default function Login() {
                   Sign in to your CGS account
                 </p>
               </div>
-
+              <div className="logo flex justify-center items-center mb-2">
+                <Image
+                  src="/logo.png"
+                  alt="CGS_LOGO"
+                  width={250}
+                  height={150}                 
+                  ></Image>
+              </div>
               {/* Login Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email Field */}
+{/*               <form onSubmit={handleSubmit} className="space-y-6">
+                
                 <div className="group">
                   <label
                     className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
@@ -148,7 +155,7 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Password Field */}
+                
                 <div className="group">
                   <label
                     className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
@@ -209,7 +216,7 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Remember Me & Forgot Password */}
+                
                 <div className="flex items-center justify-between">
                   <label className="flex items-center space-x-2 cursor-pointer group">
                     <div className="relative">
@@ -255,13 +262,13 @@ export default function Login() {
                   </Link>
                 </div>
 
-                {/* Submit Button */}
+                
                 <button
                   type="submit"
                   disabled={isLoading}
                   className="w-full py-3 px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-purple-600 cursor-pointer text-white font-semibold rounded-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group"
                 >
-                  {/* Button Shimmer Effect */}
+                  
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
                   <span className="relative z-10 flex items-center justify-center">
@@ -294,9 +301,9 @@ export default function Login() {
                     )}
                   </span>
                 </button>
-              </form>
+              </form> */}
 
-              <div className="flex items-center my-6">
+{/*               <div className="flex items-center my-6">
                 <div className="flex-grow border-t border-white/10"></div>
                 <span
                   className={`flex-shrink mx-4 text-gray-500 text-sm ${paragraph_font.className}`}
@@ -304,7 +311,7 @@ export default function Login() {
                   OR
                 </span>
                 <div className="flex-grow border-t border-white/10"></div>
-              </div>
+              </div> */}
 
               <Link
                 href="/api/auth/google"

@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, ChevronRight, Edit2, LogOut, Star } from "lucide-react";
+import { Activity, ChevronRight, Edit2, LogOut, Star ,HomeIcon} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -16,18 +16,24 @@ import {
 } from "../types/domain.types";
 import api from "../axiosApi";
 import toast from "react-hot-toast";
+import { redirect } from "next/navigation"
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/authContext";
 import { prettyHighestRole } from "../utils/pretty";
 import { designationStyles, roleStyles } from "../utils/styes";
 
-type ActiveSectionId = "user_management" | "featured_content" | "server_health";
+type ActiveSectionId = "home" | "user_management" | "featured_content" | "server_health";
 
 const navBarItems: {
   id: ActiveSectionId;
   label: string;
   icon: typeof LogOut;
 }[] = [
+  {
+    id: "home",
+    label: "Home",
+    icon: HomeIcon,
+  },
   {
     id: "server_health",
     label: "Server Health",
@@ -46,6 +52,7 @@ const navBarItems: {
 ];
 
 const AdminPanel = () => {
+  
   const [activeSectionId, setActiveSectionId] =
     useState<ActiveSectionId>("server_health");
 
@@ -428,6 +435,10 @@ const AdminPanel = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const renderHomeSection = () =>{
+    return redirect("/");
+  } 
+
   const renderServerHealthSection = () => {
     return (
       <>
@@ -731,6 +742,8 @@ const AdminPanel = () => {
 
   const renderSelectedSection = () => {
     switch (activeSectionId) {
+      case "home":
+        return renderHomeSection();
       case "server_health":
         return renderServerHealthSection();
       case "featured_content":
