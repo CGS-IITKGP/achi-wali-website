@@ -1,9 +1,19 @@
 "use client";
 
-import { Activity, ChevronRight, Edit2, LogOut, Star ,HomeIcon} from "lucide-react";
+import {
+  Activity,
+  ChevronRight,
+  Edit2,
+  LogOut,
+  Star,
+  HomeIcon,
+  Search,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import Fuse from "fuse.js";
 import {
   EFeaturedType,
   EProjectPortfolio,
@@ -16,13 +26,17 @@ import {
 } from "../types/domain.types";
 import api from "../axiosApi";
 import toast from "react-hot-toast";
-import { redirect } from "next/navigation"
+import { redirect } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/authContext";
 import { prettyHighestRole } from "../utils/pretty";
 import { designationStyles, roleStyles } from "../utils/styes";
 
-type ActiveSectionId = "home" | "user_management" | "featured_content" | "server_health";
+type ActiveSectionId =
+  | "home"
+  | "user_management"
+  | "featured_content"
+  | "server_health";
 
 const navBarItems: {
   id: ActiveSectionId;
@@ -52,9 +66,27 @@ const navBarItems: {
 ];
 
 const AdminPanel = () => {
-  
+  const {objectId}=require('bson');
+  const [searchData, setSearchData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [activeSectionId, setActiveSectionId] =
     useState<ActiveSectionId>("server_health");
+
+  // '/' to focus, 'Escape' to blur the search bar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "/" && document.activeElement !== searchInputRef.current) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (e.key === "Escape" && document.activeElement === searchInputRef.current) {
+        searchInputRef.current?.blur();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const [newFeatureForm, setNewFeatureForm] = useState<{
     contentType: EFeaturedType | "";
@@ -105,6 +137,17 @@ const AdminPanel = () => {
     limit: 20,
     totalPages: 0,
   });
+
+  const [copyUser, setCopyUser] = useState(paginatedUsers);
+
+  const fuse = useMemo(
+    () =>
+      new Fuse(copyUser.users, {
+        keys: ["name", "roles", "designation", "email", "teamId", "team"],
+        threshold: 0.3,
+      }),
+    [copyUser.users],
+  );
 
   const { refreshUser } = useAuth();
   const router = useRouter();
@@ -400,8 +443,21 @@ const AdminPanel = () => {
   };
 
   const setUsers = async () => {
-    const paginatedUsers = await fetchPaginatedUsers();
+    const paginatedUsers = await fetchPaginatedUsers()
+    const [fetchedTeams] = await Promise.all([
+     fetchAllTeams()
+    ]);
+    
+    paginatedUsers.users=paginatedUsers.users.map((entry)=>{
+      const result = fetchedTeams.find((anyteam)=> anyteam._id===entry.teamId);
+      var team=result?.name
+      return({
+        ...entry,
+        team:team
+      })
+    })
     setPaginatedUsers(paginatedUsers);
+    setCopyUser(paginatedUsers);
   };
 
   const getTeamName = (teamId: string | null) => {
@@ -435,9 +491,9 @@ const AdminPanel = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const renderHomeSection = () =>{
+  const renderHomeSection = () => {
     return redirect("/");
-  } 
+  };
 
   const renderServerHealthSection = () => {
     return (
@@ -608,12 +664,118 @@ const AdminPanel = () => {
   };
 
   const renderUserManagementSection = () => {
+    // 1. Update the function to ACCEPT the fresh query string
+    const updateSearch = (query: string) => {
+      if (query) {
+        
+        const searchResults = fuse
+          .search(query)
+          .map((result) => result.item as any);
+
+        // 2. We don't need a callback inside setPaginatedUsers anymore!
+        // We can just use the real 'copyUser' state directly.
+        const filteredUsers = copyUser.users.filter((user) =>
+          searchResults.some((searchUser) => searchUser._id === user._id),
+        );
+
+        setPaginatedUsers({
+          ...copyUser,
+          users: filteredUsers,
+        });
+      } else {
+        // If search is empty, restore the backup
+        setPaginatedUsers(copyUser);
+      }
+    };
+
     return (
       <>
         <div className="space-y-2">
           <h1 className="text-4xl font-bold">User Management</h1>
           <p className="text-slate-400">Manage all users from one place.</p>
         </div>
+
+        {/* ── Styled Fuzzy Search Bar ───────────────────────────────────────── */}
+        <div className="mt-8 relative">
+          {/* gradient border ring — visible only when focused */}
+          {searchFocused && (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 rounded-2xl z-10"
+              style={{
+                padding: "1px",
+                background:
+                  "linear-gradient(to right, #ec4899, #a855f7, #9333ea)",
+                WebkitMask:
+                  "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                WebkitMaskComposite: "xor",
+                maskComposite: "exclude",
+              }}
+            />
+          )}
+
+          <div
+            className={`flex items-center rounded-2xl border backdrop-blur-sm transition-all duration-300 ${
+              searchFocused
+                ? "border-transparent bg-slate-900/80 shadow-lg shadow-fuchsia-500/10"
+                : "border-white/10 bg-slate-900/50"
+            }`}
+          >
+            {/* search icon */}
+            <div className="pl-4 pr-3 shrink-0">
+              <Search
+                className={`w-4 h-4 transition-colors duration-200 ${
+                  searchFocused ? "text-purple-400" : "text-slate-500"
+                }`}
+              />
+            </div>
+
+            {/* input — value/onChange/logic completely unchanged */}
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                const newQuery = e.target.value;
+                setSearchQuery(newQuery);
+                updateSearch(newQuery);
+              }}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              placeholder="Search by name, role, or designation…"
+              className="flex-1 bg-transparent py-3 text-sm text-white placeholder-slate-500 focus:outline-none"
+            />
+
+            {/* '/' hint badge — shown only when not focused and no query */}
+            {!searchFocused && !searchQuery && (
+              <span className="mr-3 shrink-0 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-xs text-slate-500">
+                /
+              </span>
+            )}
+
+            {/* result-count badge */}
+            {searchQuery && (
+              <span className="mr-3 shrink-0 rounded-lg bg-gradient-to-r from-pink-500 via-purple-500 to-purple-600 px-2.5 py-0.5 text-xs font-semibold text-white">
+                {paginatedUsers.users.length}
+              </span>
+            )}
+
+            {/* clear button */}
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  updateSearch("");
+                }}
+                className="mr-3 shrink-0 p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/10 transition-colors duration-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+        {/* ─────────────────────────────────────────────────────────────────── */}
+
         {paginatedUsers.users.length > 0 ? (
           <div className="mt-8">
             <div className="space-y-4">
