@@ -43,6 +43,12 @@ export default function ProjectsClient({
   const [isInView, setIsInView] = useState(true);
   const duration = 5;
   const featuredSectionRef = useRef<HTMLDivElement>(null);
+  
+  // defining states for search text and filtered data
+  const [searchText, setSearchText] = useState("");
+  const [filteredProjects, setFilteredProjects] = useState<IProject[]>(projects);
+  const [portfolioFilter, setPortfolioFilter] = useState("ALL");
+  const portfolioOptions = ["ALL", ...new Set(projects.map(p => p.portfolio))];
 
   useEffect(() => {
     setHasMounted(true);
@@ -113,6 +119,22 @@ export default function ProjectsClient({
       setTimer(0);
     }
   }, [timer, featuredProjects.length, isInView]);
+
+  // for filtered data
+  useEffect(()=>{
+    const filtered = projects.filter((proj) =>{
+    const matchesSearch=
+      proj.title.toLowerCase().includes(searchText.toLowerCase())||
+      proj.description.toLowerCase().includes(searchText.toLowerCase())||
+      proj.tags.some((tag) =>
+        tag.toLowerCase().includes(searchText.toLowerCase())
+      );
+    const matchPortfolio =
+      portfolioFilter=== "ALL" ||proj.portfolio=== portfolioFilter;
+    return matchesSearch && matchPortfolio;
+    });
+    setFilteredProjects(filtered);
+}, [searchText,portfolioFilter, projects]);
 
   const handleCardClick = (index: number) => {
     if (isMobile) {
@@ -362,116 +384,148 @@ export default function ProjectsClient({
             All Projects
           </motion.h2>
         </div>
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-8 ">
+          <div className="flex flex-row justify-center items-center gap-4 ">
+            <div className="flex justify-center mb-8 w-[130]  "></div>
+            <div className="flex justify-center mb-8 w-md ">
+              <input
+                type="text"
+                placeholder="Search projects..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="w-full max-w-md px-4 py-2 rounded-xl bg-zinc-900 border border-pink-500/30 text-white placeholder-gray-400 focus:outline-none focus:border-pink-500"
+              />
+            </div>
+            <div className="flex justify-center mb-8 ">
+              <select
+                value={portfolioFilter}
+                onChange={(e) => setPortfolioFilter(e.target.value)}
+                className="px-4 py-2 rounded-xl bg-zinc-900 border border-pink-500/30 text-white focus:outline-none focus:border-pink-500"
+              >
+                {portfolioOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
 
         <div className="grid lg:p-2 md:p-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 md:gap-14">
-          {[...projects].reverse().map((proj, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.5, delay: idx * 0.05 }}
-              viewport={{ once: true }}
-              className="group aspect-square [perspective:800px]"
-              onClick={() => hasMounted && handleCardClick(idx)}
-            >
-              <div
-                className={`relative h-full w-full rounded-3xl shadow-xl [transform-style:preserve-3d] transition-transform duration-[1000ms] ${
-                  hasMounted && !isMobile
-                    ? "group-hover:[transform:rotateX(180deg)_rotateZ(-180deg)]"
-                    : ""
-                } ${
-                  hasMounted && isMobile && flippedCardIndex === idx
-                    ? "[transform:rotateX(180deg)_rotateZ(-180deg)]"
-                    : ""
-                }`}
+          { filteredProjects.length === 0 ? (
+            <p className="text-gray-400 text-center col-span-full">
+              No projects found
+            </p>
+          ) :(
+            [...filteredProjects].reverse().map((proj, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.5, delay: idx * 0.05 }}
+                viewport={{ once: true }}
+                className="group aspect-square [perspective:800px]"
+                onClick={() => hasMounted && handleCardClick(idx)}
               >
-                <div className="absolute inset-0 backface-hidden rounded-3xl border-2 border-pink-500/20 overflow-hidden shadow-lg transition-all duration-500 group-hover:border-pink-500/50 group-hover:shadow-pink-500/30 group-hover:scale-105">
-                  <Image
-                    src={prettySafeImage(proj.coverImgUrl)}
-                    alt={proj.title}
-                    fill
-                    className="object-fill rounded-3xl"
-                  />
+                <div
+                  className={`relative h-full w-full rounded-3xl shadow-xl [transform-style:preserve-3d] transition-transform duration-[1000ms] ${
+                    hasMounted && !isMobile
+                      ? "group-hover:[transform:rotateX(180deg)_rotateZ(-180deg)]"
+                      : ""
+                  } ${
+                    hasMounted && isMobile && flippedCardIndex === idx
+                      ? "[transform:rotateX(180deg)_rotateZ(-180deg)]"
+                      : ""
+                  }`}
+                >
+                  <div className="absolute inset-0 backface-hidden rounded-3xl border-2 border-pink-500/20 overflow-hidden shadow-lg transition-all duration-500 group-hover:border-pink-500/50 group-hover:shadow-pink-500/30 group-hover:scale-105">
+                    <Image
+                      src={prettySafeImage(proj.coverImgUrl)}
+                      alt={proj.title}
+                      fill
+                      className="object-fill rounded-3xl"
+                    />
 
-                  <div className="absolute inset-0 top-2 flex flex-col justify-end rounded-3xl bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4">
-                    <div className="absolute top-2 xs:top-3 left-2 xs:left-3 flex items-center space-x-1.5 xs:space-x-2 bg-pink-500/80 rounded-full px-1.5 xs:px-2 py-0.5 xs:py-1">
-                      {getIconByType(proj.portfolio)}
-                      <span className="text-white text-[10px] xs:text-xs font-medium">
-                        {proj.portfolio}
-                      </span>
-                    </div>
-                    <h3
-                      className={`text-xl sm:text-2xl font-bold text-white ${righteousFont.className}`}
-                    >
-                      {proj.title}
-                    </h3>
-
-                    <p
-                      className={`mt-1 line-clamp-2 text-xs sm:text-sm text-gray-300 ${robotoFont.className}`}
-                    >
-                      {proj.description}
-                    </p>
-
-                    <div className="absolute top-4 right-4 md:hidden flex items-center gap-1 text-xs text-white/70 bg-black/40 rounded-full px-2 py-1">
-                      <FiMousePointer size={12} /> <span>Tap</span>{" "}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="absolute inset-0 flex h-full w-full items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-black via-zinc-900 to-black backdrop-blur-md px-4 text-center text-slate-200 backface-hidden [transform:rotateX(180deg)_rotateZ(-180deg)] shadow-[0_0_30px_-5px_rgba(236,72,153,0.3)]">
-                  <div className="absolute h-[150%] w-[180px] animate-[rotation_5s_linear_infinite] bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-70 blur-md" />
-
-                  <div className="absolute inset-[2px] flex flex-col items-center justify-center gap-4 rounded-3xl bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800 p-6 shadow-inner border border-pink-500/10 hover:border-pink-500/30 transition-all duration-300">
-                    <h3
-                      className={`text-xl sm:text-2xl font-bold text-white tracking-wide drop-shadow-md ${righteousFont.className}`}
-                    >
-                      {proj.title}
-                    </h3>
-
-                    <div className="flex flex-wrap justify-center gap-2">
-                      {proj.tags.map((tag: string, i: number) => (
-                        <span
-                          key={i}
-                          className="rounded-full border border-pink-500/30 bg-pink-500/10 px-3 py-1 text-xs text-pink-300 transition-all duration-300 hover:bg-pink-500/30 hover:text-white shadow-[0_0_8px_rgba(236,72,153,0.3)]"
-                        >
-                          {tag}
+                    <div className="absolute inset-0 top-2 flex flex-col justify-end rounded-3xl bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4">
+                      <div className="absolute top-2 xs:top-3 left-2 xs:left-3 flex items-center space-x-1.5 xs:space-x-2 bg-pink-500/80 rounded-full px-1.5 xs:px-2 py-0.5 xs:py-1">
+                        {getIconByType(proj.portfolio)}
+                        <span className="text-white text-[10px] xs:text-xs font-medium">
+                          {proj.portfolio} 
                         </span>
-                      ))}
-                    </div>
+                      </div>
+                      <h3
+                        className={`text-xl sm:text-2xl font-bold text-white ${righteousFont.className}`}
+                      >
+                        {proj.title}
+                      </h3>
 
-                    <div className="mt-3 flex flex-wrap justify-center gap-3">
-                      {proj.links.map(
-                        (
-                          link: {
-                            text: string;
-                            url: string;
-                          },
-                          i: number,
-                        ) => (
-                          <a
+                      <p
+                        className={`mt-1 line-clamp-2 text-xs sm:text-sm text-gray-300 ${robotoFont.className}`}
+                      >
+                        {proj.description}
+                      </p>
+
+                      <div className="absolute top-4 right-4 md:hidden flex items-center gap-1 text-xs text-white/70 bg-black/40 rounded-full px-2 py-1">
+                        <FiMousePointer size={12} /> <span>Tap</span>{" "}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="absolute inset-0 flex h-full w-full items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-black via-zinc-900 to-black backdrop-blur-md px-4 text-center text-slate-200 backface-hidden [transform:rotateX(180deg)_rotateZ(-180deg)] shadow-[0_0_30px_-5px_rgba(236,72,153,0.3)]">
+                    <div className="absolute h-[150%] w-[180px] animate-[rotation_5s_linear_infinite] bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-70 blur-md" />
+
+                    <div className="absolute inset-[2px] flex flex-col items-center justify-center gap-4 rounded-3xl bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-800 p-6 shadow-inner border border-pink-500/10 hover:border-pink-500/30 transition-all duration-300">
+                      <h3
+                        className={`text-xl sm:text-2xl font-bold text-white tracking-wide drop-shadow-md ${righteousFont.className}`}
+                      >
+                        {proj.title}
+                      </h3>
+
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {proj.tags.map((tag: string, i: number) => (
+                          <span
                             key={i}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500/20 to-purple-500/20 px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm font-semibold text-white backdrop-blur-sm border border-pink-500/30 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(236,72,153,0.5)]"
+                            className="rounded-full border border-pink-500/30 bg-pink-500/10 px-3 py-1 text-xs text-pink-300 transition-all duration-300 hover:bg-pink-500/30 hover:text-white shadow-[0_0_8px_rgba(236,72,153,0.3)]"
                           >
-                            {link.text.toLowerCase().includes("git") ? (
-                              <Github className="h-4 w-4" />
-                            ) : (
-                              <ExternalLink className="h-4 w-4" />
-                            )}
-                            {link.text}
-                          </a>
-                        ),
-                      )}
-                    </div>
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
 
-                    <div className="mt-4 h-[1px] w-2/3 bg-gradient-to-r from-transparent via-pink-500/50 to-transparent animate-pulse" />
+                      <div className="mt-3 flex flex-wrap justify-center gap-3">
+                        {proj.links.map(
+                          (
+                            link: {
+                              text: string;
+                              url: string;
+                            },
+                            i: number,
+                          ) => (
+                            <a
+                              key={i}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500/20 to-purple-500/20 px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm font-semibold text-white backdrop-blur-sm border border-pink-500/30 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(236,72,153,0.5)]"
+                            >
+                              {link.text.toLowerCase().includes("git") ? (
+                                <Github className="h-4 w-4" />
+                              ) : (
+                                <ExternalLink className="h-4 w-4" />
+                              )}
+                              {link.text}
+                            </a>
+                          ),
+                        )}
+                      </div>
+
+                      <div className="mt-4 h-[1px] w-2/3 bg-gradient-to-r from-transparent via-pink-500/50 to-transparent animate-pulse" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            )))}
         </div>
       </div>
     </>
