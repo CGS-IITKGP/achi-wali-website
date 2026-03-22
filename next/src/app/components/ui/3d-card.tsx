@@ -142,14 +142,10 @@ export const CardItem = ({
     rotateZ,
   ]);
 
-  return (
-    <Tag
-      ref={ref}
-      className={cn("w-fit transition duration-200 ease-linear", className)}
-      {...rest}
-    >
-      {children}
-    </Tag>
+  return React.createElement(
+    Tag,
+    { ref, className: cn("w-fit transition duration-200 ease-linear", className), ...rest },
+    children,
   );
 };
 
