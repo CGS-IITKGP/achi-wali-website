@@ -8,7 +8,7 @@ import HoverCard from "./HoverCard";
 
 export default function ShopModel({ machineHoverEnabled = false }: { machineHoverEnabled?: boolean }) {
   const SHOP_MODEL_URL = "/models/shop/shop.glb";
-  const { scene } = useGLTF(SHOP_MODEL_URL);
+  const { scene } = useGLTF(SHOP_MODEL_URL, "/draco/");
   const [hoveredNode, setHoveredNode] = useState<THREE.Object3D | null>(null);
   const [popupPos, setPopupPos] = useState<[number, number, number]>([0, 0, 0]);
   const groupRef = useRef<THREE.Group>(null);
@@ -234,4 +234,4 @@ export default function ShopModel({ machineHoverEnabled = false }: { machineHove
   );
 }
 
-useGLTF.preload("/models/shop/shop.glb");
+useGLTF.preload("/models/shop/shop.glb", "/draco/");

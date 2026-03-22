@@ -105,6 +105,16 @@ export default function Navbar() {
               <Link
                 href={item.href}
                 className="font-bold text-white hover:text-pink-300 duration-300 transition-all relative overflow-hidden py-2 px-1"
+                onMouseEnter={() => {
+                  if (item.href === "/3d" && !document.querySelector('link[href="/models/shop/shop.glb"]')) {
+                    const link = document.createElement("link");
+                    link.rel = "prefetch";
+                    link.href = "/models/shop/shop.glb";
+                    link.as = "fetch";
+                    link.crossOrigin = "anonymous";
+                    document.head.appendChild(link);
+                  }
+                }}
               >
                 <span className="relative z-10">{item.name}</span>
                 <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-pink-500 to-pink-300 group-hover:w-full transition-all duration-300"></div>
