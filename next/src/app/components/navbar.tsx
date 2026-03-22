@@ -45,7 +45,7 @@ export default function Navbar() {
     setNavItems(() => {
       return [
         ...[
-          { name: "Home", href: "/" },
+          { name: "3D-View", href: "/3d" },
           { name: "Games", href: "/games" },
           { name: "Projects", href: "/projects" },
           { name: "Blog", href: "/blog" },

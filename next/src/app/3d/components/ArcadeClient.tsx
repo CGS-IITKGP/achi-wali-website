@@ -446,16 +446,25 @@ export default function ArcadeClient() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && focusActive) {
         clearFocus();
-        return;
-      }
-      if (event.key === "l") {
-        setCameraLoggerOn((prev) => !prev);
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [focusActive]);
+
+  // Separate effect for camera logger toggle so it never gets torn down
+  // by unrelated state changes and always captures the keypress.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "l" || event.key === "L") {
+        setCameraLoggerOn((prev) => !prev);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const goToCheckpoint = (direction: number) => {
     const current = telemetry.targetProgress;
@@ -476,89 +485,140 @@ export default function ArcadeClient() {
 
   return (
     <div className="arcade-scroll-layout">
-      {/* Debug camera logger panel */}
-      <div
+      {/* Logo — back to main site */}
+      <a
+        href="/"
         style={{
           position: "fixed",
-          top: 12,
-          left: 12,
-          zIndex: 20,
-          color: "#ccfbff",
-          background: "rgba(5, 11, 24, 0.78)",
-          border: "1px solid rgba(90, 236, 255, 0.4)",
-          borderRadius: 10,
-          padding: "10px 12px",
-          minWidth: 248,
-          fontFamily:
-            "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-          fontSize: 11,
-          lineHeight: 1.45,
-          boxShadow: "0 0 18px rgba(68, 220, 255, 0.2)",
-          userSelect: "none",
+          top: 14,
+          right: 14,
+          zIndex: 30,
+          display: "block",
+          width: 40,
+          height: 40,
+          borderRadius: "50%",
+          overflow: "hidden",
+          border: "1px solid rgba(82, 243, 255, 0.35)",
+          boxShadow: "0 0 12px rgba(82, 243, 255, 0.2)",
+          background: "rgba(5, 11, 24, 0.7)",
+          transition: "box-shadow 0.2s ease, border-color 0.2s ease",
         }}
+        title="Back to CGS"
       >
-        <div style={{ marginBottom: 8, color: "#8ff6ff" }}>CAMERA LOGGER</div>
-        <button
-          type="button"
-          onClick={() => setFreeMove((prev) => !prev)}
+        <img
+          src="/logo.png"
+          alt="CGS"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      </a>
+
+      {/* "Press L" hint — hidden when logger is open */}
+      {!cameraLoggerOn && (
+        <div
           style={{
-            marginBottom: 8,
-            width: "100%",
-            background: freeMove ? "#18465a" : "#2a243d",
-            color: "#bff9ff",
-            border: "1px solid rgba(90, 236, 255, 0.5)",
-            borderRadius: 6,
-            padding: "6px 8px",
-            cursor: "pointer",
+            position: "fixed",
+            bottom: 16,
+            right: 16,
+            zIndex: 20,
+            color: "rgba(82, 243, 255, 0.6)",
+            fontFamily:
+              "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+            fontSize: 11,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            pointerEvents: "none",
+            textShadow: "0 0 8px rgba(82, 243, 255, 0.4)",
           }}
         >
-          {freeMove ? "Free Move: ON" : "Spline Mode: ON"}
-        </button>
-        <div>P: {telemetry.progress.toFixed(3)}</div>
-        <div>TP: {telemetry.targetProgress.toFixed(3)}</div>
-        <div>
-          C: [{telemetry.camera.x.toFixed(3)}, {telemetry.camera.y.toFixed(3)},{" "}
-          {telemetry.camera.z.toFixed(3)}]
+          press <span style={{ color: "#52f3ff", fontWeight: 700 }}>L</span> for camera logger
         </div>
-        <div>
-          L: [{telemetry.look.x.toFixed(3)}, {telemetry.look.y.toFixed(3)},{" "}
-          {telemetry.look.z.toFixed(3)}]
-        </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+      )}
+
+      {/* Debug camera logger panel — toggle with "L" key */}
+      {cameraLoggerOn && (
+        <div
+          style={{
+            position: "fixed",
+            top: 12,
+            left: 12,
+            zIndex: 20,
+            color: "#ccfbff",
+            background: "rgba(5, 11, 24, 0.78)",
+            border: "1px solid rgba(90, 236, 255, 0.4)",
+            borderRadius: 10,
+            padding: "10px 12px",
+            minWidth: 248,
+            fontFamily:
+              "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+            fontSize: 11,
+            lineHeight: 1.45,
+            boxShadow: "0 0 18px rgba(68, 220, 255, 0.2)",
+            userSelect: "none",
+          }}
+        >
+          <div style={{ marginBottom: 8, color: "#8ff6ff" }}>CAMERA LOGGER</div>
           <button
             type="button"
-            onClick={() => goToCheckpoint(-1)}
-            disabled={freeMove}
+            onClick={() => setFreeMove((prev) => !prev)}
             style={{
-              flex: 1,
-              background: freeMove ? "#1a2131" : "#0f2e3c",
-              color: freeMove ? "#8398aa" : "#bff9ff",
+              marginBottom: 8,
+              width: "100%",
+              background: freeMove ? "#18465a" : "#2a243d",
+              color: "#bff9ff",
               border: "1px solid rgba(90, 236, 255, 0.5)",
               borderRadius: 6,
               padding: "6px 8px",
-              cursor: freeMove ? "not-allowed" : "pointer",
+              cursor: "pointer",
             }}
           >
-            Prev
+            {freeMove ? "Free Move: ON" : "Spline Mode: ON"}
           </button>
-          <button
-            type="button"
-            onClick={() => goToCheckpoint(1)}
-            disabled={freeMove}
-            style={{
-              flex: 1,
-              background: freeMove ? "#1a2131" : "#0f2e3c",
-              color: freeMove ? "#8398aa" : "#bff9ff",
-              border: "1px solid rgba(90, 236, 255, 0.5)",
-              borderRadius: 6,
-              padding: "6px 8px",
-              cursor: freeMove ? "not-allowed" : "pointer",
-            }}
-          >
-            Next
-          </button>
+          <div>P: {telemetry.progress.toFixed(3)}</div>
+          <div>TP: {telemetry.targetProgress.toFixed(3)}</div>
+          <div>
+            C: [{telemetry.camera.x.toFixed(3)}, {telemetry.camera.y.toFixed(3)},{" "}
+            {telemetry.camera.z.toFixed(3)}]
+          </div>
+          <div>
+            L: [{telemetry.look.x.toFixed(3)}, {telemetry.look.y.toFixed(3)},{" "}
+            {telemetry.look.z.toFixed(3)}]
+          </div>
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <button
+              type="button"
+              onClick={() => goToCheckpoint(-1)}
+              disabled={freeMove}
+              style={{
+                flex: 1,
+                background: freeMove ? "#1a2131" : "#0f2e3c",
+                color: freeMove ? "#8398aa" : "#bff9ff",
+                border: "1px solid rgba(90, 236, 255, 0.5)",
+                borderRadius: 6,
+                padding: "6px 8px",
+                cursor: freeMove ? "not-allowed" : "pointer",
+              }}
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              onClick={() => goToCheckpoint(1)}
+              disabled={freeMove}
+              style={{
+                flex: 1,
+                background: freeMove ? "#1a2131" : "#0f2e3c",
+                color: freeMove ? "#8398aa" : "#bff9ff",
+                border: "1px solid rgba(90, 236, 255, 0.5)",
+                borderRadius: 6,
+                padding: "6px 8px",
+                cursor: freeMove ? "not-allowed" : "pointer",
+              }}
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Focus hotspots */}
       {hotspotsVisible && (
