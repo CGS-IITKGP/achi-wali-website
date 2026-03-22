@@ -1,0 +1,160 @@
+.arcade-scroll-layout {
+  min-height: 100vh;
+  background: #000;
+  overflow: hidden;
+}
+
+.arcade-canvas-shell {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  touch-action: none;
+}
+
+.arcade-canvas-shell canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 3D Arcade Hover Card - Premium Cyberpunk Style */
+.cgs-game-card {
+  position: relative;
+  width: 240px;
+  padding: 2px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(82, 243, 255, 0.4), rgba(16, 28, 48, 0.1));
+  box-shadow: 0 0 20px rgba(82, 243, 255, 0.15), inset 0 0 20px rgba(82, 243, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: hologramIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  pointer-events: auto;
+  cursor: pointer;
+  overflow: hidden;
+  font-family: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cgs-game-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 30px rgba(82, 243, 255, 0.3), inset 0 0 20px rgba(82, 243, 255, 0.2);
+}
+
+.cgs-game-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(82, 243, 255, 0.08) 2px,
+    rgba(82, 243, 255, 0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cgs-card-inner {
+  position: relative;
+  background: rgba(8, 12, 25, 0.9);
+  border-radius: 6px;
+  text-align: center;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background 0.3s ease;
+}
+
+.cgs-game-card:hover .cgs-card-inner {
+  background: rgba(12, 18, 38, 0.95);
+}
+
+.cgs-card-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 110px;
+  overflow: hidden;
+}
+
+.cgs-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.cgs-image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent 30%, rgba(8, 12, 25, 0.9) 100%);
+  pointer-events: none;
+  transition: background 0.3s ease;
+}
+
+.cgs-game-card:hover .cgs-card-image {
+  transform: scale(1.1);
+}
+
+.cgs-game-card:hover .cgs-image-overlay {
+  background: linear-gradient(to bottom, transparent 30%, rgba(12, 18, 38, 0.95) 100%);
+}
+
+.cgs-card-info {
+  padding: 8px 16px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.cgs-card-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(82, 243, 255, 0.6);
+}
+
+.cgs-card-indicator {
+  display: inline-block;
+  padding: 6px 16px;
+  border: 1px solid rgba(82, 243, 255, 0.4);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #52f3ff;
+  background: rgba(82, 243, 255, 0.08);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.cgs-game-card:hover .cgs-card-indicator {
+  background: rgba(82, 243, 255, 0.25);
+  box-shadow: 0 0 15px rgba(82, 243, 255, 0.4);
+  color: #fff;
+  border-color: rgba(82, 243, 255, 0.8);
+}
+
+@keyframes hologramIn {
+  0% {
+    opacity: 0;
+    transform: translateY(15px) scale(0.9);
+    filter: brightness(2) blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: brightness(1) blur(0);
+  }
+}
