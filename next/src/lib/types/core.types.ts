@@ -61,6 +61,7 @@ export type ServiceConfig<SDIn, SDOut, ObD, RequireAuth extends boolean> = {
     onSuccess?: (sDOut: SDOut) => {
         responseData: ObD;
         cookies?: ISetCookie[];
+        redirectUrl?: string;
     };
     controller?: never;
 };
@@ -78,4 +79,18 @@ export type HandlerConfig<
     options:
     | ControllerConfig<IbD>
     | ServiceConfig<SDIn, SDOut, ObD, RequireAuth>;
+}
+
+export interface PaginationOptions {
+    page?: number;
+    limit?: number;
+    sort?: Record<string, 1 | -1>;
+}
+
+export interface PaginatedResult<T> {
+    data: T[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
 }

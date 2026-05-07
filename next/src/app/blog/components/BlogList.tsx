@@ -2,15 +2,12 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Calendar, ArrowRight, Clock } from "lucide-react";
+import { Search, Calendar, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Righteous } from "next/font/google";
 import { IBlogOfList } from "@/app/types/index.types";
-import {
-  prettyDate,
-  prettySafeImage,
-  prettyShortName,
-} from "@/app/utils/pretty";
+import { prettyDate, prettySafeImage } from "../../utils/pretty";
+import Image from "next/image";
 
 const righteousFont = Righteous({ weight: "400", subsets: ["latin"] });
 
@@ -87,11 +84,13 @@ export default function BlogList({ posts }: BlogListProps) {
               >
                 <Link href={`/blog/${blog.slug}`}>
                   <div className="bg-gray-900/50 backdrop-blur-xl rounded-2xl border border-gray-800 overflow-hidden hover:border-pink-500/50 transition-all duration-500 h-full">
-                    <div className="relative h-48 overflow-hidden">
-                      <img
-                        src={prettySafeImage(blog.coverImgMediaKey)}
+                    <div className="relative w-full h-48 overflow-hidden bg-white/5">
+                      <Image
+                        src={prettySafeImage(blog.coverImgUrl)}
                         alt={blog.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                        unoptimized
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                       <div className="absolute top-4 left-4">
@@ -125,22 +124,23 @@ export default function BlogList({ posts }: BlogListProps) {
                               {prettyDate(blog.createdAt)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            <span>5 min</span>
-                          </div>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-md font-semibold">
-                              {prettyShortName(blog.authors[0].name)}
-                            </span>
-                          </div>
+                          <Image
+                            src={
+                              blog.author.profileImgUrl ||
+                              "/default-fallback-image.png"
+                            }
+                            alt="Profile Image"
+                            className="w-10 h-10 object-cover rounded-full border-2 border-pink-500/20"
+                            width={40}
+                            height={40}
+                          />
                           <span className="text-gray-400 text-sm">
-                            {blog.authors[0].name}
+                            {blog.author.name}
                           </span>
                         </div>
                       </div>
@@ -174,7 +174,7 @@ export default function BlogList({ posts }: BlogListProps) {
         </div>
       </section>
 
-      <section className="py-16 border-t border-gray-800">
+      {/* <section className="py-16 border-t border-gray-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -205,7 +205,7 @@ export default function BlogList({ posts }: BlogListProps) {
             </div>
           </motion.div>
         </div>
-      </section>
+      </section> */}
     </>
   );
 }

@@ -17,11 +17,7 @@ const TeamSchema = new Schema<ITeam>({
     members: [{
         type: Schema.Types.ObjectId,
         ref: 'User',
-    }],
-    coverImageMediaKey: {
-        type: Schema.Types.String,
-        default: null,
-    },
+    }]
 }, {
     timestamps: true,
 });

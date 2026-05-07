@@ -1,5 +1,5 @@
 import { Schema, model, models } from 'mongoose';
-import { IUser, EUserRole } from '@/lib/types/index.types';
+import { IUser, EUserRole, EUserDesignation } from '@/lib/types/index.types';
 
 
 const UserSchema = new Schema<IUser>({
@@ -17,9 +17,9 @@ const UserSchema = new Schema<IUser>({
     },
     passwordHash: {
         type: Schema.Types.String,
-        required: true,
+        default: null,
     },
-    profileImgMediaKey: {
+    profileImgUrl: {
         type: Schema.Types.String,
         default: null,
     },
@@ -29,7 +29,7 @@ const UserSchema = new Schema<IUser>({
         trim: true,
     },
     links: [{
-        label: {
+        text: {
             type: Schema.Types.String,
             required: true,
             trim: true,
@@ -51,6 +51,12 @@ const UserSchema = new Schema<IUser>({
         default: [EUserRole.GUEST],
         required: true,
     }],
+    designation: {
+        type: Schema.Types.String,
+        enum: Object.values(EUserDesignation),
+        default: EUserDesignation.NONE,
+        required: true,
+    },
 }, {
     timestamps: true,
 });

@@ -45,7 +45,8 @@ function createHandler<
         const defaultOnSuccess = (sData: SDOut) => {
             return {
                 responseData: sData,
-                cookies: []
+                cookies: [],
+                redirectUrl: undefined,
             };
         }
 
@@ -98,12 +99,26 @@ function createHandler<
                     );
                 }
 
-                const { responseData, cookies } = (config.onSuccess ?? defaultOnSuccess)(
+                const {
+                    responseData,
+                    cookies,
+                    redirectUrl
+                } = (config.onSuccess ?? defaultOnSuccess)(
                     serviceResponse.data
                 );
 
                 if (cookies) {
-                    cookies.forEach((cookie) => responseHandler.setCookie(cookie.name, cookie.value, cookie.options));
+                    cookies.forEach((cookie) =>
+                        responseHandler.setCookie(
+                            cookie.name,
+                            cookie.value,
+                            cookie.options
+                        )
+                    );
+                }
+
+                if (redirectUrl) {
+                    responseHandler.setRedirect(redirectUrl);
                 }
 
                 return responseHandler.sendSuccess(
@@ -153,12 +168,14 @@ const serviceErrorCodeHandler = (
         case ESECs.BLOG_NOT_FOUND:
         case ESECs.SLUG_NOT_FOUND:
         case ESECs.FEATURED_NOT_FOUND:
+        case ESECs.MEDIA_NOT_FOUND:
             return responseHandler.sendFailed(FailedResponseCodeEnum.NOT_FOUND, errorMessage);
 
         case ESECs.INVALID_CREDENTIALS:
         case ESECs.INVALID_JWT:
         case ESECs.INVALID_OTP:
         case ESECs.UNAUTHORIZED:
+        case ESECs.GOOGLE_OAUTH_FAILED:
             return responseHandler.sendFailed(FailedResponseCodeEnum.UNAUTHORIZED, errorMessage);
 
         case ESECs.FORBIDDEN:
@@ -169,6 +186,7 @@ const serviceErrorCodeHandler = (
         case ESECs.TEAM_NAME_TAKEN:
         case ESECs.SLUG_ALREADY_IN_USE:
         case ESECs.ALREADY_FEATURED:
+        case ESECs.MEDIA_PUBLIC_ID_ALREADY_EXISTS:
             return responseHandler.sendFailed(FailedResponseCodeEnum.CONFLICT, errorMessage);
 
         case ESECs.TOO_MANY_REQUESTS:

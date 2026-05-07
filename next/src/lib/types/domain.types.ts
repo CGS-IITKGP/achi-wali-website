@@ -3,10 +3,17 @@ import { Types } from "mongoose";
 export enum EUserRole {
     GUEST = "GUEST",
     MEMBER = "MEMBER",
-    EXECUTIVE = "EXECUTIVE",
-    HEAD = "HEAD",
     ADMIN = "ADMIN",
     ROOT = "ROOT",
+}
+
+export enum EUserDesignation {
+    NONE = "NONE",
+    JUNIOR = "JUNIOR",
+    SENIOR = "SENIOR",
+    EXECUTIVE = "EXECUTIVE",
+    HEAD = "HEAD",
+    ADVISOR = "ADVISOR",
 }
 
 export interface ISignUpRequest {
@@ -24,14 +31,15 @@ export interface IUser {
     _id: Types.ObjectId;
     name: string;
     email: string;
-    passwordHash: string;
-    profileImgMediaKey: string | null;
+    passwordHash: string | null;
+    profileImgUrl: string | null;
     phoneNumber: string | null;
     links: {
-        label: string;
+        text: string;
         url: string;
     }[];
     teamId: Types.ObjectId | null;
+    designation: EUserDesignation;
     roles: EUserRole[];
     createdAt: Date;
     updatedAt: Date;
@@ -42,7 +50,6 @@ export interface ITeam {
     name: string;
     description: string;
     members: Types.ObjectId[];
-    coverImageMediaKey: string | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -52,14 +59,15 @@ export interface ITeamExportable extends Omit<ITeam, "members"> {
         _id: Types.ObjectId;
         name: string;
         links: {
-            label: string;
+            text: string;
             url: string;
         }[];
-        profileImgMediaKey: string | null;
+        profileImgUrl: string | null;
+        designation: EUserDesignation;
     }[];
 }
 
-export interface ITeamOfListExportable extends Omit<ITeam, "member"> {
+export interface ITeamOfListExportable extends Omit<ITeam, "members"> {
     useEslint: never;
 }
 
@@ -75,21 +83,28 @@ export interface IProject {
     title: string;
     description: string;
     tags: string[];
-    authors: Types.ObjectId[];
+    author: Types.ObjectId;
+    collaborators: Types.ObjectId[];
     links: {
         text: string;
         url: string;
     }[];
-    coverImgMediaKey: string | null;
+    coverImgUrl: string | null;
     media: Types.ObjectId[];
     createdAt: Date;
     updatedAt: Date;
 }
 
-export interface IProjectExportable extends Omit<IProject, 'authors'> {
-    authors: {
+export interface IProjectExportable extends Omit<IProject, 'author' | "collaborators"> {
+    author: {
         _id: Types.ObjectId;
         name: string;
+        profileImgUrl: string | null;
+    };
+    collaborators: {
+        _id: Types.ObjectId;
+        name: string;
+        profileImgUrl: string | null;
     }[];
 }
 
@@ -99,16 +114,23 @@ export interface IBlog {
     slug: string;
     content: string;
     tags: string[];
-    authors: Types.ObjectId[];
-    coverImgMediaKey: string | null;
+    author: Types.ObjectId;
+    collaborators: Types.ObjectId[];
+    coverImgUrl: string | null;
     createdAt: Date;
     updatedAt: Date;
 }
 
-export interface IBlogExportable extends Omit<IBlog, 'authors'> {
-    authors: {
+export interface IBlogExportable extends Omit<IBlog, 'author' | "collaborators"> {
+    author: {
         _id: Types.ObjectId;
         name: string;
+        profileImgUrl: string | null;
+    };
+    collaborators: {
+        _id: Types.ObjectId;
+        name: string;
+        profileImgUrl: string | null;
     }[];
 }
 
@@ -120,9 +142,19 @@ export interface IMedia {
     _id: Types.ObjectId;
     key: string;
     url: string;
+    sizeBytes: number;
+    format: string;
+    resourceType: string;
     uploadedBy: Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
+}
+
+export interface IMediaExportable extends Omit<IMedia, "uploadedBy"> {
+    uploadedBy: {
+        _id: Types.ObjectId;
+        name: string;
+    };
 }
 
 export enum EFeaturedType {
@@ -136,15 +168,16 @@ export interface IFeatured {
     _id: Types.ObjectId;
     contentType: EFeaturedType;
     contentId: Types.ObjectId;
+    isHighlight: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
 
-export type IRecentFeaturedContent = {
+export type IFeaturedHighlightExportable = ({
     _id: Types.ObjectId;
     type: "BLOG" | "GAME" | "GRAPHICS" | "RND",
     title: string;
-    coverImgMediaKey: string | null;
+    coverImgUrl: string | null;
     tags: string[];
 } & ({
     type: "BLOG",
@@ -153,4 +186,11 @@ export type IRecentFeaturedContent = {
     type: "GAME" | "GRAPHICS" | "RND",
     liveDemoLink: string | null;
     githubLink: string | null;
-});
+}));
+
+export type IFeaturedExportableAsList = {
+    _id: Types.ObjectId;
+    contentType: string;
+    contentTitle: string;
+    isHighlight: string;
+}

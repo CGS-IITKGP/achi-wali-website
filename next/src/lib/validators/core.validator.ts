@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { z, ZodSchema } from "zod";
-import { EProjectPortfolio, EUserRole } from "../types/domain.types";
+import { EProjectPortfolio, EUserDesignation, EUserRole } from "../types/domain.types";
 
 type ValidatedRequest<T> = {
     success: true;
@@ -54,6 +54,13 @@ const allIbDField = {
             message: "Invalid MongoDB ObjectId",
         })
         .transform((val) => new Types.ObjectId(val)),
+    teamId: z
+        .string()
+        .nullable()
+        .refine((val) => val === null || _isValidObjectId(val), {
+            message: "Invalid MongoDB ObjectId",
+        })
+        .transform((val) => (val === null ? null : new Types.ObjectId(val))),
     shortString: z.string().trim().max(255),
     longString: z.string().trim().max(4095),
     bigString: z.string().trim().max(32767),
@@ -62,10 +69,12 @@ const allIbDField = {
     password: z.string().max(255),
     otp: z.string().regex(new RegExp("^\\d{6}$")),
     token: z.string().regex(new RegExp("^[a-f0-9]{64}$")),
-    roles: z.array(z.enum(EUserRole)),
-    mediaKey: z.string().max(255).nullable(),
+    roles: z.array(z.nativeEnum(EUserRole)),
+    designation: z.nativeEnum(EUserDesignation),
+    mediaKey: z.string().max(1023).nullable(),
+    mediaKeyNotNullable: z.string().max(1023),
     phoneNumber: z.string().trim().max(20),
-    projectPortfolio: z.enum(EProjectPortfolio),
+    projectPortfolio: z.nativeEnum(EProjectPortfolio),
     url: z.string().url().max(2048),
     link: z.object({
         text: z.string().trim().max(255),
@@ -75,6 +84,14 @@ const allIbDField = {
     slug: z.string().trim().max(255).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
         message: "Slug must be URL-friendly (lowercase letters, numbers, and hyphens only)",
     }),
+    paginationPage: z
+        .string()
+        .transform((val) => parseInt(val, 10))
+        .pipe(z.number().int().min(1)),
+    paginationLimit: z
+        .string()
+        .transform((val) => parseInt(val, 10))
+        .pipe(z.number().int().min(1).max(20)),
 }
 
 

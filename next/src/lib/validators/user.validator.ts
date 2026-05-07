@@ -3,30 +3,42 @@ import { allIbDField } from "./core.validator";
 import { APIControl } from "../types/api.types";
 
 const userValidator = {
-    get: z.object({
-        target: z.enum(APIControl.User.Get.Target),
-        _id: allIbDField._id.optional(),
-    }).refine((data) => {
-        if (data.target === APIControl.User.Get.Target.RESTRICTED && !data._id) {
+    get: z
+        .object({
+            target: z.nativeEnum(APIControl.User.Get.Target),
+            _id: allIbDField._id.optional(),
+            page: allIbDField.paginationPage.optional(),
+            limit: allIbDField.paginationLimit.optional(),
+        })
+        .refine((data) => {
+            if (data.target === APIControl.User.Get.Target.ALL || data.target === APIControl.User.Get.Target.PUBLIC_ALL) {
+                return data.page != undefined && data.limit != undefined;
+            }
+            if (data.target === APIControl.User.Get.Target.SUMMARY) {
+                return true;
+            }
+            if (data.target === APIControl.User.Get.Target.PUBLIC_SINGLE) {
+                return data._id != undefined;
+            }
             return false;
-        }
-        if (data.target === APIControl.User.Get.Target.UNRESTRICTED && !data._id) {
-            return false;
-        }
-        return true;
-    }, {
-        message: "Missing required fields based on target",
-        path: ['_id'],
-    }),
+        }, {
+            message:
+                "Invalid combination: if target is ALL or PUBLIC_ALL, provide page & limit; if PUBLIC_SINGLE, _id is required; other targets follow specific rules.",
+        }),
     update: z.object({
         name: allIbDField.shortString.optional(),
-        profileImgMediaKey: allIbDField.mediaKey.optional(),
         phoneNumber: allIbDField.phoneNumber.optional(),
         links: z.array(allIbDField.link).optional(),
+        profileImgUrl: allIbDField.mediaKeyNotNullable.optional(),
     }),
-    updateRoles: z.object({
+    updateTeam: z.object({
         _id: allIbDField._id,
-        roles: allIbDField.roles,
+        teamId: allIbDField._id.nullable(),
+    }),
+    updateAssignment: z.object({
+        _id: allIbDField._id,
+        roles: allIbDField.roles.optional(),
+        designation: allIbDField.designation.optional(),
     }),
     remove: z.object({
         _id: allIbDField._id,

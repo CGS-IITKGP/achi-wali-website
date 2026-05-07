@@ -227,7 +227,7 @@ export default function Register() {
       <Navbar />
 
       {/* Main Content */}
-      <div className="flex items-center justify-center min-h-screen pt-20 px-4 py-8">
+      <div className="flex items-center justify-center min-h-screen pt-20 lg:pt-35 px-4 pb-8">
         <div className="w-full max-w-lg relative">
           {/* Register Card */}
           <div className="glass rounded-3xl p-8 shadow-2xl relative overflow-hidden group transition-all duration-500">
@@ -261,6 +261,20 @@ export default function Register() {
                     ? "Create your account and start your journey"
                     : "Verify your email"}
                 </p>
+                {state === "REQUEST" && (
+                  <div
+                    className={`mt-4 rounded-lg border border-red-500/40 bg-gradient-to-r from-red-500/10 via-pink-500/10 to-red-500/10 px-4 py-3 ${paragraph_font.className} text-sm text-red-200`}
+                  >
+                    Sign-up is temporarily unavailable. Please use{" "}
+                    <Link
+                      href="/auth/sign-in"
+                      className="font-semibold text-pink-400 underline decoration-pink-400/60 hover:text-pink-200"
+                    >
+                      Google Sign-In
+                    </Link>{" "}
+                    instead.
+                  </div>
+                )}
               </div>
 
               {/* State based forms */}
@@ -445,7 +459,7 @@ export default function Register() {
                           <span
                             className={`text-xs ${getPasswordStrengthColor().replace(
                               "bg-",
-                              "text-"
+                              "text-",
                             )} font-semibold`}
                           >
                             {getPasswordStrengthText()}
@@ -485,9 +499,9 @@ export default function Register() {
                           errors.confirmPassword
                             ? "border-red-400 focus:border-red-400 focus:ring-red-400/20"
                             : formData.confirmPassword &&
-                              formData.password === formData.confirmPassword
-                            ? "border-green-400 focus:border-green-400 focus:ring-green-400/20"
-                            : "border-white/10 focus:border-pink-400 focus:ring-pink-400/20"
+                                formData.password === formData.confirmPassword
+                              ? "border-green-400 focus:border-green-400 focus:ring-green-400/20"
+                              : "border-white/10 focus:border-pink-400 focus:ring-pink-400/20"
                         }`}
                         placeholder="••••••••"
                         required
@@ -583,8 +597,8 @@ export default function Register() {
                           agreeToTerms
                             ? "bg-gradient-to-r from-pink-500 to-purple-500 border-pink-500"
                             : errors.terms
-                            ? "border-red-400 hover:border-red-300"
-                            : "border-white/20 hover:border-pink-400"
+                              ? "border-red-400 hover:border-red-300"
+                              : "border-white/20 hover:border-pink-400"
                         }`}
                       >
                         {agreeToTerms && (
@@ -628,7 +642,7 @@ export default function Register() {
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    disabled={isButtonEngaged}
+                    disabled={false}
                     className="w-full py-3 px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-purple-600 cursor-pointer text-white font-semibold rounded-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group"
                   >
                     {/* Button Shimmer Effect */}

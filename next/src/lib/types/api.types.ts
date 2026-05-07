@@ -16,6 +16,14 @@ export namespace APIControl {
             export enum Target {
                 ONE = "one",
                 ALL = "all",
+                ALL_AS_LIST = "all_as_list",
+            }
+        }
+
+        export namespace EditMembers {
+            export enum Target {
+                ADD = "add",
+                REMOVE = "remove"
             }
         }
     }
@@ -23,9 +31,10 @@ export namespace APIControl {
     export namespace User {
         export namespace Get {
             export enum Target {
-                RESTRICTED = "restricted",
-                UNRESTRICTED = "unrestricted",
                 ALL = "all",
+                SUMMARY = "summary",
+                PUBLIC_ALL = "public_all",
+                PUBLIC_SINGLE = "public_single",
             }
         }
     }
@@ -34,6 +43,7 @@ export namespace APIControl {
         export namespace Get {
             export enum Target {
                 ALL = "all",
+                ALL_AS_LIST = "all_as_list",
                 MY = "my",
             }
 
@@ -50,6 +60,7 @@ export namespace APIControl {
         export namespace Get {
             export enum Target {
                 ALL = "all",
+                ALL_AS_LIST = "all_as_list",
                 MY = "my",
                 BY_SLUG = "by_slug"
             }
@@ -59,7 +70,8 @@ export namespace APIControl {
     export namespace Featured {
         export namespace Get {
             export enum Target {
-                RECENT = "recent",
+                HIGHLIGHT = "highlight",
+                ALL_AS_LIST = "all_as_list",
                 BLOG = "blog",
                 GAME = "game",
                 GRAPHICS = "graphics",

@@ -1,4 +1,5 @@
 import cloudinary from "@/lib/utils/cloudinary";
+import { createId } from "@paralleldrive/cuid2";
 import {
     ServiceSignature,
     EUserRole,
@@ -26,6 +27,9 @@ const get: ServiceSignature<
                 _id: media._id.toHexString(),
                 key: media.key,
                 url: media.url,
+                sizeBytes: media.sizeBytes,
+                format: media.format,
+                resourceType: media.resourceType
             }
         })
     }
@@ -35,14 +39,16 @@ const sign: ServiceSignature<
     SDIn.Media.Sign,
     SDOut.Media.Sign,
     true
-> = async (data, session) => {
+> = async (_data, session) => {
     const timestamp = Math.round(new Date().getTime() / 1000);
     const folder = "user-assets/" + session.userId.toHexString();
+    const publicId = createId();
 
-    // Note: These should be alphabetically sorted for signature to match.
+    // These should be alphabetically sorted for signature to match.
+    // In cloudinary, final public_id will be concatenation of folder and public_id.
     const paramsToSign = {
         folder,
-        public_id: data.publicId,
+        public_id: publicId,
         timestamp: timestamp,
     };
 
@@ -57,6 +63,7 @@ const sign: ServiceSignature<
             signature,
             timestamp: timestamp.toString(),
             folder,
+            publicId,
             cloudName: getEnvVariable("CLOUDINARY_CLOUD_NAME", true),
             apiKey: getEnvVariable("CLOUDINARY_API_KEY", true)
         }
@@ -76,9 +83,35 @@ const create: ServiceSignature<
         }
     }
 
+    const media = await mediaRepository.findOne({ key: data.publicId });
+    if (media) {
+        return {
+            success: false,
+            errorCode: ESECs.MEDIA_PUBLIC_ID_ALREADY_EXISTS,
+            errorMessage: "Media with this public id already exists."
+        }
+    }
+
+    let sizeBytes = -1;
+    let format = "unknown";
+    let resourceType = "unknown";
+
+    try {
+        const cloudinaryResource = await cloudinary.api.resource(data.publicId);
+
+        sizeBytes = cloudinaryResource.bytes ?? -1;
+        format = cloudinaryResource.format ?? "unknown";
+        resourceType = cloudinaryResource.resource_type ?? "unknown";
+    } catch {
+        // I will think about it later.
+    }
+
     await mediaRepository.insert({
         key: data.publicId,
         url: data.url,
+        sizeBytes,
+        format,
+        resourceType,
         uploadedBy: session.userId
     });
 
@@ -110,6 +143,10 @@ const remove: ServiceSignature<
             errorMessage: "Only admin or uploader can remove a media."
         }
     }
+
+    await cloudinary.uploader.destroy(media.key, {
+        invalidate: true,
+    });
 
     await mediaRepository.removeById(data._id);
 

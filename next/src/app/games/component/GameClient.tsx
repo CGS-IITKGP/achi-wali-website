@@ -1,7 +1,6 @@
 "use client";
 
 import Navbar from "../../components/navbar";
-import Footer from "../../footer";
 import { robotoFont, righteousFont } from "../../fonts";
 import Image from "next/image";
 import { useState, useEffect } from "react";
@@ -10,20 +9,21 @@ import {
   ChevronLeft,
   ChevronRight,
   Play,
-  ExternalLink,
   Github,
   Gamepad2,
 } from "lucide-react";
-import { RxAvatar } from "react-icons/rx";
 import { IProject } from "@/app/types/index.types";
 import { prettySafeImage } from "@/app/utils/pretty";
 
 interface GameClientProps {
-  games: IProject[];
-  featuredGames: IProject[];
+  games?: IProject[];
+  featuredGames?: IProject[];
 }
 
-export default function GameClient({ games, featuredGames }: GameClientProps) {
+export default function GameClient({
+  games = [],
+  featuredGames = [],
+}: GameClientProps) {
   const [selectedGame, setSelectedGame] = useState<number>(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
@@ -35,7 +35,7 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
     }, 6000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, featuredGames.length]);
 
   const nextGame = () => {
     setSelectedGame((prev) => (prev + 1) % featuredGames.length);
@@ -44,7 +44,7 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
 
   const prevGame = () => {
     setSelectedGame(
-      (prev) => (prev - 1 + featuredGames.length) % featuredGames.length
+      (prev) => (prev - 1 + featuredGames.length) % featuredGames.length,
     );
     setIsAutoPlaying(false);
   };
@@ -65,7 +65,29 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
     return "#";
   };
 
-  const currentGame = featuredGames[selectedGame];
+  const currentGame = featuredGames[selectedGame] || {
+    _id: "",
+    title: "No Game Selected",
+    description: "No game available at the moment.",
+    coverImgMediaKey: "",
+    tags: [],
+    links: [],
+  };
+
+  // If no games are available, show a message
+  if (!games.length) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center text-gray-400">
+            <h2 className="text-2xl font-bold mb-2">No Games Available</h2>
+            <p>Please check back later for our game collection.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative">
@@ -77,7 +99,7 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-600/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
       </div>
 
-      <div className="relative z-10 pt-24 px-16 lg:px-64 h-screen flex flex-col">
+      <div className="relative z-10 pt-16 sm:pt-20 lg:pt-24 px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 2xl:px-64 min-h-screen flex flex-col">
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -128,8 +150,8 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
               className="relative h-[400px] lg:h-[600px] rounded-3xl overflow-hidden shadow-2xl border border-pink-500/20"
             >
               <Image
-                src={prettySafeImage(currentGame.coverImgMediaKey)}
-                alt={currentGame.title}
+                src={prettySafeImage(currentGame.coverImgUrl || "")}
+                alt={currentGame.title || "Game image"}
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                 priority
@@ -170,7 +192,7 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className={`text-4xl lg:text-5xl font-bold text-white drop-shadow-2xl ${righteousFont.className}`}
+                    className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white drop-shadow-2xl ${righteousFont.className} leading-tight`}
                   >
                     {currentGame.title}
                   </motion.h2>
@@ -179,7 +201,7 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
-                    className={`text-gray-300 text-lg max-w-2xl ${robotoFont.className}`}
+                    className={`text-gray-300 text-sm sm:text-base md:text-lg max-w-2xl ${robotoFont.className} line-clamp-3 sm:line-clamp-none`}
                   >
                     {currentGame.description}
                   </motion.p>
@@ -190,7 +212,7 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
                     transition={{ delay: 0.6 }}
                     className="flex flex-wrap gap-2"
                   >
-                    {currentGame.tags.map((tech, index) => (
+                    {currentGame.tags?.map((tech, index) => (
                       <span
                         key={index}
                         className="px-3 py-1 bg-gray-800/60 backdrop-blur-sm rounded-full text-gray-300 text-sm border border-gray-600/40"
@@ -265,7 +287,7 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
           </div>
 
           <div className="lg:col-span-1 space-y-4">
-            <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0">
+            <div className="flex lg:flex-col gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 px-2 -mx-2 snap-x snap-mandatory sm:snap-none">
               {featuredGames.map((game, index) => (
                 <motion.div
                   key={game._id}
@@ -273,14 +295,14 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
                   onClick={() => selectGame(index)}
-                  className={`relative flex-shrink-0 w-24 h-24 lg:w-full lg:h-32 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 ${
+                  className={`relative flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:h-[120px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 snap-center ${
                     selectedGame === index
                       ? "border-pink-500 shadow-lg shadow-pink-500/25 scale-105"
                       : "border-gray-700/50 hover:border-pink-500/50 hover:scale-102"
                   }`}
                 >
                   <Image
-                    src={prettySafeImage(game.coverImgMediaKey)}
+                    src={prettySafeImage(game.coverImgUrl)}
                     alt={game.title}
                     fill
                     className="object-cover transition-all duration-300"
@@ -422,7 +444,7 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-16 sm:mb-20">
           {games.map((game, index) => (
             <motion.div
               key={game._id}
@@ -431,47 +453,45 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
               transition={{ duration: 0.6, delay: index * 0.1 }}
               viewport={{ once: true }}
               whileHover={{ y: -10, scale: 1.02 }}
-              className="group relative bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-700/30 hover:border-pink-500/40 shadow-xl hover:shadow-2xl hover:shadow-pink-500/10 transition-all duration-500"
+              className="group relative bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-700/30 hover:border-pink-500/40 shadow-xl hover:shadow-2xl hover:shadow-pink-500/10 transition-all duration-500 flex flex-col h-full"
             >
               <div className="relative h-48 lg:h-56 overflow-hidden">
                 <Image
-                  src={prettySafeImage(game.coverImgMediaKey)}
-                  alt={game.title}
+                  src={prettySafeImage(game.coverImgUrl || "")}
+                  alt={game.title || "Game image"}
                   fill
                   className="object-cover transition-all duration-700 group-hover:scale-110"
-                />
-
+                />{" "}
                 <div
                   className={`absolute inset-0 bg-gradient-to-t from-pink-600 via-rose-500 to-orange-400 opacity-20 group-hover:opacity-30 transition-opacity duration-500`}
                 ></div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-
                 {/* <div className="absolute top-4 left-4">
                   <div className="flex items-center gap-2 px-3 py-1 bg-black/70 backdrop-blur-sm rounded-full text-pink-300 text-sm font-semibold border border-pink-500/30">
                     {game.icon}
                     {game.category}
                   </div>
                 </div> */}
-
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                   <div className="flex gap-3">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="w-12 h-12 bg-pink-500/90 hover:bg-pink-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
-                    >
-                      <Play className="w-5 h-5" />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="w-12 h-12 bg-gray-800/90 hover:bg-gray-700 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300"
-                    >
-                      <ExternalLink className="w-5 h-5" />
-                    </motion.button>
+                    {game.links?.find((link) => link.text === "live-demo") && (
+                      <motion.a
+                        href={
+                          game.links.find((link) => link.text === "live-demo")!
+                            .url
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => e.stopPropagation()} // Prevents event bubbling
+                        className="w-12 h-12 bg-pink-500/90 hover:bg-pink-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
+                      >
+                        <Play className="w-5 h-5" />
+                      </motion.a>
+                    )}
                   </div>
                 </div>
-
                 {/* <div className="absolute top-4 right-4">
                   <div className="flex items-center gap-1 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-full text-yellow-400 text-sm">
                     <Star className="w-4 h-4 fill-current" />
@@ -480,67 +500,92 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
                 </div> */}
               </div>
 
-              <div className="p-6 space-y-4">
-                <div>
-                  <h3
-                    className={`text-xl lg:text-2xl font-bold text-white mb-2 group-hover:text-pink-300 transition-colors duration-300 ${righteousFont.className}`}
-                  >
-                    {game.title}
-                  </h3>
-                  <p
-                    className={`text-gray-400 text-sm leading-relaxed ${robotoFont.className}`}
-                  >
-                    {game.description}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {game.tags.slice(0, 2).map((tech, techIndex) => (
-                    <span
-                      key={techIndex}
-                      className="px-2 py-1 bg-gray-800/60 text-gray-300 text-xs rounded-full border border-gray-600/40 hover:border-pink-500/40 hover:text-pink-300 transition-all duration-300"
+              {/* `flex-1` pushes the footer (with the divider line) to the bottom. */}
+              <div className="p-6 flex flex-col flex-1">
+                <div className="flex-1 space-y-4">
+                  <div>
+                    {/* Fixed height for title (2 lines) */}
+                    <h3
+                      className={`text-xl lg:text-2xl font-bold text-white mb-2 group-hover:text-pink-300 transition-colors duration-300 ${righteousFont.className} h-16`}
                     >
-                      {tech}
-                    </span>
-                  ))}
-                  {game.tags.length > 2 && (
-                    <span className="px-2 py-1 bg-pink-500/20 text-pink-300 text-xs rounded-full border border-pink-500/40">
-                      +{game.tags.length - 2}
-                    </span>
-                  )}
+                      {game.title}
+                    </h3>
+
+                    {/*
+                    // =================================================================
+                    // ⭐️ CHANGE 1: More space for description
+                    //
+                    // `h-24` (6rem) fits 4 lines of text.
+                    // `line-clamp-4` cuts off anything after 4 lines.
+                    // This is the compromise: more text, but still uniform.
+                    // =================================================================
+                    */}
+                    <p
+                      className={`text-gray-400 text-sm leading-relaxed ${robotoFont.className} line-clamp-4 h-24`}
+                    >
+                      {game.description}
+                    </p>
+                  </div>
+
+                  {/*
+                  // =================================================================
+                  // ⭐️ CHANGE 2: Distance between tags and divider
+                  //
+                  // `mb-4` (1rem) adds the space you wanted.
+                  // This section is now perfectly aligned on all cards.
+                  // =================================================================
+                  */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {game.tags?.slice(0, 2).map((tech, techIndex) => (
+                      <span
+                        key={techIndex}
+                        className="px-2 py-1 bg-gray-800/60 text-gray-300 text-xs rounded-full border border-gray-600/40 hover:border-pink-500/40 hover:text-pink-300 transition-all duration-300"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                    {(game.tags?.length ?? 0) > 2 && (
+                      <span className="px-2 py-1 bg-pink-500/20 text-pink-300 text-xs rounded-full border border-pink-500/40">
+                        +{(game.tags?.length ?? 0) - 2}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-4 border-t border-gray-700/50">
                   <div className="flex items-center gap-4 text-sm text-gray-400">
-                    {/* <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>2 hrs ago</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Download className="w-4 h-4" />
-                      <span>1.2k</span>
-                    </div> */}
-                    <div className="flex items-center gap-1">
-                      <RxAvatar className="w-4 h-4" />
-                      <span>{game.authors[0].name}</span>
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src={
+                          game.author?.profileImgUrl ||
+                          "/default-fallback-image.png"
+                        }
+                        alt="Author Profile"
+                        className="w-6 h-6 rounded-full object-cover border border-pink-500/20"
+                        width={24}
+                        height={24}
+                      />
+
+                      <span>{game.author?.name || "Anonymous"}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="w-8 h-8 bg-gray-800/60 hover:bg-pink-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-pink-300 transition-all duration-300"
-                    >
-                      <Github className="w-4 h-4" />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="w-8 h-8 bg-gray-800/60 hover:bg-pink-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-pink-300 transition-all duration-300"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </motion.button>
+                    {game.links?.find((link) => link.text === "github") && (
+                      <motion.a
+                        href={
+                          game.links.find((link) => link.text === "github")!.url
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-8 h-8 bg-gray-800/60 hover:bg-pink-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-pink-300 transition-all duration-300"
+                      >
+                        <Github className="w-4 h-4" />
+                      </motion.a>
+                    )}
                   </div>
                 </div>
               </div>
@@ -551,38 +596,7 @@ export default function GameClient({ games, featuredGames }: GameClientProps) {
             </motion.div>
           ))}
         </div>
-
-        {/* <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-20"
-        >
-          {[
-            { label: "Total Games", value: _Projects.length, icon: Gamepad },
-            { label: "Downloads", value: "12.4k", icon: Download },
-            { label: "Average Rating", value: "4.8", icon: Star },
-            { label: "Active Players", value: "2.1k", icon: Award },
-          ].map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 hover:border-pink-500/30 transition-all duration-300 text-center group"
-            >
-              <div className="text-2xl lg:text-3xl font-bold text-white mb-1">
-                {stat.value}
-              </div>
-              <div className="text-gray-400 text-sm">{stat.label}</div>
-            </motion.div>
-          ))}
-        </motion.div> */}
       </div>
-
-      <Footer />
     </div>
   );
 }

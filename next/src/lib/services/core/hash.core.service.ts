@@ -20,6 +20,8 @@ const verifyStringAndHash = async (
     str: string,
     hashedStr: string
 ) => {
+    // NOTE: If hash is invalid, it will throw an error rather than returning false.
+    // TODO: Change this and return false in such case.
     try {
         return await bcrypt.compare(str, hashedStr);
     } catch (error) {

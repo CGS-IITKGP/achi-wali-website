@@ -7,11 +7,11 @@ import { ClientSession, FilterQuery } from "mongoose";
 
 class ProjectRepository extends GenericRepository<
     IProject,
-    Pick<IProject, "portfolio" | "title" | "description" | "tags" | "authors"
-        | "links" | "coverImgMediaKey" | "media"
+    Pick<IProject, "portfolio" | "title" | "description" | "tags" | "author"
+        | "collaborators" | "links" | "coverImgUrl" | "media"
     >,
-    Pick<IProject, "portfolio" | "title" | "description" | "tags" | "authors"
-        | "links" | "coverImgMediaKey" | "media"
+    Pick<IProject, "portfolio" | "title" | "description" | "tags" | "collaborators"
+        | "links" | "coverImgUrl" | "media"
     >
 > {
     constructor() {
@@ -24,8 +24,8 @@ class ProjectRepository extends GenericRepository<
 
         try {
             return await this.model.find(filter).populate({
-                path: "authors",
-                select: "name",
+                path: "author",
+                select: "name profileImgUrl",
             }).session(session || null).lean<IProjectExportable[]>().exec();
         } catch (error) {
             throw new AppError('Failed to find document.', {
