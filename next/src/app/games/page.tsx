@@ -5,6 +5,7 @@ import Footer from "../footer";
 import GameClient from "./component/GameClient";
 import { IProject } from "../types/domain.types";
 import api from "../axiosApi";
+import Leaderboard from "./component/Leaderboard";
 
 const fetchFeaturedGamesProjects = async () => {
   const apiResponse = await api("GET", "/featured", {
@@ -68,6 +69,7 @@ export default async function ProjectsPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative">
         <Navbar />
         <GameClient games={gamesProject} featuredGames={featuredGamesProject} />
+        <Leaderboard />
         <Footer />
       </div>
     </>

@@ -1,4 +1,4 @@
-import { Arima, Righteous, Roboto } from "next/font/google";
+import { Arima, Righteous, Roboto, Fredoka, JetBrains_Mono  } from "next/font/google";
 
 const arimaFont = Arima({
   subsets: ["latin"],
@@ -13,4 +13,12 @@ const robotoFont = Roboto({
   subsets: ["latin"],
 });
 
-export { arimaFont, righteousFont, robotoFont };
+const fredokaFont = Fredoka({
+  subsets: ["latin"],
+});
+
+const jetbrainsMonoFont = JetBrains_Mono({
+  subsets: ["latin"],
+});
+
+export { arimaFont, righteousFont, robotoFont, fredokaFont, jetbrainsMonoFont };
