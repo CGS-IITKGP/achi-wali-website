@@ -128,7 +128,9 @@ const Leaderboard: React.FC = () => {
             {rest.map((r) => (
               <li
                 key={r.handle}
-                className="grid grid-cols-12 items-center border-b border-white/[0.06] px-5 py-3.5 transition-colors hover:bg-white/[0.03]"
+                className="grid grid-cols-12 items-center border-b border-white/[0.06] px-5 py-3.5 transition-colors hover:bg-[linear-gradient(160deg,rgba(255,61,139,0.28)_0%,rgba(20,8,24,0.7)_70%)]
+                          hover:border-[rgba(255,61,139,0.6)]
+                          hover:shadow-[0_0_0_1px_rgba(255,61,139,0.25),0_6px_18px_-10px_rgba(255,61,139,0.25)]"
               >
                 <div className="col-span-2 text-white/50">
                   {String(r.rank).padStart(2, "0")}
