@@ -4,7 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "./context/authContext";
 import { Toaster } from "react-hot-toast";
 
-import Logo from "./assets/logo.png";
+import Logo from "./favicon.ico";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
