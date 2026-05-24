@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="Backend architecture diagram">
+  <style>
+    .box { fill: #ffffff; stroke: #c9b8a3; stroke-width: 1.5; rx: 12; }
+    .title { font-family: "Space Grotesk", Arial, sans-serif; font-size: 14px; fill: #1f1c18; }
+    .muted { font-family: "Space Grotesk", Arial, sans-serif; font-size: 12px; fill: #5f5a52; }
+    .arrow { stroke: #6b5e52; stroke-width: 1.6; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#6b5e52" />
+    </marker>
+  </defs>
+
+  <rect class="box" x="40" y="40" width="180" height="70" />
+  <text class="title" x="60" y="70">Client</text>
+  <text class="muted" x="60" y="90">Browser / App</text>
+
+  <rect class="box" x="270" y="40" width="200" height="70" />
+  <text class="title" x="290" y="70">Next API Route</text>
+  <text class="muted" x="290" y="90">app/api/*</text>
+
+  <rect class="box" x="520" y="40" width="220" height="70" />
+  <text class="title" x="540" y="70">Handler + Validator</text>
+  <text class="muted" x="540" y="90">createHandler + Zod</text>
+
+  <rect class="box" x="520" y="140" width="220" height="70" />
+  <text class="title" x="540" y="170">Service Layer</text>
+  <text class="muted" x="540" y="190">Business logic</text>
+
+  <rect class="box" x="520" y="240" width="220" height="70" />
+  <text class="title" x="540" y="270">Repository</text>
+  <text class="muted" x="540" y="290">GenericRepository</text>
+
+  <rect class="box" x="520" y="340" width="220" height="70" />
+  <text class="title" x="540" y="370">MongoDB</text>
+  <text class="muted" x="540" y="390">Mongoose models</text>
+
+  <rect class="box" x="270" y="240" width="200" height="70" />
+  <text class="title" x="290" y="270">Cloudinary</text>
+  <text class="muted" x="290" y="290">Media uploads</text>
+
+  <rect class="box" x="270" y="340" width="200" height="70" />
+  <text class="title" x="290" y="370">SMTP</text>
+  <text class="muted" x="290" y="390">Email service</text>
+
+  <line class="arrow" x1="220" y1="75" x2="270" y2="75" />
+  <line class="arrow" x1="470" y1="75" x2="520" y2="75" />
+  <line class="arrow" x1="630" y1="110" x2="630" y2="140" />
+  <line class="arrow" x1="630" y1="210" x2="630" y2="240" />
+  <line class="arrow" x1="630" y1="310" x2="630" y2="340" />
+  <line class="arrow" x1="520" y1="175" x2="470" y2="275" />
+  <line class="arrow" x1="520" y1="190" x2="470" y2="370" />
+</svg>

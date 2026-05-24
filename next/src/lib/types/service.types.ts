@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
 import { Types } from "mongoose";
-import { EFeaturedType, EProjectPortfolio, EUserRole } from "./domain.types";
+import {
+    EFeaturedType,
+    EProjectPortfolio,
+    EUserDesignation,
+    EUserRole,
+} from "./domain.types";
 import { APIControl, EmptyObject } from "./index.types";
 
 export enum ESECs {
@@ -13,6 +18,8 @@ export enum ESECs {
     INVALID_JWT,
     INVALID_OTP,
     UNAUTHORIZED,
+
+    GOOGLE_OAUTH_FAILED,
 
     TOO_MANY_REQUESTS,
     FORBIDDEN,
@@ -30,7 +37,8 @@ export enum ESECs {
     FEATURED_NOT_FOUND,
     ALREADY_FEATURED,
 
-    MEDIA_NOT_FOUND
+    MEDIA_NOT_FOUND,
+    MEDIA_PUBLIC_ID_ALREADY_EXISTS,
 }
 
 export namespace SDIn {
@@ -40,6 +48,13 @@ export namespace SDIn {
         export type SignIn = {
             email: string,
             password: string,
+        }
+
+        export type RefreshSession = EmptyObject;
+
+        export type GoogleOAuth = {
+            code: string;
+            scope: string;
         }
 
         export type SignOut = EmptyObject;
@@ -82,7 +97,9 @@ export namespace SDIn {
                 target: APIControl.Team.Get.Target.ONE,
                 _id: Types.ObjectId
             }) | ({
-                target: APIControl.Team.Get.Target.ALL
+                target:
+                | APIControl.Team.Get.Target.ALL
+                | APIControl.Team.Get.Target.ALL_AS_LIST;
             });
 
         export type Create = {
@@ -94,13 +111,12 @@ export namespace SDIn {
             _id: Types.ObjectId,
             name?: string,
             description?: string,
-            coverImageMediaKey?: string,
         }
 
-        export type AddMembers = {
+        export type RemoveMembers = {
             _id: Types.ObjectId,
             memberIds: Types.ObjectId[],
-        };
+        }
 
         export type Remove = {
             _id: Types.ObjectId,
@@ -113,17 +129,18 @@ export namespace SDIn {
             portfolio: APIControl.Project.Get.Portfolio,
         };
 
+        export type GetAsList = EmptyObject;
+
         export type Create = {
             portfolio: EProjectPortfolio;
             title: string;
             description: string;
             tags: string[];
-            // TODO: Add the ability to have multiple authors.
-            // authors: Types.ObjectId[];
             links: {
                 text: string;
                 url: string;
             }[];
+            coverImgUrl: string | null;
         };
 
         export type Update = {
@@ -131,16 +148,13 @@ export namespace SDIn {
             portfolio: EProjectPortfolio;
             title?: string;
             description?: string;
-            tags?: {
-                tag: string;
-            }[];
-            // TODO: Add the ability to have multiple authors.
-            // authors: Types.ObjectId[];
+            tags?: string[];
+            collaborators?: Types.ObjectId[];
             links?: {
                 text: string;
                 url: string;
             }[];
-            coverImgMediaKey?: string | null;
+            coverImgUrl?: string | null;
             media?: Types.ObjectId[];
         };
 
@@ -152,20 +166,24 @@ export namespace SDIn {
     export namespace Blog {
         export type Get =
             | ({
-                target: APIControl.Blog.Get.Target.ALL | APIControl.Blog.Get.Target.MY
+                target:
+                | APIControl.Blog.Get.Target.ALL
+                | APIControl.Blog.Get.Target.MY
+                | APIControl.Blog.Get.Target.ALL_AS_LIST
             })
             | ({
                 target: APIControl.Blog.Get.Target.BY_SLUG,
                 slug: string;
             });
 
+        export type GetAsList = EmptyObject;
+
         export type Create = {
             title: string;
             slug: string;
             content: string;
             tags: string[];
-            // TODO: Add the ability to have multiple authors.
-            // authors: Types.ObjectId[];
+            coverImgUrl: string | null;
         };
 
         export type Update = {
@@ -174,9 +192,8 @@ export namespace SDIn {
             slug?: string;
             content?: string;
             tags?: string[];
-            // TODO: Add the ability to have multiple authors.
-            // authors: Types.ObjectId[];
-            coverImgMediaKey?: string | null;
+            collaborators?: Types.ObjectId[];
+            coverImgUrl?: string | null;
         };
 
         export type Remove = {
@@ -189,11 +206,18 @@ export namespace SDIn {
             target: APIControl.Featured.Get.Target
         }
 
-        export type GetRecent = EmptyObject;
+        export type GetHighlight = EmptyObject;
+        export type GetAsList = EmptyObject;
 
         export type Create = {
             contentType: EFeaturedType;
             contentId: Types.ObjectId;
+            isHighlight: boolean;
+        }
+
+        export type Update = {
+            _id: Types.ObjectId;
+            isHighlight: boolean;
         }
 
         export type Remove = {
@@ -203,10 +227,7 @@ export namespace SDIn {
 
     export namespace Media {
         export type Get = EmptyObject;
-
-        export type Sign = {
-            publicId: string;
-        }
+        export type Sign = EmptyObject;
 
         export type Create = {
             publicId: string;
@@ -221,34 +242,43 @@ export namespace SDIn {
     export namespace User {
         export type Get =
             | ({
-                target: APIControl.User.Get.Target.RESTRICTED
-            } & GetRestricted)
+                target: APIControl.User.Get.Target.ALL;
+            } & GetAll)
             | ({
-                target: APIControl.User.Get.Target.UNRESTRICTED
-            } & GetUnrestricted)
+                target: APIControl.User.Get.Target.SUMMARY,
+            })
             | ({
-                target: APIControl.User.Get.Target.ALL
-            } & GetAll);
+                target: APIControl.User.Get.Target.PUBLIC_ALL;
+            } & GetAll)
+            | ({
+                target: APIControl.User.Get.Target.PUBLIC_SINGLE;
+                _id: Types.ObjectId;
+            });
 
-        export type GetRestricted = {
-            _id: Types.ObjectId,
+        export type GetAll = {
+            page: number;
+            limit: number;
         }
-
-        export type GetUnrestricted = GetRestricted;
-        export type GetAll = EmptyObject;
 
         export type Update = {
             name?: string,
-            profileImgMediaKey?: string | null,
             phoneNumber?: string,
             links?: {
-                label: string,
+                text: string,
                 url: string,
             }[],
+            profileImgUrl?: string,
         };
-        export type UpdateRoles = {
+
+        export type UpdateTeam = {
+            _id: Types.ObjectId;
+            teamId: Types.ObjectId | null;
+        };
+
+        export type UpdateAssignment = {
             _id: Types.ObjectId,
-            roles: EUserRole[],
+            roles?: EUserRole[],
+            designation?: EUserDesignation;
         };
 
         export type Remove = {
@@ -263,10 +293,10 @@ export namespace SDOut {
             _id: string;
             name: string;
             email: string;
-            profileImgMediaKey: string | null;
+            profileImgUrl: string | null;
             phoneNumber: string | null;
             links: {
-                label: string;
+                text: string;
                 url: string;
             }[];
             team: {
@@ -274,11 +304,20 @@ export namespace SDOut {
                 name: string;
             };
             roles: EUserRole[];
+            designation: string;
             createdAt: Date;
             updatedAt: Date;
         }
 
         export type SignIn = {
+            token: string;
+        }
+
+        export type RefreshSession = {
+            token: string;
+        }
+
+        export type GoogleOAuth = {
             token: string;
         }
 
@@ -300,7 +339,7 @@ export namespace SDOut {
     }
 
     export namespace Team {
-        export type Get = GetOne | GetAll;
+        export type Get = GetOne | GetAll | GetAsList;
 
         export type GetOne = {
             _id: string;
@@ -310,28 +349,24 @@ export namespace SDOut {
                 _id: string;
                 name: string;
                 links: {
-                    label: string;
+                    text: string;
                     url: string;
                 }[];
-                profileImgMediaKey: string | null;
+                profileImgUrl: string | null;
             }[];
-            coverImageMediaKey: string | null;
             createdAt: Date;
             updatedAt: Date;
         }
 
-        export type GetAll = {
+        export type GetAll = GetOne[];
+
+        export type GetAsList = {
             _id: string;
             name: string;
-            description: string;
-            coverImageMediaKey: string | null;
-            createdAt: Date;
-            updatedAt: Date;
         }[];
 
         export type Create = EmptyObject;
         export type Update = EmptyObject;
-        export type AddMembers = EmptyObject;
         export type Remove = EmptyObject;
     }
 
@@ -342,7 +377,12 @@ export namespace SDOut {
             title: string;
             description: string;
             tags: string[];
-            authors: {
+            author: {
+                _id: string;
+                name: string;
+                profileImgUrl: string | null;
+            };
+            collaborators: {
                 _id: string;
                 name: string;
             }[];
@@ -350,10 +390,16 @@ export namespace SDOut {
                 text: string;
                 url: string;
             }[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             media: string[];
             createdAt: Date;
             updatedAt: Date;
+        }[] | GetAsList;
+
+        export type GetAsList = {
+            _id: string;
+            portfolio: string;
+            title: string;
         }[];
 
         export type Create = EmptyObject;
@@ -362,18 +408,23 @@ export namespace SDOut {
     }
 
     export namespace Blog {
-        export type Get = GetList | GetBySlug;
+        export type Get = GetList | GetBySlug | GetAsList;
 
         export type GetList = {
             _id: string;
             title: string;
             slug: string;
             tags: string[];
-            authors: {
+            author: {
+                _id: string;
+                name: string;
+                profileImgUrl: string | null;
+            };
+            collaborators: {
                 _id: string;
                 name: string;
             }[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -386,14 +437,24 @@ export namespace SDOut {
             content: string;
             slug: string;
             tags: string[];
-            authors: {
+            author: {
+                _id: string;
+                name: string;
+                profileImgUrl: string | null;
+            };
+            collaborators: {
                 _id: string;
                 name: string;
             }[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
         };
+
+        export type GetAsList = {
+            _id: string;
+            title: string;
+        }[];
 
         export type Create = EmptyObject;
         export type Update = EmptyObject;
@@ -401,18 +462,23 @@ export namespace SDOut {
     }
 
     export namespace Featured {
-        export type Get = GetBlog | GetProject | GetRecent;
+        export type Get = (GetBlog[0] | GetProject[0] | GetHighlight[0] | GetAsList[0])[];
 
         export type GetBlog = {
             _id: string;
             title: string;
             slug: string;
             tags: string[];
-            authors: {
+            author: {
+                _id: string;
+                name: string;
+                profileImgUrl: string | null;
+            };
+            collaborators: {
                 _id: string;
                 name: string;
             }[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -423,7 +489,12 @@ export namespace SDOut {
             title: string;
             description: string;
             tags: string[];
-            authors: {
+            author: {
+                _id: string;
+                name: string;
+                profileImgUrl: string | null;
+            };
+            collaborators: {
                 _id: string;
                 name: string;
             }[];
@@ -431,24 +502,35 @@ export namespace SDOut {
                 text: string;
                 url: string;
             }[];
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             createdAt: Date;
             updatedAt: Date;
         }[];
 
-        export type GetRecent = ({
+        export type GetHighlight = ({
             _id: string;
-            type: "BLOG" | "GAME" | "GRAPHICS" | "RND";
+            type: "BLOG" | "GAME" | "GRAPHICS" | "RND",
             title: string;
-            coverImgMediaKey: string | null;
+            coverImgUrl: string | null;
             tags: string[];
-        } & (
-                { type: "BLOG"; readUrl: string } |
-                { type: "GAME" | "GRAPHICS" | "RND"; liveDemoLink: string | null; githubLink: string | null }
-            ))[];
+        } & ({
+            type: "BLOG",
+            readUrl: string;
+        } | {
+            type: "GAME" | "GRAPHICS" | "RND",
+            liveDemoLink: string | null;
+            githubLink: string | null;
+        }))[];
 
+        export type GetAsList = {
+            _id: string;
+            contentType: string;
+            contentTitle: string;
+            isHighlight: string;
+        }[];
 
         export type Create = EmptyObject;
+        export type Update = EmptyObject;
         export type Remove = EmptyObject;
     }
 
@@ -457,12 +539,16 @@ export namespace SDOut {
             _id: string;
             key: string;
             url: string;
+            sizeBytes: number;
+            format: string;
+            resourceType: string;
         }[];
 
         export type Sign = {
             signature: string;
             timestamp: string;
             folder: string;
+            publicId: string;
             cloudName: string;
             apiKey: string;
         }
@@ -472,112 +558,48 @@ export namespace SDOut {
     }
 
     export namespace User {
-        // Get encompasses GetRestricted, GetUnrestricted, and GetAll.
-        export type Get = object;
-
-        export type GetRestricted = {
-            _id: string;
-            name: string;
-            email: string;
-            profileImgMediaKey: string | null;
-            roles: EUserRole[];
-            teamId: string | null;
-            links: {
-                label: string;
-                url: string;
-            }[];
-            createdAt: Date;
-        }
-
-        export type GetUnrestricted = GetRestricted & {
-            phoneNumber: string | null;
-            updatedAt: Date;
-        }
+        export type Get = GetAll | GetSinglePublic;
 
         export type GetAll = {
+            users: {
+                _id: string;
+                name: string;
+                email: string;
+                profileImgUrl: string | null;
+                roles: EUserRole[];
+                designation: string;
+                teamId: string | null;
+            }[];
+            total: number;
+            page: number;
+            limit: number;
+            totalPages: number;
+        };
+
+        export type GetSinglePublic = {
             _id: string;
             name: string;
             email: string;
-            profileImgMediaKey: string | null;
+            profileImgUrl: string | null;
+            phoneNumber: string | null;
+            links: {
+                text: string;
+                url: string;
+            }[];
+            team: {
+                _id: string;
+                name: string;
+            };
             roles: EUserRole[];
-            teamId: string | null;
-        }[];
+            designation: string;
+            memberSince: string; // Derived from createdAt
+        };
 
         export type Update = EmptyObject;
-        export type UpdateRoles = EmptyObject;
+        export type UpdateTeam = EmptyObject;
+        export type UpdateAssignment = EmptyObject;
         export type Remove = EmptyObject;
     }
-}
-
-export namespace SECs {
-    export namespace Misc {
-        export type Health = never;
-    }
-
-    // Auth
-    export type AuthMe = never;
-
-    export type AuthSignIn = ESECs.USER_NOT_FOUND | ESECs.INVALID_CREDENTIALS;
-
-    export type AuthSignOut = never;
-
-    export type AuthSignUpRequest = ESECs.EMAIL_TAKEN;
-
-    export type AuthSignUpRequestResendOTP =
-        | ESECs.SIGNUP_REQUEST_NOT_FOUND
-        | ESECs.TOO_MANY_REQUESTS;
-
-    export type AuthSignUpVerify =
-        | ESECs.SIGNUP_REQUEST_NOT_FOUND
-        | ESECs.INVALID_OTP;
-
-    export type AuthChangePassword = ESECs.INVALID_CREDENTIALS;
-
-    export type AuthExtractSession = ESECs.INVALID_JWT;
-
-    // Team
-    export type TeamGet = ESECs.TEAM_NOT_FOUND;
-    export type TeamGetAll = never;
-    export type TeamCreate = ESECs.TEAM_NAME_TAKEN | ESECs.FORBIDDEN;
-    export type TeamUpdate =
-        | ESECs.TEAM_NOT_FOUND
-        | ESECs.TEAM_NAME_TAKEN
-        | ESECs.FORBIDDEN;
-    export type TeamAddMembers =
-        | ESECs.TEAM_NOT_FOUND
-        | ESECs.USER_NOT_FOUND
-        | ESECs.FORBIDDEN;
-    export type TeamRemove = ESECs.TEAM_NOT_FOUND | ESECs.FORBIDDEN;
-
-    export type GetAll = never;
-
-    export type Create = ESECs.TEAM_NAME_TAKEN | ESECs.FORBIDDEN;
-
-    export type Update =
-        | ESECs.TEAM_NOT_FOUND
-        | ESECs.TEAM_NAME_TAKEN
-        | ESECs.FORBIDDEN;
-
-    export type AddMembers =
-        | ESECs.TEAM_NOT_FOUND
-        | ESECs.USER_NOT_FOUND
-        | ESECs.FORBIDDEN;
-
-    export type Remove = ESECs.TEAM_NOT_FOUND | ESECs.FORBIDDEN;
-}
-
-export namespace User {
-    export type Get = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
-
-    export type GetUnrestricted = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
-
-    export type GetAll = ESECs.FORBIDDEN;
-
-    export type Update = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
-
-    export type UpdateRoles = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
-
-    export type Remove = ESECs.USER_NOT_FOUND | ESECs.FORBIDDEN;
 }
 
 /* eslint-enable @typescript-eslint/no-namespace */

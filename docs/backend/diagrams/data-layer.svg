@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 260" width="840" height="260" role="img" aria-label="Data layer flow">
+  <style>
+    .box { fill: #ffffff; stroke: #c9b8a3; stroke-width: 1.5; rx: 12; }
+    .title { font-family: "Space Grotesk", Arial, sans-serif; font-size: 14px; fill: #1f1c18; }
+    .muted { font-family: "Space Grotesk", Arial, sans-serif; font-size: 12px; fill: #5f5a52; }
+    .arrow { stroke: #6b5e52; stroke-width: 1.6; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#6b5e52" />
+    </marker>
+  </defs>
+
+  <rect class="box" x="40" y="80" width="160" height="70" />
+  <text class="title" x="60" y="110">Service</text>
+  <text class="muted" x="60" y="130">Business logic</text>
+
+  <rect class="box" x="250" y="80" width="170" height="70" />
+  <text class="title" x="270" y="110">Repository</text>
+  <text class="muted" x="270" y="130">GenericRepository</text>
+
+  <rect class="box" x="470" y="80" width="170" height="70" />
+  <text class="title" x="490" y="110">Mongoose Model</text>
+  <text class="muted" x="490" y="130">Schema + model</text>
+
+  <rect class="box" x="690" y="80" width="120" height="70" />
+  <text class="title" x="710" y="110">MongoDB</text>
+  <text class="muted" x="710" y="130">Collection</text>
+
+  <line class="arrow" x1="200" y1="115" x2="250" y2="115" />
+  <line class="arrow" x1="420" y1="115" x2="470" y2="115" />
+  <line class="arrow" x1="640" y1="115" x2="690" y2="115" />
+</svg>

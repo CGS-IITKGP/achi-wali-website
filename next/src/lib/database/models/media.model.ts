@@ -14,6 +14,18 @@ const MediaSchema = new Schema<IMedia>({
         required: true,
         trim: true,
     },
+    sizeBytes: {
+        type: Schema.Types.Number,
+        required: true
+    },
+    format: {
+        type: Schema.Types.String,
+        required: true
+    },
+    resourceType: {
+        type: Schema.Types.String,
+        required: true
+    },
     uploadedBy: {
         type: Schema.Types.ObjectId,
         ref: 'User',

@@ -24,12 +24,14 @@ class ResponseHandler {
             options?: ICookieOptions;
         }
     > = {};
+    private redirectUrl?: string;
 
     constructor() {
         this.statusCode = FailureResponseCodesEnum.INTERNAL_SERVER_ERROR;
         this.message = 'Internal Server Error!';
         this.action = null;
         this.cookies = {};
+        this.redirectUrl = undefined;
     }
 
     public sendSuccess(statusCode: SuccessResponseCodesEnum, data: object = {}) {
@@ -66,12 +68,30 @@ class ResponseHandler {
         return this.build();
     }
 
+    public setRedirect(redirectUrl: string) {
+        this.redirectUrl = redirectUrl;
+        return this;
+    }
+
     public setCookie(name: string, value: string, options?: ICookieOptions) {
         this.cookies[name] = { value, options };
         return this;
     }
 
     private build() {
+        const cookieHeaders: string[] = [];
+        for (const [name, { value, options }] of Object.entries(this.cookies)) {
+            cookieHeaders.push(serialize(name, value, options));
+        }
+
+        if (this.redirectUrl) {
+            const response = NextResponse.redirect(this.redirectUrl);
+            cookieHeaders.forEach(cookie =>
+                response.headers.append('Set-Cookie', cookie)
+            );
+            return response;
+        }
+
         const payload: Record<string, unknown> = {
             action: this.action,
         };
@@ -86,11 +106,6 @@ class ResponseHandler {
             if (this.errors && Object.keys(this.errors).length > 0) {
                 payload.errors = this.errors;
             }
-        }
-
-        const cookieHeaders: string[] = [];
-        for (const [name, { value, options }] of Object.entries(this.cookies)) {
-            cookieHeaders.push(serialize(name, value, options));
         }
 
         const headers = new Headers();

@@ -19,7 +19,7 @@ const get: ServiceSignature<
 > = async (data) => {
     if (data.target === APIControl.Team.Get.Target.ONE) {
         const team = await teamRepository.findExportable({
-            teamId: data._id
+            _id: data._id
         });
         if (!team) {
             return {
@@ -44,7 +44,7 @@ const get: ServiceSignature<
         };
     }
     else if (data.target === APIControl.Team.Get.Target.ALL) {
-        const teams = await teamRepository.findAllOfListExportable();
+        const teams = await teamRepository.findAllExportable();
 
         return {
             success: true,
@@ -52,13 +52,32 @@ const get: ServiceSignature<
                 return {
                     ...team,
                     _id: team._id.toHexString(),
+                    members: team.members.map(member => {
+                        return {
+                            ...member,
+                            _id: member._id.toHexString(),
+                        }
+                    })
+                }
+            })
+        };
+    }
+    else if (data.target === APIControl.Team.Get.Target.ALL_AS_LIST) {
+        const teams = await teamRepository.findAll({});
+
+        return {
+            success: true,
+            data: teams.map(team => {
+                return {
+                    _id: team._id.toHexString(),
+                    name: team.name,
                 }
             })
         }
     }
 
     throw new AppError(
-        "APIControl.Team.Get is something other than ONE and ALL",
+        "APIControl.Team.Get is something other than ONE, ALL AND ALL_AS_LIST",
         { data }
     );
 };
@@ -99,62 +118,6 @@ const create: ServiceSignature<
     };
 };
 
-const addMembers: ServiceSignature<
-    SDIn.Team.AddMembers,
-    SDOut.Team.AddMembers,
-    true
-> = async (data, session) => {
-    if (!session.userRoles.includes(EUserRole.ADMIN)) {
-        return {
-            success: false,
-            errorCode: ESECs.FORBIDDEN,
-            errorMessage: "Only admin can add team members.",
-        };
-    }
-
-    const team = await teamRepository.findById(data._id);
-    if (!team) {
-        return {
-            success: false,
-            errorCode: ESECs.TEAM_NOT_FOUND,
-            errorMessage: "Team not found.",
-        };
-    }
-
-    await withSession(async (dbSession) => {
-        await teamRepository.updateById(
-            data._id,
-            {
-                $addToSet: {
-                    members: {
-                        $each: data.memberIds,
-                    },
-                },
-            },
-            dbSession
-        );
-
-        await userRepository.updateMany(
-            {
-                _id: {
-                    $in: data.memberIds,
-                },
-            },
-            {
-                $set: {
-                    teamId: data._id,
-                },
-            },
-            dbSession
-        );
-    });
-
-    return {
-        success: true,
-        data: {},
-    };
-};
-
 const update: ServiceSignature<
     SDIn.Team.Update,
     SDOut.Team.Update,
@@ -180,7 +143,6 @@ const update: ServiceSignature<
     await teamRepository.updateById(data._id, {
         name: data.name,
         description: data.description,
-        coverImageMediaKey: data.coverImageMediaKey,
     });
 
     return {
@@ -215,7 +177,7 @@ const remove: ServiceSignature<
         await teamRepository.removeById(data._id, dbSession);
         await userRepository.updateMany(
             {
-                _id: data._id,
+                teamId: data._id,
             },
             {
                 $set: {
@@ -236,7 +198,6 @@ const teamServices = {
     get,
     create,
     update,
-    addMembers,
     remove
 };
 

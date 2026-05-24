@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import createHandler from '@/lib/handler';
 import mediaValidator from '@/lib/validators/media.validator';
 import mediaServices from '@/lib/services/media.service';

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Database Layer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">CGS Backend</div>
+      <div class="tagline">Mongoose models and repositories</div>
+    </header>
+
+    <div class="layout">
+      <nav class="side-nav">
+        <div class="nav-title">Docs</div>
+        <a href="index.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="code-walkthrough.html">Code walkthrough</a>
+        <a href="types-catalog.html">Types catalog</a>
+        <a href="folder-structure.html">Folder structure</a>
+        <a href="api-routes.html">API routes</a>
+        <a href="auth-flow.html">Auth flow</a>
+        <a class="active" href="database.html">Database</a>
+        <a href="adding-features.html">Adding features</a>
+        <div class="nav-meta">
+          System map: <a href="system_map.md">system_map.md</a>
+        </div>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <h1>Database layer</h1>
+          <p>Models, relationships, and repository utilities.</p>
+        </section>
+
+        <section class="card">
+          <h2>Data flow</h2>
+          <p>
+            Services call repositories which wrap Mongoose models. The generic
+            repository provides CRUD, paginated queries, and transactional
+            helpers.
+          </p>
+          <div class="diagram">
+            <img src="diagrams/data-layer.svg" alt="Data layer diagram" />
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Models and relationships</h2>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Key fields</th>
+                <th>Relationships</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>User</td>
+                <td>email, roles, designation, profileImgUrl</td>
+                <td>Belongs to Team via <code>teamId</code></td>
+              </tr>
+              <tr>
+                <td>Team</td>
+                <td>name, description, members</td>
+                <td>Members reference User ids</td>
+              </tr>
+              <tr>
+                <td>Project</td>
+                <td>portfolio, title, links, media</td>
+                <td>Author + collaborators reference User ids</td>
+              </tr>
+              <tr>
+                <td>Blog</td>
+                <td>title, slug, tags, content</td>
+                <td>Author + collaborators reference User ids</td>
+              </tr>
+              <tr>
+                <td>Featured</td>
+                <td>contentType, contentId, isHighlight</td>
+                <td>References Blog or Project via <code>contentId</code></td>
+              </tr>
+              <tr>
+                <td>Media</td>
+                <td>key, url, sizeBytes, resourceType</td>
+                <td>uploadedBy references User id</td>
+              </tr>
+              <tr>
+                <td>SignUpRequest</td>
+                <td>email, otpHash, expiresAt</td>
+                <td>TTL index removes expired requests</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <h2>Transactions and sessions</h2>
+          <ul>
+            <li>
+              <code>connectToDatabase()</code> caches the connection in
+              <code>global.mongooseCache</code>.
+            </li>
+            <li>
+              <code>withSession()</code> wraps multi-step updates in a
+              transaction.
+            </li>
+            <li>Repositories accept an optional <code>ClientSession</code>.</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

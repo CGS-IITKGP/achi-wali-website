@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Adding Backend Features</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">CGS Backend</div>
+      <div class="tagline">How to extend the backend safely</div>
+    </header>
+
+    <div class="layout">
+      <nav class="side-nav">
+        <div class="nav-title">Docs</div>
+        <a href="index.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="code-walkthrough.html">Code walkthrough</a>
+        <a href="types-catalog.html">Types catalog</a>
+        <a href="folder-structure.html">Folder structure</a>
+        <a href="api-routes.html">API routes</a>
+        <a href="auth-flow.html">Auth flow</a>
+        <a href="database.html">Database</a>
+        <a class="active" href="adding-features.html">Adding features</a>
+        <div class="nav-meta">
+          System map: <a href="system_map.md">system_map.md</a>
+        </div>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <h1>Adding features</h1>
+          <p>Repeatable steps for new endpoints and new domain features.</p>
+        </section>
+
+        <section class="card">
+          <h2>How to add a new API endpoint</h2>
+          <ol>
+            <li>Define the input schema in <code>lib/validators</code>.</li>
+            <li>Add input/output types in <code>lib/types</code> if needed.</li>
+            <li>
+              Implement the service function in <code>lib/services</code>.
+            </li>
+            <li>Create the route handler under <code>app/api</code>.</li>
+            <li>Update docs and the system map.</li>
+          </ol>
+          <pre class="tree">
+Example route setup
+
+import createHandler from "@/lib/handler";
+import widgetValidator from "@/lib/validators/widget.validator";
+import widgetService from "@/lib/services/widget.service";
+
+const POST = createHandler({
+  requireAuth: true,
+  validationSchema: widgetValidator.create,
+  options: {
+    service: widgetService.create,
+  },
+});
+
+export { POST };
+</pre
+          >
+        </section>
+
+        <section class="card">
+          <h2>How to add a new backend feature</h2>
+          <ol>
+            <li>
+              Create a Mongoose model in <code>lib/database/models</code>.
+            </li>
+            <li>Add a repository in <code>lib/database/repos</code>.</li>
+            <li>Wire service logic in <code>lib/services</code>.</li>
+
+                    <section class="card">
+                      <h2>Coding conventions</h2>
+                      <ul>
+                        <li>Always use <code>createHandler</code> for route handlers.</li>
+                        <li>Validate every request with Zod; add shared fields to <code>core.validator</code>.</li>
+                        <li>Prefer shared types in <code>lib/types</code>; keep only truly local types inline.</li>
+                        <li>Services must call repositories, not raw Mongoose models.</li>
+                        <li>Return <code>ESECs</code> codes for expected errors; throw <code>AppError</code> for unexpected failures.</li>
+                        <li>Avoid the deprecated email/password sign-up flow.</li>
+                      </ul>
+                      <pre class="tree">File naming patterns
+            <li>Define validators for each endpoint.</li>
+            <li>Update API types and domain types.</li>
+            <li>Expose routes under <code>app/api</code>.</li>
+            <li>Document endpoints and data shape changes.</li>
+          </ol>
+        </section>
+
+        <section class="card">
+                    </section>
+          <h2>Checklist before shipping</h2>
+          <ul>
+            <li>Ensure role checks are enforced in the service.</li>
+            <li>Validate every request body and query string.</li>
+            <li>Use <code>withSession</code> for multi-collection updates.</li>
+            <li>
+              Update <code>docs/backend</code> pages and
+              <code>system_map.md</code>.
+            </li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

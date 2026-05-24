@@ -8,7 +8,7 @@ import { ClientSession, FilterQuery } from "mongoose";
 class TeamRepository extends GenericRepository<
     ITeam,
     Pick<ITeam, "name" | "description">,
-    Pick<ITeam, "name" | "description" | "members" | "coverImageMediaKey">
+    Pick<ITeam, "name" | "description" | "members">
 > {
     constructor() {
         super(TeamModel);
@@ -20,9 +20,25 @@ class TeamRepository extends GenericRepository<
 
         try {
             return await this.model.findOne(filter).populate({
-                path: "authors",
-                select: "name links profileImgMediaKey",
+                path: "members",
+                select: "name links profileImgUrl designation",
             }).session(session || null).lean<ITeamExportable>().exec();
+        } catch (error) {
+            throw new AppError('Failed to find document.', {
+                error
+            });
+        }
+    }
+
+    async findAllExportable(filter: FilterQuery<ITeam> = {}, session?: ClientSession):
+        Promise<ITeamExportable[]> {
+        await this.ensureDbConnection();
+
+        try {
+            return await this.model.find(filter).populate({
+                path: "members",
+                select: "name links profileImgUrl designation",
+            }).session(session || null).lean<ITeamExportable[]>().exec();
         } catch (error) {
             throw new AppError('Failed to find document.', {
                 error
@@ -36,8 +52,8 @@ class TeamRepository extends GenericRepository<
 
         try {
             return await this.model.find(filter).populate({
-                path: "authors",
-                select: "name links profileImgMediaKey",
+                path: "members",
+                select: "name links profileImgUrl designation",
             }).session(session || null).lean<ITeamOfListExportable[]>().exec();
         } catch (error) {
             throw new AppError('Failed to find document.', {

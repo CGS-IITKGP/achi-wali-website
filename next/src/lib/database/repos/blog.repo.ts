@@ -7,11 +7,11 @@ import { ClientSession, FilterQuery } from "mongoose";
 
 class BlogRepository extends GenericRepository<
     IBlog,
-    Pick<IBlog, "title" | "slug" | "content" | "tags" | "authors"
-        | "coverImgMediaKey"
+    Pick<IBlog, "title" | "slug" | "content" | "tags" | "author"
+        | "collaborators" | "coverImgUrl"
     >,
-    Pick<IBlog, "title" | "slug" | "content" | "tags" | "authors"
-        | "coverImgMediaKey"
+    Pick<IBlog, "title" | "slug" | "content" | "tags" | "collaborators"
+        | "coverImgUrl"
     >
 > {
     constructor() {
@@ -24,8 +24,8 @@ class BlogRepository extends GenericRepository<
 
         try {
             return await this.model.find(filter).select('-content').populate({
-                path: "authors",
-                select: "name",
+                path: "author",
+                select: "name profileImgUrl",
             }).session(session || null).lean<IBlogOfListExportable[]>().exec();
         } catch (error) {
             throw new AppError('Failed to find document.', {
@@ -40,8 +40,8 @@ class BlogRepository extends GenericRepository<
 
         try {
             return await this.model.findOne(filter).populate({
-                path: "authors",
-                select: "name",
+                path: "author",
+                select: "name profileImgUrl",
             }).session(session || null).lean<IBlogExportable>().exec();
         } catch (error) {
             throw new AppError('Failed to find document.', {
@@ -56,8 +56,8 @@ class BlogRepository extends GenericRepository<
 
         try {
             return await this.model.find(filter).populate({
-                path: "authors",
-                select: "name",
+                path: "author",
+                select: "name profileImgUrl",
             }).session(session || null).lean<IBlogExportable[]>().exec();
         } catch (error) {
             throw new AppError('Failed to find document.', {

@@ -5,6 +5,7 @@ import {
     generateJWToken,
     validateJWToken,
 } from "@/lib/services/core/jwt.core.service";
+import { OAuth2Client } from "google-auth-library";
 import {
     hashString,
     verifyStringAndHash,
@@ -19,10 +20,13 @@ import {
     SDOut,
     SDIn,
     APIControl,
+    EUserDesignation,
 } from "@/lib/types/index.types";
 import { SESSION_COOKIE_NAME } from "@/lib/config/constants";
 import AppError from "../utils/error";
 import teamRepository from "../database/repos/team.repo";
+import getEnvVariable from "../utils/envVariable";
+import axios from 'axios';
 
 
 const me: ServiceSignature<
@@ -74,18 +78,162 @@ const signIn: ServiceSignature<
         };
     }
 
+    if (user.passwordHash === null) {
+        return {
+            success: false,
+            errorCode: ESECs.INVALID_CREDENTIALS,
+            errorMessage: "Email or password is incorrect.",
+        };
+    }
+
     const isValid = await verifyStringAndHash(data.password, user.passwordHash);
 
     if (!isValid) {
         return {
             success: false,
             errorCode: ESECs.INVALID_CREDENTIALS,
-            errorMessage: "The password you provided is incorrect.",
+            errorMessage: "Email or password is incorrect.",
         };
     }
 
     const token = await generateJWToken({
         _id: user._id.toString(),
+        roles: user.roles,
+    });
+
+    return {
+        success: true,
+        data: {
+            token,
+        },
+    };
+};
+
+const refreshSession: ServiceSignature<
+    SDIn.Auth.RefreshSession,
+    SDOut.Auth.RefreshSession,
+    true
+> = async ({ }, session) => {
+    const user = await userRepository.findById(session.userId);
+
+    if (!user) {
+        throw new AppError("Session exists, but user not found.", { session });
+    }
+
+    const token = await generateJWToken({
+        _id: user._id.toString(),
+        roles: user.roles,
+    });
+
+    return {
+        success: true,
+        data: {
+            token,
+        },
+    };
+};
+
+const __googleOAuthClient = new OAuth2Client(
+    getEnvVariable("GOOGLE_OAUTH_CLIENT_ID", true)
+);
+
+const googleOAuth: ServiceSignature<
+    SDIn.Auth.GoogleOAuth,
+    SDOut.Auth.GoogleOAuth,
+    false
+> = async (data) => {
+    let userEmail: string = "";
+    let userName: string | undefined = "";
+    let userPicture: string | undefined = "";
+
+    try {
+        const apiResponse = await axios.post<{
+            id_token: string;
+        }>(
+            "https://oauth2.googleapis.com/token",
+            new URLSearchParams({
+                code: data.code,
+                client_id: getEnvVariable("GOOGLE_OAUTH_CLIENT_ID", true),
+                client_secret: getEnvVariable("GOOGLE_OAUTH_CLIENT_SECRET", true),
+                redirect_uri: getEnvVariable("GOOGLE_OAUTH_REDIRECT_URI", true),
+                grant_type: "authorization_code",
+            }),
+            {
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+            }
+        );
+
+        if (apiResponse.status !== 200) {
+            return {
+                success: false,
+                errorCode: ESECs.GOOGLE_OAUTH_FAILED,
+                errorMessage: "Unable to verify code from google."
+            };
+        }
+
+        if (!apiResponse.data.id_token) {
+            return {
+                success: false,
+                errorCode: ESECs.GOOGLE_OAUTH_FAILED,
+                errorMessage: "Didn't receive user information from google."
+            };
+        }
+
+        const ticket = await __googleOAuthClient.verifyIdToken({
+            idToken: apiResponse.data.id_token,
+            audience: getEnvVariable("GOOGLE_OAUTH_CLIENT_ID", true),
+        });
+
+        const payload = ticket.getPayload();
+
+        if (!payload || !payload.email) {
+            return {
+                success: false,
+                errorCode: ESECs.GOOGLE_OAUTH_FAILED,
+                errorMessage: "Missing user information from google."
+            };
+        }
+
+        if (!payload?.email_verified) {
+            return {
+                success: false,
+                errorCode: ESECs.GOOGLE_OAUTH_FAILED,
+                errorMessage: "Google account email not verified. Rejecting request. ",
+            };
+        }
+
+        userEmail = payload.email;
+        userName = payload.name;
+        userPicture = payload.picture;
+    } catch (_error) {
+        throw new AppError("Error while processing google oauth request");
+    }
+
+    let user = await userRepository.findByEmail(userEmail);
+
+    if (!user) {
+        user = await userRepository.insert({
+            name: userName ?? "Unnamed User",
+            email: userEmail,
+            passwordHash: null,
+            roles: [
+                EUserRole.GUEST,
+            ],
+            designation: EUserDesignation.NONE
+        });
+
+        if (userPicture) {
+            await userRepository.updateById(user._id, {
+                profileImgUrl: userPicture
+            });
+        }
+    }
+
+    const token = await generateJWToken({
+        _id: user._id.toString(),
+        roles: user.roles,
     });
 
     return {
@@ -99,8 +247,8 @@ const signIn: ServiceSignature<
 const signOut: ServiceSignature<
     SDIn.Auth.SignOut,
     SDOut.Auth.SignOut,
-    true
-> = async ({ }, { }) => {
+    false
+> = async ({ }) => {
     return {
         success: true,
         data: {
@@ -241,20 +389,21 @@ const signUpVerify: ServiceSignature<
         };
     }
 
-    await userRepository.insert({
+    const newUser = await userRepository.insert({
         name: request.name,
         email: request.email,
         passwordHash: request.passwordHash,
         roles: [
             EUserRole.GUEST,
-            // TODO: REMOVE THIS.
-            // NOTE: Until we have an admin panel,
-            // let all users be a member.
-            EUserRole.MEMBER
         ],
+        designation: EUserDesignation.NONE
     });
 
     await signUpRequestRepository.removeById(request._id);
+
+    await userRepository.updateById(newUser._id, {
+        profileImgMediaKey: `user-assets/${newUser._id.toHexString()}/profileImage`
+    });
 
     return {
         success: true,
@@ -272,16 +421,20 @@ const changePassword: ServiceSignature<
         throw new AppError("Session exists, but user not found.", { session });
     }
 
-    const isCurrentPasswordValid = await verifyStringAndHash(
-        data.password,
-        user.passwordHash
-    );
+    let isCurrentPasswordValid = true;
+
+    if (user.passwordHash !== null) {
+        isCurrentPasswordValid = await verifyStringAndHash(
+            data.password,
+            user.passwordHash
+        );
+    }
 
     if (!isCurrentPasswordValid) {
         return {
             success: false,
             errorCode: ESECs.INVALID_CREDENTIALS,
-            errorMessage: "The password you provided is incorrect.",
+            errorMessage: "Email or password is incorrect.",
         };
     }
 
@@ -335,6 +488,8 @@ const extractSession = async (request: Request): Promise<ISession | null> => {
 const authServices = {
     me,
     signIn,
+    refreshSession,
+    googleOAuth,
     signOut,
     signUp,
     changePassword,

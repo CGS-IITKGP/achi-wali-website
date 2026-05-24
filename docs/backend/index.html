@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CGS Backend Docs</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">CGS Backend</div>
+      <div class="tagline">Next.js API routes, MongoDB, and Cloudinary</div>
+    </header>
+
+    <div class="layout">
+      <nav class="side-nav">
+        <div class="nav-title">Docs</div>
+        <a class="active" href="index.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="code-walkthrough.html">Code walkthrough</a>
+        <a href="types-catalog.html">Types catalog</a>
+        <a href="folder-structure.html">Folder structure</a>
+        <a href="api-routes.html">API routes</a>
+        <a href="auth-flow.html">Auth flow</a>
+        <a href="database.html">Database</a>
+        <a href="adding-features.html">Adding features</a>
+        <div class="nav-meta">
+          System map: <a href="system_map.md">system_map.md</a>
+        </div>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <h1>Backend handbook</h1>
+          <p>
+            This guide explains how the backend works, how data flows through
+            the API layer, and how to extend the system without surprises.
+          </p>
+          <div class="pill">Last updated: 2026-03-13</div>
+        </section>
+
+        <section class="card">
+          <h2>System snapshot</h2>
+          <ul>
+            <li>API routes live under <code>next/src/app/api</code>.</li>
+            <li>
+              Requests flow through <code>createHandler</code> for validation
+              and auth.
+            </li>
+            <li>
+              Services encapsulate business logic and call repository classes.
+            </li>
+            <li>
+              Mongoose models define User, Team, Blog, Project, Media, and
+              Featured.
+            </li>
+            <li>
+              Authentication is JWT-in-cookie with Google OAuth as the primary
+              flow.
+            </li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Start here</h2>
+          <div class="grid">
+            <div class="card">
+              <h3>Architecture</h3>
+              <p>Understand the request lifecycle and middleware guardrails.</p>
+              <a href="architecture.html">Open architecture</a>
+            </div>
+            <div class="card">
+              <h3>Code walkthrough</h3>
+              <p>Follow the handler, types, services, and repositories.</p>
+              <a href="code-walkthrough.html">View code guide</a>
+            </div>
+            <div class="card">
+              <h3>Types catalog</h3>
+              <p>Understand APIControl, SDIn/SDOut, and response enums.</p>
+              <a href="types-catalog.html">Browse types</a>
+            </div>
+            <div class="card">
+              <h3>API routes</h3>
+              <p>See every endpoint, method, and auth requirement.</p>
+              <a href="api-routes.html">Browse API routes</a>
+            </div>
+            <div class="card">
+              <h3>Auth flow</h3>
+              <p>Follow the OAuth flow and JWT session lifecycle.</p>
+              <a href="auth-flow.html">Review auth flow</a>
+            </div>
+            <div class="card">
+              <h3>Database</h3>
+              <p>Explore models, relationships, and repository helpers.</p>
+              <a href="database.html">Inspect data layer</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Roles and access</h2>
+          <table class="data">
+            <thead>
+              <tr>
+                <th>Role</th>
+                <th>Typical access</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>GUEST</code></td>
+                <td>Read-only access to public data.</td>
+              </tr>
+              <tr>
+                <td><code>MEMBER</code></td>
+                <td>Create and manage own projects, blogs, and media.</td>
+              </tr>
+              <tr>
+                <td><code>ADMIN</code></td>
+                <td>Manage users, teams, featured content, and deletions.</td>
+              </tr>
+              <tr>
+                <td><code>ROOT</code></td>
+                <td>Reserved for future high-privilege actions.</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="note">
+            Email/password sign-up exists but is deprecated. Google OAuth is the
+            supported onboarding path.
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      For backend structure details, see
+      <a href="system_map.md">system_map.md</a>.
+    </footer>
+  </body>
+</html>

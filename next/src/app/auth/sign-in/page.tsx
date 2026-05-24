@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Righteous, Roboto } from "next/font/google";
-// import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import Navbar from "../../components/navbar";
-// import GlowingCircle from "../assets/glowing-circle.svg";
 import { useAuth } from "@/app/context/authContext";
 import api from "@/app/axiosApi";
 import toast from "react-hot-toast";
@@ -93,7 +92,7 @@ export default function Login() {
       <Navbar />
 
       {/* Main Content */}
-      <div className="flex items-center justify-center min-h-screen pt-20 px-4">
+      <div className="flex items-center justify-center min-h-screen pt-20 lg:pt-35 px-4 pb-8">
         <div className="w-full max-w-md relative">
           {/* Glowing Circle Asset */}
           {/* <div className="absolute -top-20 -right-20 opacity-30 animate-float">
@@ -126,10 +125,17 @@ export default function Login() {
                   Sign in to your CGS account
                 </p>
               </div>
-
+              <div className="logo flex justify-center items-center mb-2">
+                <Image
+                  src="/logo.png"
+                  alt="CGS_LOGO"
+                  width={250}
+                  height={150}                 
+                  ></Image>
+              </div>
               {/* Login Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email Field */}
+{/*               <form onSubmit={handleSubmit} className="space-y-6">
+                
                 <div className="group">
                   <label
                     className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
@@ -149,7 +155,7 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Password Field */}
+                
                 <div className="group">
                   <label
                     className={`block text-gray-300 text-sm font-medium mb-2 ${paragraph_font.className}`}
@@ -210,7 +216,7 @@ export default function Login() {
                   </div>
                 </div>
 
-                {/* Remember Me & Forgot Password */}
+                
                 <div className="flex items-center justify-between">
                   <label className="flex items-center space-x-2 cursor-pointer group">
                     <div className="relative">
@@ -256,13 +262,13 @@ export default function Login() {
                   </Link>
                 </div>
 
-                {/* Submit Button */}
+                
                 <button
                   type="submit"
                   disabled={isLoading}
                   className="w-full py-3 px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-purple-600 cursor-pointer text-white font-semibold rounded-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group"
                 >
-                  {/* Button Shimmer Effect */}
+                  
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
                   <span className="relative z-10 flex items-center justify-center">
@@ -295,7 +301,33 @@ export default function Login() {
                     )}
                   </span>
                 </button>
-              </form>
+              </form> */}
+
+{/*               <div className="flex items-center my-6">
+                <div className="flex-grow border-t border-white/10"></div>
+                <span
+                  className={`flex-shrink mx-4 text-gray-500 text-sm ${paragraph_font.className}`}
+                >
+                  OR
+                </span>
+                <div className="flex-grow border-t border-white/10"></div>
+              </div> */}
+
+              <Link
+                href="/api/auth/google"
+                className="w-full py-3 px-6 border border-white/20 text-white font-semibold rounded-xl transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group flex items-center justify-center space-x-3 bg-white/5 hover:bg-white/10"
+              >
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-pink-400/0 via-pink-400/5 to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                <Image
+                  src="/icons/google_logo.svg"
+                  alt="Google Icon"
+                  width={24}
+                  height={24}
+                />
+                <span className={`relative z-10 ${paragraph_font.className}`}>
+                  Sign in with Google
+                </span>
+              </Link>
 
               {/* Sign Up Link */}
               <div className="text-center mt-8">

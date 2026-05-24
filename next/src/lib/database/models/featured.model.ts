@@ -11,6 +11,11 @@ const FeaturedSchema = new Schema<IFeatured>({
         type: Schema.Types.ObjectId,
         required: true,
     },
+    isHighlight: {
+        type: Schema.Types.Boolean,
+        required: true,
+        default: false,
+    }
 }, {
     timestamps: true,
 });

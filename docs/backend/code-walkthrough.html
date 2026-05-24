@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Code Walkthrough</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="brand">CGS Backend</div>
+      <div class="tagline">How the code is structured end-to-end</div>
+    </header>
+
+    <div class="layout">
+      <nav class="side-nav">
+        <div class="nav-title">Docs</div>
+        <a href="index.html">Overview</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="code-walkthrough.html" class="active">Code walkthrough</a>
+        <a href="types-catalog.html">Types catalog</a>
+        <a href="folder-structure.html">Folder structure</a>
+        <a href="api-routes.html">API routes</a>
+        <a href="auth-flow.html">Auth flow</a>
+        <a href="database.html">Database</a>
+        <a href="adding-features.html">Adding features</a>
+        <div class="nav-meta">
+          System map: <a href="system_map.md">system_map.md</a>
+        </div>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <h1>Code walkthrough</h1>
+          <p>
+            A contributor-oriented guide that starts at the API handler and
+            ends at the database and external services.
+          </p>
+        </section>
+
+        <section class="card">
+          <h2>Canonical request path</h2>
+          <ol>
+            <li><code>app/api/**/route.ts</code> defines the route handler.</li>
+            <li><code>createHandler</code> (from <code>lib/handler.ts</code>) executes:
+              <ul>
+                <li>Session extraction when <code>requireAuth</code> is true.</li>
+                <li>Body parsing and <code>dataUnifier</code> for path/query data.</li>
+                <li>Zod validation using a schema from <code>lib/validators</code>.</li>
+              </ul>
+            </li>
+            <li>The service function runs (from <code>lib/services</code>).</li>
+            <li>Services call repositories (from <code>lib/database/repos</code>).</li>
+            <li>Repositories run Mongoose queries on models in <code>lib/database/models</code>.</li>
+            <li><code>ResponseHandler</code> standardizes the JSON response.</li>
+          </ol>
+          <div class="note">
+            Always use <code>createHandler</code>. The older name
+            <code>createServiceOnlyHandler</code> was a legacy typo and should not
+            be used in new code.
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Handler structure</h2>
+          <p>
+            <code>createHandler</code> takes a <code>HandlerConfig</code> with a
+            validator schema, auth requirement, and service definition. The
+            handler returns a <code>NextResponse</code> with a uniform payload:
+            <code>{ action, data? }</code> on success or
+            <code>{ action, message, errors? }</code> on failure.
+          </p>
+          <pre class="tree">createHandler({
+  requireAuth: true,
+  validationSchema: widgetValidator.create,
+  dataUnifier: (req, body) => ({ ...body, slug: getSlug(req) }),
+  options: {
+    service: widgetService.create,
+    onSuccess: (data) => ({ responseData: data }),
+  },
+});
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Route handler example (query + path params)</h2>
+          <pre class="tree">// app/api/blog/view/[slug]/route.ts
+import createHandler from "@/lib/handler";
+import blogValidator from "@/lib/validators/blog.validator";
+import blogService from "@/lib/services/blog.service";
+import { APIControl } from "@/lib/types/api.types";
+
+const GET = createHandler({
+  validationSchema: blogValidator.get,
+  dataUnifier: (req) => {
+    const urlTokens = new URL(req.url).pathname.split("/");
+    return {
+      target: APIControl.Blog.Get.Target.BY_SLUG,
+      slug: urlTokens[urlTokens.length - 1],
+    };
+  },
+  requireAuth: false,
+  options: {
+    service: blogService.get,
+  },
+});
+
+export { GET };
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Validator example (Zod)</h2>
+          <pre class="tree">// lib/validators/blog.validator.ts
+import { z } from "zod";
+import { allIbDField } from "./core.validator";
+import { APIControl } from "../types/api.types";
+
+const blogValidator = {
+  get: z.object({
+    target: z.enum(APIControl.Blog.Get.Target),
+    slug: allIbDField.shortString.optional(),
+  }).refine((data) => {
+    if (data.target === APIControl.Blog.Get.Target.BY_SLUG && !data.slug) {
+      return false;
+    }
+    return true;
+  }),
+};
+
+export default blogValidator;
+</pre>
+          <div class="note">
+            All schemas must be Zod. Shared formats belong in
+            <code>core.validator</code> as <code>allIbDField</code> entries.
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Validation rules</h2>
+          <ul>
+            <li>All inputs are validated with Zod.</li>
+            <li>Reusable formats belong in <code>core.validator</code> (see <code>allIbDField</code>).</li>
+            <li>Validators cover both body and query/route params.</li>
+          </ul>
+          <pre class="tree">// core.validator.ts
+const allIbDField = {
+  _id: z.string().transform((val) => new Types.ObjectId(val)),
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  url: z.string().url(),
+};
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Type system map</h2>
+          <p>
+            Types are the backbone of the backend. Prefer adding new types in
+            <code>lib/types</code> unless the data is truly local to a file.
+          </p>
+          <p>
+            For the complete reference, see <a href="types-catalog.html">Types catalog</a>.
+          </p>
+          <ul>
+            <li><code>APIControl</code>: enumerates target strings for query-driven handlers.</li>
+            <li><code>SDIn</code> (ServiceDataIn): input payloads for services.</li>
+            <li><code>SDOut</code> (ServiceDataOut): successful return shapes for services.</li>
+            <li><code>ESECs</code>: Service error codes (Enum). The <code>E</code> prefix denotes enums.</li>
+            <li><code>ServiceSignature</code>: function type for services.</li>
+            <li><code>IServiceResolve</code>: success/error union returned by services.</li>
+            <li><code>SuccessResponseCodesEnum</code>, <code>FailedResponseCodeEnum</code>, <code>FailureResponseCodesEnum</code>:
+              HTTP status mapping.</li>
+          </ul>
+          <pre class="tree">type ServiceSignature<SDIn, SDOut, RequireSession> =
+  (data: SDIn, session: RequireSession extends true ? ISession : ISession | null)
+    => Promise<IServiceResolve<SDOut>>;
+</pre>
+            <pre class="tree">// APIControl example
+        APIControl.Project.Get.Target.ALL
+        APIControl.Project.Get.Target.MY
+        </pre>
+        </section>
+
+        <section class="card">
+          <h2>Service example (auth + business rules)</h2>
+          <pre class="tree">// lib/services/project.service.ts (excerpt)
+const create: ServiceSignature<
+  SDIn.Project.Create,
+  SDOut.Project.Create,
+  true
+> = async (data, session) => {
+  if (!session.userRoles.includes(EUserRole.MEMBER)) {
+    return {
+      success: false,
+      errorCode: ESECs.FORBIDDEN,
+      errorMessage: "Only members can create a new project.",
+    };
+  }
+
+  await projectRepository.insert({
+    portfolio: data.portfolio,
+    title: data.title,
+    description: data.description,
+    tags: data.tags,
+    author: session.userId,
+    collaborators: [],
+    links: data.links,
+    coverImgUrl: data.coverImgUrl,
+    media: [],
+  });
+
+  return { success: true, data: {} };
+};
+</pre>
+          <div class="note">
+            Use <code>ESECs</code> for expected client errors, and throw
+            <code>AppError</code> for unexpected failures.
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Naming conventions</h2>
+          <ul>
+            <li>Handlers live in <code>app/api/**/route.ts</code>.</li>
+            <li>Services: <code>feature.service.ts</code>.</li>
+            <li>Validators: <code>feature.validator.ts</code>.</li>
+            <li>Repositories: <code>feature.repo.ts</code>.</li>
+            <li>Models: <code>feature.model.ts</code>.</li>
+            <li>Types: <code>feature.types.ts</code> or namespace files in <code>lib/types</code>.</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Service layer conventions</h2>
+          <ul>
+            <li>Services return <code>{ success: true, data }</code> or an error code.</li>
+            <li>Authorization lives in services (role checks, ownership checks).</li>
+            <li>Use <code>ESECs</code> for client-facing errors.</li>
+            <li>Throw <code>AppError</code> for unexpected failures.</li>
+          </ul>
+        </section>
+
+        <section class="card">
+          <h2>Repository layer conventions</h2>
+          <ul>
+            <li>Services always call repositories, never raw models.</li>
+            <li>Generic behavior belongs in <code>GenericRepository</code>.</li>
+            <li>Feature-specific queries live in the feature repository.</li>
+          </ul>
+          <pre class="tree">Examples from the codebase
+
+GenericRepository:
+  findAllPaginated, insert, updateById
+
+TeamRepository:
+  findAllExportable (populate members)
+
+BlogRepository:
+  findAllOfListExportable (select -content)
+
+FeaturedRepository:
+  findAllExportableAsList (aggregation + lookups)
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Repository example (custom query)</h2>
+          <pre class="tree">// lib/database/repos/blog.repo.ts (excerpt)
+async findAllOfListExportable(filter = {}, session) {
+  await this.ensureDbConnection();
+  return await this.model
+    .find(filter)
+    .select("-content")
+    .populate({ path: "author", select: "name profileImgUrl" })
+    .session(session || null)
+    .lean()
+    .exec();
+}
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Model example (Mongoose schema)</h2>
+          <pre class="tree">// lib/database/models/team.model.ts (excerpt)
+const TeamSchema = new Schema({
+  name: { type: String, required: true, unique: true, trim: true },
+  description: { type: String, required: true, trim: true },
+  members: [{ type: Schema.Types.ObjectId, ref: "User" }],
+}, { timestamps: true });
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Response format example</h2>
+          <pre class="tree">// Success response
+{
+  "action": true,
+  "data": { "_id": "...", "title": "..." }
+}
+
+// Client error response
+{
+  "action": false,
+  "message": "Only members can create a new project."
+}
+</pre>
+        </section>
+
+        <section class="card">
+          <h2>Middleware example (proxy)</h2>
+          <pre class="tree">// src/proxy.ts (excerpt)
+const isDashboardPage = pathname.startsWith("/dashboard");
+const isAdminPage = pathname.startsWith("/admin");
+
+if (!isAuthenticated && (isDashboardPage || isAdminPage)) {
+  return NextResponse.redirect(new URL("/auth/sign-in", request.url));
+}
+</pre>
+          <div class="note">
+            <code>proxy.ts</code> is the canonical middleware entrypoint for
+            route protection.
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Response format</h2>
+          <ul>
+            <li>Success: <code>{ action: true, data: { ... } }</code></li>
+            <li>Client error: <code>{ action: false, message, errors? }</code></li>
+            <li>Server error: <code>{ action: null }</code> with 500 status</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

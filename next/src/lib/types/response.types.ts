@@ -1,3 +1,5 @@
+import { EUserRole } from "./domain.types";
+
 export enum SuccessResponseCodesEnum {
     OK = 200,
     CREATED = 201,
@@ -45,6 +47,7 @@ export interface ISetCookie {
 }
 
 export interface JWTPayload {
-    [key: string]: string;
+    [key: string]: string | EUserRole[];
     _id: string;
+    roles: EUserRole[];
 }
