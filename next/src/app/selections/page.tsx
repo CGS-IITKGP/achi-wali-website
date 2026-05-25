@@ -125,7 +125,7 @@ function TaskSection({
 }) {
   return (
     <div className="mb-8">
-      <h3 className="text-2xl font-semibold text-pink-200 mb-4">
+      <h3 className="text-xl sm:text-2xl font-semibold text-pink-200 mb-4">
         {title}
       </h3>
 
@@ -133,7 +133,7 @@ function TaskSection({
         {items.map((item, index) => (
           <li
             key={index}
-            className="text-gray-300 leading-relaxed"
+            className="text-gray-300 leading-relaxed text-sm sm:text-base"
           >
             • {item}
           </li>
@@ -177,19 +177,19 @@ export default function SelectionsPage() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-gradient-to-b from-[#12000f] to-black text-white pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-gradient-to-b from-[#12000f] to-black text-white pt-28 sm:pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         {/* Hero */}
 
-        <section className="max-w-6xl mx-auto text-center mb-16">
-          <div className="inline-block mb-6 px-4 py-2 rounded-full border border-pink-500/30 bg-pink-500/10 text-pink-200 text-sm">
+        <section className="max-w-6xl mx-auto text-center mb-12 sm:mb-16">
+          <div className="inline-block mb-5 px-4 py-2 rounded-full border border-pink-500/30 bg-pink-500/10 text-pink-200 text-xs sm:text-sm">
             2026–27 Selections
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold text-pink-300 mb-6">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold text-pink-300 mb-5 leading-tight">
             Sophomore Selections
           </h1>
 
-          <p className="text-gray-400 max-w-3xl mx-auto text-lg leading-relaxed">
+          <p className="text-gray-400 max-w-3xl mx-auto text-sm sm:text-lg leading-relaxed px-2">
             Explore the official selection tasks for WebX,
             Graphics, and Game Development portfolios
             of the Computer Graphics Society.
@@ -198,51 +198,49 @@ export default function SelectionsPage() {
 
         {/* Tabs */}
 
-        <div className="sticky top-24 z-40 mb-10">
-          <div className="max-w-3xl mx-auto grid grid-cols-3 gap-4">
-            {Object.keys(portfolioData).map((tab) => (
-                        <button
-            key={tab}
-            onClick={() => {
-              setActiveTab(tab);
-              setActiveTask(0);
+        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-3 sm:gap-4 mb-10 sm:mb-14">
+          {Object.keys(portfolioData).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => {
+                setActiveTab(tab);
+                setActiveTask(0);
 
-              window.scrollTo({
-                top: 0,
-                behavior: "smooth",
-              });
-            }}
-            className={`w-full py-4 rounded-2xl font-semibold transition-all duration-300 border ${
-              activeTab === tab
-                ? "bg-pink-400 text-black border-pink-300"
-                : "bg-[#1a1a1a]/80 backdrop-blur-xl text-white border-gray-700 hover:border-pink-300"
-            }`}
-          >
-            {tab}
-          </button>
-            ))}
-          </div>
+                window.scrollTo({
+                  top: 0,
+                  behavior: "smooth",
+                });
+              }}
+              className={`w-full py-3 sm:py-4 rounded-2xl font-semibold text-sm sm:text-base transition-all duration-300 border ${
+                activeTab === tab
+                  ? "bg-pink-400 text-black border-pink-300"
+                  : "bg-[#1a1a1a]/80 backdrop-blur-xl text-white border-gray-700 hover:border-pink-300"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
         {/* Download */}
 
-        <div className="flex justify-center mb-16">
+        <div className="flex justify-center mb-12 sm:mb-16">
           <a
             href={currentPortfolio.download}
             download
-            className="inline-flex items-center gap-3 bg-pink-400 text-black font-semibold px-6 py-3 rounded-full hover:scale-105 transition-all duration-300"
+            className="inline-flex items-center justify-center text-center gap-3 bg-pink-400 text-black font-semibold px-5 sm:px-6 py-3 rounded-full hover:scale-105 transition-all duration-300 text-sm sm:text-base"
           >
             Download Full {activeTab} Tasks
           </a>
         </div>
 
-        {/* Main Layout */}
+        {/* Layout */}
 
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-[280px_1fr] gap-10">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-[280px_1fr] gap-8 lg:gap-10">
           {/* Sidebar */}
 
           <aside className="hidden lg:block">
-            <div className="sticky top-40 border border-pink-500/10 bg-white/[0.03] rounded-3xl p-6 backdrop-blur-sm">
+            <div className="sticky top-36 border border-pink-500/10 bg-white/[0.03] rounded-3xl p-6 backdrop-blur-sm">
               <h3 className="text-xl font-semibold text-pink-200 mb-6">
                 Task Contents
               </h3>
@@ -280,49 +278,49 @@ export default function SelectionsPage() {
 
           {/* Tasks */}
 
-          <div className="space-y-20">
+          <div className="space-y-12 sm:space-y-20">
             {currentPortfolio.tasks.map((task, index) => (
               <section
                 id={`task-${index}`}
                 key={index}
-                className="scroll-mt-40 border border-pink-500/10 rounded-3xl p-8 md:p-12 bg-white/[0.03] backdrop-blur-sm"
+                className="scroll-mt-32 border border-pink-500/10 rounded-3xl p-5 sm:p-8 md:p-12 bg-white/[0.03] backdrop-blur-sm"
               >
                 {/* Number */}
 
-                <div className="w-14 h-14 rounded-full bg-pink-400 text-black flex items-center justify-center text-xl font-bold mb-8">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-pink-400 text-black flex items-center justify-center text-lg sm:text-xl font-bold mb-6 sm:mb-8">
                   {index + 1}
                 </div>
 
                 {/* Title */}
 
-                <h2 className="text-4xl font-bold text-pink-300 mb-8">
+                <h2 className="text-3xl sm:text-4xl font-bold text-pink-300 mb-6 leading-tight">
                   {task.title}
                 </h2>
 
-                <p className="text-gray-500 mb-10">
+                <p className="text-gray-500 mb-8 sm:mb-10 text-sm sm:text-base">
                   Portfolio Task • 2026–27 Selection Process
                 </p>
 
                 {/* Introduction */}
 
-                <div className="mb-10">
-                  <h3 className="text-2xl font-semibold text-pink-200 mb-4">
+                <div className="mb-8 sm:mb-10">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-pink-200 mb-4">
                     Introduction
                   </h3>
 
-                  <p className="text-gray-300 leading-relaxed text-lg">
+                  <p className="text-gray-300 leading-relaxed text-sm sm:text-lg">
                     {task.introduction}
                   </p>
                 </div>
 
                 {/* Overview */}
 
-                <div className="mb-10">
-                  <h3 className="text-2xl font-semibold text-pink-200 mb-4">
+                <div className="mb-8 sm:mb-10">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-pink-200 mb-4">
                     Overview
                   </h3>
 
-                  <p className="text-gray-300 leading-relaxed text-lg">
+                  <p className="text-gray-300 leading-relaxed text-sm sm:text-lg">
                     {task.overview}
                   </p>
                 </div>
@@ -336,7 +334,7 @@ export default function SelectionsPage() {
 
                 {/* Phase 1 */}
 
-                <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-6 mb-10">
+                <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-5 sm:p-6 mb-8 sm:mb-10">
                   <TaskSection
                     title="Phase 1"
                     items={task.phase1}
@@ -345,7 +343,7 @@ export default function SelectionsPage() {
 
                 {/* Phase 2 */}
 
-                <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-6 mb-10">
+                <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-5 sm:p-6 mb-8 sm:mb-10">
                   <TaskSection
                     title="Phase 2"
                     items={task.phase2}
@@ -362,7 +360,7 @@ export default function SelectionsPage() {
                 {/* Tech Stack */}
 
                 <div>
-                  <h3 className="text-2xl font-semibold text-pink-200 mb-4">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-pink-200 mb-4">
                     Recommended Tech Stack
                   </h3>
 
@@ -370,13 +368,31 @@ export default function SelectionsPage() {
                     {task.techStack.map((tech, idx) => (
                       <span
                         key={idx}
-                        className="bg-pink-400/10 border border-pink-400/20 text-pink-200 px-4 py-2 rounded-full"
+                        className="bg-pink-400/10 border border-pink-400/20 text-pink-200 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm"
                       >
                         {tech}
                       </span>
                     ))}
                   </div>
                 </div>
+
+                {/* Back To Top */}
+
+                {index === currentPortfolio.tasks.length - 1 && (
+                  <div className="flex justify-center mt-14">
+                    <button
+                      onClick={() => {
+                        window.scrollTo({
+                          top: 0,
+                          behavior: "smooth",
+                        });
+                      }}
+                      className="bg-pink-400 text-black font-semibold px-6 py-3 rounded-full hover:scale-105 transition-all duration-300"
+                    >
+                      Back To Top
+                    </button>
+                  </div>
+                )}
               </section>
             ))}
           </div>
