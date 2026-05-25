@@ -45,6 +45,7 @@ export default function Navbar() {
     setNavItems(() => {
       return [
         ...[
+          { name: "Selections" , href: "/selections"},
           { name: "3D-View", href: "/3d" },
           { name: "Games", href: "/games" },
           { name: "Projects", href: "/projects" },
@@ -94,35 +95,51 @@ export default function Navbar() {
           </Link>
         </motion.div>{" "}
         <div className="hidden lg:flex flex-row items-center gap-8 bg-gray-900/30 backdrop-blur-2xl px-8 py-4 rounded-2xl shadow-2xl border border-pink-500/20 hover:border-pink-500/40 transition-all duration-300">
-          {navItems.map((item, index) => (
-            <motion.div
-              key={item.name}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              className="relative group"
-            >
-              <Link
-                href={item.href}
-                className="font-bold text-white hover:text-pink-300 duration-300 transition-all relative overflow-hidden py-2 px-1"
-                onMouseEnter={() => {
-                  if (item.href === "/3d" && !document.querySelector('link[href="/models/shop/shop.glb"]')) {
-                    const link = document.createElement("link");
-                    link.rel = "prefetch";
-                    link.href = "/models/shop/shop.glb";
-                    link.as = "fetch";
-                    link.crossOrigin = "anonymous";
-                    document.head.appendChild(link);
-                  }
-                }}
-              >
-                <span className="relative z-10">{item.name}</span>
-                <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-pink-500 to-pink-300 group-hover:w-full transition-all duration-300"></div>
-                <div className="absolute inset-0 bg-pink-500/10 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300 origin-center"></div>
-              </Link>
-            </motion.div>
-          ))}
+{navItems.map((item, index) => {
+  const isSelections = item.name === "Selections";
 
+  return (
+    <motion.div
+      key={item.name}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1, duration: 0.5 }}
+      className="relative group"
+    >
+      <Link
+        href={item.href}
+        className={`font-bold duration-300 transition-all relative overflow-hidden py-2 px-3 rounded-lg ${
+          isSelections
+            ? "text-pink-200 bg-pink-500/10 border border-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.5)] hover:shadow-[0_0_25px_rgba(236,72,153,0.8)] hover:border-pink-400 hover:bg-pink-500/20"
+            : "text-white hover:text-pink-300"
+        }`}
+        onMouseEnter={() => {
+          if (
+            item.href === "/3d" &&
+            !document.querySelector('link[href="/models/shop/shop.glb"]')
+          ) {
+            const link = document.createElement("link");
+            link.rel = "prefetch";
+            link.href = "/models/shop/shop.glb";
+            link.as = "fetch";
+            link.crossOrigin = "anonymous";
+            document.head.appendChild(link);
+          }
+        }}
+      >
+        <span className="relative z-10">{item.name}</span>
+        
+        {/* Only show the underline hover effect for non-glowing buttons */}
+        {!isSelections && (
+          <>
+            <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-pink-500 to-pink-300 group-hover:w-full transition-all duration-300"></div>
+            <div className="absolute inset-0 bg-pink-500/10 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300 origin-center"></div>
+          </>
+        )}
+      </Link>
+    </motion.div>
+  );
+})}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
