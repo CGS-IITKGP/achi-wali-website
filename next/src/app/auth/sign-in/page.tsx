@@ -130,11 +130,11 @@ export default function Login() {
                   src="/logo.png"
                   alt="CGS_LOGO"
                   width={250}
-                  height={150}                 
-                  ></Image>
+                  height={150}
+                ></Image>
               </div>
               {/* Login Form */}
-{/*               <form onSubmit={handleSubmit} className="space-y-6">
+              {/*               <form onSubmit={handleSubmit} className="space-y-6">
                 
                 <div className="group">
                   <label
@@ -303,7 +303,7 @@ export default function Login() {
                 </button>
               </form> */}
 
-{/*               <div className="flex items-center my-6">
+              {/*               <div className="flex items-center my-6">
                 <div className="flex-grow border-t border-white/10"></div>
                 <span
                   className={`flex-shrink mx-4 text-gray-500 text-sm ${paragraph_font.className}`}
