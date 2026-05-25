@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/navbar";
 import Footer from "../footer";
 
@@ -145,16 +145,40 @@ function TaskSection({
 
 export default function SelectionsPage() {
   const [activeTab, setActiveTab] = useState("WebX");
+  const [activeTask, setActiveTask] = useState(0);
 
   const currentPortfolio =
     portfolioData[activeTab as keyof typeof portfolioData];
+
+  useEffect(() => {
+    const handleScroll = () => {
+      currentPortfolio.tasks.forEach((_, index) => {
+        const element = document.getElementById(
+          `task-${index}`
+        );
+
+        if (element) {
+          const rect = element.getBoundingClientRect();
+
+          if (rect.top <= 200 && rect.bottom >= 200) {
+            setActiveTask(index);
+          }
+        }
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () =>
+      window.removeEventListener("scroll", handleScroll);
+  }, [currentPortfolio.tasks]);
 
   return (
     <>
       <Navbar />
 
       <main className="min-h-screen bg-gradient-to-b from-[#12000f] to-black text-white pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        {/* Hero Section */}
+        {/* Hero */}
 
         <section className="max-w-6xl mx-auto text-center mb-16">
           <div className="inline-block mb-6 px-4 py-2 rounded-full border border-pink-500/30 bg-pink-500/10 text-pink-200 text-sm">
@@ -172,14 +196,17 @@ export default function SelectionsPage() {
           </p>
         </section>
 
-        {/* Sticky Tabs */}
+        {/* Tabs */}
 
         <div className="sticky top-24 z-40 mb-10">
           <div className="max-w-3xl mx-auto grid grid-cols-3 gap-4">
             {Object.keys(portfolioData).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setActiveTask(0);
+                }}
                 className={`w-full py-4 rounded-2xl font-semibold transition-all duration-300 border ${
                   activeTab === tab
                     ? "bg-pink-400 text-black border-pink-300"
@@ -192,7 +219,7 @@ export default function SelectionsPage() {
           </div>
         </div>
 
-        {/* Download Button */}
+        {/* Download */}
 
         <div className="flex justify-center mb-16">
           <a
@@ -204,100 +231,150 @@ export default function SelectionsPage() {
           </a>
         </div>
 
-        {/* Tasks */}
+        {/* Main Layout */}
 
-        <div className="max-w-6xl mx-auto space-y-20">
-          {currentPortfolio.tasks.map((task, index) => (
-            <section
-              key={index}
-              className="border border-pink-500/10 rounded-3xl p-8 md:p-12 bg-white/[0.03] backdrop-blur-sm"
-            >
-              {/* Task Title */}
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-[280px_1fr] gap-10">
+          {/* Sidebar */}
 
-              <h2 className="text-4xl font-bold text-pink-300 mb-8">
-                {task.title}
-              </h2>
+          <aside className="hidden lg:block">
+            <div className="sticky top-40 border border-pink-500/10 bg-white/[0.03] rounded-3xl p-6 backdrop-blur-sm">
+              <h3 className="text-xl font-semibold text-pink-200 mb-6">
+                Task Contents
+              </h3>
 
-              <p className="text-gray-500 mb-10">
-                Portfolio Task • 2025–26 Selection Process
-              </p>
+              <div className="space-y-3">
+                {currentPortfolio.tasks.map((task, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      document
+                        .getElementById(`task-${index}`)
+                        ?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "start",
+                        });
+                    }}
+                    className={`w-full text-left p-4 rounded-2xl transition-all duration-300 border ${
+                      activeTask === index
+                        ? "bg-pink-400 text-black border-pink-300"
+                        : "bg-black/20 border-white/5 text-gray-300 hover:border-pink-300"
+                    }`}
+                  >
+                    <div className="text-sm font-semibold mb-1">
+                      Task {index + 1}
+                    </div>
 
-              {/* Introduction */}
-
-              <div className="mb-10">
-                <h3 className="text-2xl font-semibold text-pink-200 mb-4">
-                  Introduction
-                </h3>
-
-                <p className="text-gray-300 leading-relaxed text-lg">
-                  {task.introduction}
-                </p>
+                    <div className="text-sm leading-relaxed">
+                      {task.title}
+                    </div>
+                  </button>
+                ))}
               </div>
+            </div>
+          </aside>
 
-              {/* Overview */}
+          {/* Tasks */}
 
-              <div className="mb-10">
-                <h3 className="text-2xl font-semibold text-pink-200 mb-4">
-                  Overview
-                </h3>
+          <div className="space-y-20">
+            {currentPortfolio.tasks.map((task, index) => (
+              <section
+                id={`task-${index}`}
+                key={index}
+                className="scroll-mt-40 border border-pink-500/10 rounded-3xl p-8 md:p-12 bg-white/[0.03] backdrop-blur-sm"
+              >
+                {/* Number */}
 
-                <p className="text-gray-300 leading-relaxed text-lg">
-                  {task.overview}
-                </p>
-              </div>
-
-              {/* Objectives */}
-
-              <TaskSection
-                title="Objectives"
-                items={task.objectives}
-              />
-
-              {/* Phase 1 */}
-
-              <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-6 mb-10">
-                <TaskSection
-                  title="Phase 1"
-                  items={task.phase1}
-                />
-              </div>
-
-              {/* Phase 2 */}
-
-              <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-6 mb-10">
-                <TaskSection
-                  title="Phase 2"
-                  items={task.phase2}
-                />
-              </div>
-
-              {/* Evaluation */}
-
-              <TaskSection
-                title="Evaluation Criteria"
-                items={task.evaluation}
-              />
-
-              {/* Tech Stack */}
-
-              <div>
-                <h3 className="text-2xl font-semibold text-pink-200 mb-4">
-                  Recommended Tech Stack
-                </h3>
-
-                <div className="flex flex-wrap gap-3">
-                  {task.techStack.map((tech, idx) => (
-                    <span
-                      key={idx}
-                      className="bg-pink-400/10 border border-pink-400/20 text-pink-200 px-4 py-2 rounded-full"
-                    >
-                      {tech}
-                    </span>
-                  ))}
+                <div className="w-14 h-14 rounded-full bg-pink-400 text-black flex items-center justify-center text-xl font-bold mb-8">
+                  {index + 1}
                 </div>
-              </div>
-            </section>
-          ))}
+
+                {/* Title */}
+
+                <h2 className="text-4xl font-bold text-pink-300 mb-8">
+                  {task.title}
+                </h2>
+
+                <p className="text-gray-500 mb-10">
+                  Portfolio Task • 2025–26 Selection Process
+                </p>
+
+                {/* Introduction */}
+
+                <div className="mb-10">
+                  <h3 className="text-2xl font-semibold text-pink-200 mb-4">
+                    Introduction
+                  </h3>
+
+                  <p className="text-gray-300 leading-relaxed text-lg">
+                    {task.introduction}
+                  </p>
+                </div>
+
+                {/* Overview */}
+
+                <div className="mb-10">
+                  <h3 className="text-2xl font-semibold text-pink-200 mb-4">
+                    Overview
+                  </h3>
+
+                  <p className="text-gray-300 leading-relaxed text-lg">
+                    {task.overview}
+                  </p>
+                </div>
+
+                {/* Objectives */}
+
+                <TaskSection
+                  title="Objectives"
+                  items={task.objectives}
+                />
+
+                {/* Phase 1 */}
+
+                <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-6 mb-10">
+                  <TaskSection
+                    title="Phase 1"
+                    items={task.phase1}
+                  />
+                </div>
+
+                {/* Phase 2 */}
+
+                <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-6 mb-10">
+                  <TaskSection
+                    title="Phase 2"
+                    items={task.phase2}
+                  />
+                </div>
+
+                {/* Evaluation */}
+
+                <TaskSection
+                  title="Evaluation Criteria"
+                  items={task.evaluation}
+                />
+
+                {/* Tech Stack */}
+
+                <div>
+                  <h3 className="text-2xl font-semibold text-pink-200 mb-4">
+                    Recommended Tech Stack
+                  </h3>
+
+                  <div className="flex flex-wrap gap-3">
+                    {task.techStack.map((tech, idx) => (
+                      <span
+                        key={idx}
+                        className="bg-pink-400/10 border border-pink-400/20 text-pink-200 px-4 py-2 rounded-full"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            ))}
+          </div>
         </div>
       </main>
 
