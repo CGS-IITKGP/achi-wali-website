@@ -177,7 +177,7 @@ export default function SelectionsPage() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-gradient-to-b from-[#12000f] to-black text-white pt-28 sm:pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-gradient-to-b from-[#12000f] to-black text-white pt-28 sm:pt-32 pb-24 px-4 sm:px-6 lg:px-8">
         {/* Hero */}
 
         <section className="max-w-6xl mx-auto text-center mb-12 sm:mb-16">
@@ -198,7 +198,7 @@ export default function SelectionsPage() {
 
         {/* Tabs */}
 
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-3 sm:gap-4 mb-10 sm:mb-14">
+        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-3 sm:gap-4 mb-14">
           {Object.keys(portfolioData).map((tab) => (
             <button
               key={tab}
@@ -220,18 +220,6 @@ export default function SelectionsPage() {
               {tab}
             </button>
           ))}
-        </div>
-
-        {/* Download */}
-
-        <div className="flex justify-center mb-12 sm:mb-16">
-          <a
-            href={currentPortfolio.download}
-            download
-            className="inline-flex items-center justify-center text-center gap-3 bg-pink-400 text-black font-semibold px-5 sm:px-6 py-3 rounded-full hover:scale-105 transition-all duration-300 text-sm sm:text-base"
-          >
-            Download Full {activeTab} Tasks
-          </a>
         </div>
 
         {/* Layout */}
@@ -325,14 +313,10 @@ export default function SelectionsPage() {
                   </p>
                 </div>
 
-                {/* Objectives */}
-
                 <TaskSection
                   title="Objectives"
                   items={task.objectives}
                 />
-
-                {/* Phase 1 */}
 
                 <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-5 sm:p-6 mb-8 sm:mb-10">
                   <TaskSection
@@ -341,8 +325,6 @@ export default function SelectionsPage() {
                   />
                 </div>
 
-                {/* Phase 2 */}
-
                 <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-5 sm:p-6 mb-8 sm:mb-10">
                   <TaskSection
                     title="Phase 2"
@@ -350,14 +332,10 @@ export default function SelectionsPage() {
                   />
                 </div>
 
-                {/* Evaluation */}
-
                 <TaskSection
                   title="Evaluation Criteria"
                   items={task.evaluation}
                 />
-
-                {/* Tech Stack */}
 
                 <div>
                   <h3 className="text-xl sm:text-2xl font-semibold text-pink-200 mb-4">
@@ -375,26 +353,36 @@ export default function SelectionsPage() {
                     ))}
                   </div>
                 </div>
-
-                {/* Back To Top */}
-
-                {index === currentPortfolio.tasks.length - 1 && (
-                  <div className="flex justify-center mt-14">
-                    <button
-                      onClick={() => {
-                        window.scrollTo({
-                          top: 0,
-                          behavior: "smooth",
-                        });
-                      }}
-                      className="bg-pink-400 text-black font-semibold px-6 py-3 rounded-full hover:scale-105 transition-all duration-300"
-                    >
-                      Back To Top
-                    </button>
-                  </div>
-                )}
               </section>
             ))}
+
+            {/* Bottom Actions */}
+
+            <div className="flex items-center justify-between pt-6">
+              {/* Back To Top */}
+
+              <button
+                onClick={() => {
+                  window.scrollTo({
+                    top: 0,
+                    behavior: "smooth",
+                  });
+                }}
+                className="w-14 h-14 rounded-full bg-pink-400 text-black flex items-center justify-center hover:scale-110 transition-all duration-300 text-2xl font-bold"
+              >
+                ↑
+              </button>
+
+              {/* Download Button */}
+
+              <a
+                href={currentPortfolio.download}
+                download
+                className="inline-flex items-center justify-center bg-pink-400 text-black font-semibold px-5 sm:px-6 py-3 rounded-full hover:scale-105 transition-all duration-300 text-sm sm:text-base"
+              >
+                Download {activeTab} Tasks
+              </a>
+            </div>
           </div>
         </div>
       </main>
