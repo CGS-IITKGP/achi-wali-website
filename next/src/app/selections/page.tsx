@@ -201,20 +201,25 @@ export default function SelectionsPage() {
         <div className="sticky top-24 z-40 mb-10">
           <div className="max-w-3xl mx-auto grid grid-cols-3 gap-4">
             {Object.keys(portfolioData).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                  setActiveTask(0);
-                }}
-                className={`w-full py-4 rounded-2xl font-semibold transition-all duration-300 border ${
-                  activeTab === tab
-                    ? "bg-pink-400 text-black border-pink-300"
-                    : "bg-[#1a1a1a]/80 backdrop-blur-xl text-white border-gray-700 hover:border-pink-300"
-                }`}
-              >
-                {tab}
-              </button>
+                        <button
+            key={tab}
+            onClick={() => {
+              setActiveTab(tab);
+              setActiveTask(0);
+
+              window.scrollTo({
+                top: 0,
+                behavior: "smooth",
+              });
+            }}
+            className={`w-full py-4 rounded-2xl font-semibold transition-all duration-300 border ${
+              activeTab === tab
+                ? "bg-pink-400 text-black border-pink-300"
+                : "bg-[#1a1a1a]/80 backdrop-blur-xl text-white border-gray-700 hover:border-pink-300"
+            }`}
+          >
+            {tab}
+          </button>
             ))}
           </div>
         </div>
