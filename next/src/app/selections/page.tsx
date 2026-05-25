@@ -182,7 +182,7 @@ export default function SelectionsPage() {
 
         <section className="max-w-6xl mx-auto text-center mb-16">
           <div className="inline-block mb-6 px-4 py-2 rounded-full border border-pink-500/30 bg-pink-500/10 text-pink-200 text-sm">
-            2025–26 Selections
+            2026–27 Selections
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold text-pink-300 mb-6">
@@ -300,7 +300,7 @@ export default function SelectionsPage() {
                 </h2>
 
                 <p className="text-gray-500 mb-10">
-                  Portfolio Task • 2025–26 Selection Process
+                  Portfolio Task • 2026–27 Selection Process
                 </p>
 
                 {/* Introduction */}
