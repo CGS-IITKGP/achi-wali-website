@@ -7,15 +7,7 @@ const gamedevTasks = [
     step1: "Dream Up Your Game: Your first task is to come up with a game idea. Imagine anything you want, the more imaginative, the better! Think about whether you want to create a 2D or 3D game, what makes your game special, and even the basic storyline (if you have one)",
     step2: "Pick Your Game Engine: Next, you need to choose the software that'll help you build your game. For beginners, we suggest using Unity, but Unreal Engine 5 and Godot are alternate options if you're feeling adventurous.",
     step3: "Create a Trial Level: Using your chosen game engine, build one level of your game. Think of this level as a sneak peek or a trial version of your game. It's like a demo that shows off what makes your game unique. The best part? There are no limits to your creativity! The crazier and more imaginative your game idea, the better your chances of standing out. So, let your imagination run wild, pick your tools, and start creating your very own game. We can't wait to see what you come up with! Good luck!",
-    examplesAndReferences: [
-      { label: "Unity Docs: Unity - Manual", url: "https://docs.unity3d.com/Manual/index.html" },
-      { label: "Unreal Docs", url: "https://docs.unrealengine.com/5.3/en-US/" },
-      { label: "Godot Docs", url: "https://docs.godotengine.org/en/stable/index.html" },
-      { label: "Brackeys", url: "https://www.youtube.com/@Brackeys/featured" },
-      { label: "Sunny Valley Studio", url: "https://www.youtube.com/@SunnyValleyStudio/videos" },
-      { label: "Code Monkey", url: "https://www.youtube.com/@CodeMonkeyUnity/featured" },
-      { label: "GMTK: How I learned Unity without following tutorials", url: "https://www.youtube.com/watch?v=DiIoWrOlIRw" }
-    ]
+
   },
   {
     title: "Problem 2: Theme-Based Game",
@@ -25,10 +17,6 @@ const gamedevTasks = [
     "Parallel worlds": "Parallel worlds invites players to explore realities that exist side by side-different dimensions, timelines, or versions of the same world. Actions in one world may affect another, forcing players to adapt, solve puzzles, survive, or make choices across multiple realities. Whether shifting between worlds, managing alternate selves, or uncovering hidden connections between dimensions, the theme encourages creative gameplay built around contrast, consequence, and discovery.",
     "Impossible space": "\"Impossible Space\" challenges players to navigate worlds where space itself defies logic. Rooms may be larger inside than outside, paths can loop endlessly, gravity may shift unpredictably, and locations might connect in ways that shouldn't be possible. The theme encourages creative mechanics built around warped geometry, perspective, dimension shifting, and non-Euclidean design-turning exploration, puzzles, and movement into mind-bending experiences.",
     "Time Loop": "A time loop is a narrative or gameplay mechanic where events repeat over and over, with the player or character reliving the same period of time until a certain condition is met like breaking the loop, solving a puzzle, or changing the outcome.",
-    examplesAndReferences: [
-      { label: "Assets: Unity asset store/ unreal marketplace, Itch, Sketchfab, Ready Player Me, Vroid Studio.", url: "https://assetstore.unity.com/" },
-      { label: "Mixamo tutorial", url: "https://www.youtube.com/watch?v=Q8lJpoUwaBA" }
-    ]
   }
 ];
 

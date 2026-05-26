@@ -110,7 +110,7 @@ export default function Navbar() {
         href={item.href}
         className={`font-bold duration-300 transition-all relative overflow-hidden py-2 px-3 rounded-lg ${
           isSelections
-            ? "text-pink-200 bg-pink-500/10 border border-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.5)] hover:shadow-[0_0_25px_rgba(236,72,153,0.8)] hover:border-pink-400 hover:bg-pink-500/20"
+            ? "text-pink-200   [text-shadow:_0_0_10px_#f9a8d4] hover:shadow-[0_0_25px_rgba(236,72,153,0.8)] hover:border-pink-400 hover:bg-pink-500/20"
             : "text-white hover:text-pink-300"
         }`}
         onMouseEnter={() => {
@@ -239,39 +239,49 @@ export default function Navbar() {
               </div>
 
               <div className="py-6 xs:py-8 px-4 xs:px-6">
-                {navItems.map((item, index) => (
-                  <motion.div
-                    key={item.name}
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 + 0.2, duration: 0.4 }}
-                    className="mb-2"
-                  >
-                    <Link
-                      href={item.href}
-                      onClick={toggleMenu}
-                      className="block w-full p-3 xs:p-4 rounded-xl text-white font-semibold text-base xs:text-lg hover:bg-pink-500/20 hover:text-pink-300 transition-all duration-300 border border-transparent hover:border-pink-500/30 group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{item.name}</span>
-                        <motion.svg
-                          className="w-5 h-5 text-pink-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          whileHover={{ x: 5 }}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </motion.svg>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
+{navItems.map((item, index) => {
+  const isSelections = item.name === "Selections";
+
+  return (
+    <motion.div
+      key={item.name}
+      initial={{ opacity: 0, x: -50 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.1 + 0.2, duration: 0.4 }}
+      className="mb-2"
+    >
+      <Link
+        href={item.href}
+        onClick={toggleMenu}
+        className={`block w-full p-3 xs:p-4 rounded-xl font-semibold text-base xs:text-lg transition-all duration-300 border group ${
+          isSelections
+            ? "text-pink-200 [text-shadow:_0_0_10px_#f9a8d4] border-transparent hover:border-pink-400 hover:bg-pink-500/20 hover:shadow-[0_0_15px_rgba(236,72,153,0.4)]"
+            : "text-white border-transparent hover:border-pink-500/30 hover:bg-pink-500/20 hover:text-pink-300"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <span>{item.name}</span>
+          <motion.svg
+            className={`w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+              isSelections ? "text-pink-200" : "text-pink-400"
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            whileHover={{ x: 5 }}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
+          </motion.svg>
+        </div>
+      </Link>
+    </motion.div>
+  );
+})}
 
                 <motion.div
                   initial={{ opacity: 0, x: -50 }}

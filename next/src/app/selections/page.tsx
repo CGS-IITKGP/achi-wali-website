@@ -74,15 +74,15 @@ const portfolioData = {
         <h3 className="text-xl sm:text-2xl font-semibold text-pink-200 mb-4 mt-8">Learning Resources</h3>
         <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-5 sm:p-6">
           <ul className="grid sm:grid-cols-2 gap-3 text-gray-300 text-sm sm:text-base">
-            <li className="flex items-center gap-2"><span>▶</span> Docker - Full Course</li>
-            <li className="flex items-center gap-2"><span>▶</span> React Full Playlist</li>
-            <li className="flex items-center gap-2"><span>▶</span> Go Lang Full Course - FreeCodeCamp</li>
-            <li className="flex items-center gap-2"><span>▶</span> Node & Express Full Tutorial</li>
-            <li className="flex items-center gap-2"><span>▶</span> Python Full Course - FreeCodeCamp</li>
-            <li className="flex items-center gap-2"><span>▶</span> Tailwind CSS Crash Course</li>
-            <li className="flex items-center gap-2"><span>▶</span> MongoDB Tutorial for Beginners</li>
-            <li className="flex items-center gap-2"><span>▶</span> PostgreSQL Full Course</li>
-            <li className="flex items-center gap-2 col-span-1 sm:col-span-2"><span>▶</span> Blockchain Development Tutorial (Patrick Collins)</li>
+            <li className="flex items-center gap-2"><span>▶</span> <a href="https://www.youtube.com/watch?v=9bSbNNH4Nqw" className="cursor-pointer hover:underline">Docker - Full Course</a></li>
+            <li className="flex items-center gap-2"><span>▶</span> <a href="https://www.youtube.com/playlist?list=PLu71SKxNbfoDqgPchmvIsL4hTnJIrtige" className="cursor-pointer hover:underline">React Full Playlist</a></li>
+            <li className="flex items-center gap-2"><span>▶</span> <a href="https://www.youtube.com/watch?v=un6ZyFkqFKo" className="cursor-pointer hover:underline">Go Lang Full Course - FreeCodeCamp</a></li>
+            <li className="flex items-center gap-2"><span>▶</span> <a href="https://www.youtube.com/watch?v=Oe421EPjeBE" className="cursor-pointer hover:underline">Node & Express Full Tutorial</a></li>
+            <li className="flex items-center gap-2"><span>▶</span> <a href="https://www.youtube.com/watch?v=jBzwzrDvZ18" className="cursor-pointer hover:underline">Python Full Course - FreeCodeCamp</a></li>
+            <li className="flex items-center gap-2"><span>▶</span> <a href="https://www.youtube.com/watch?v=6biMWgD6_JY" className="cursor-pointer hover:underline">Tailwind CSS Crash Course</a></li>
+            <li className="flex items-center gap-2"><span>▶</span> <a href="https://www.youtube.com/watch?v=c2M-rlkkT5o" className="cursor-pointer hover:underline">MongoDB Tutorial for Beginners</a></li>
+            <li className="flex items-center gap-2"><span>▶</span> <a href="https://www.youtube.com/watch?v=qw--VYLpxG4" className="cursor-pointer hover:underline">PostgreSQL Full Course</a></li>
+            <li className="flex items-center gap-2 col-span-1 sm:col-span-2"><span>▶</span> <a href="https://www.youtube.com/watch?v=gyMwXuJrbJQ" className="cursor-pointer hover:underline"> Blockchain Development Tutorial (Patrick Collins)</a></li>
           </ul>
         </div>
       </div>
@@ -147,20 +147,28 @@ const portfolioData = {
         <h3 className="text-xl sm:text-2xl font-semibold text-pink-200 mb-4 mt-8">Tutorials to Help You on Your Journey :)</h3>
         <div className="bg-pink-500/5 border border-pink-500/10 rounded-2xl p-5 sm:p-6">
           <ul className="space-y-4 text-gray-300 text-sm sm:text-base">
-            <li>
-              <strong className="text-pink-300">Blender Basics:</strong> CrossMind studio absolute beginner blender series (GO THROUGH AT LEAST DAY 1 TO DAY 3 TO BEGIN WITH MODELING)
+            <li><a href="https://www.youtube.com/playlist?list=PLgO2ChD7acqH5S3fCO1GbAJC55NeVaCCp"
+                   className="cursor-pointer hover:underline">
+              <strong className="text-pink-300">Blender Basics:</strong> </a>CrossMind studio absolute beginner blender series (GO THROUGH AT LEAST DAY 1 TO DAY 3 TO BEGIN WITH MODELING)
+            </li>
+            <li><a href="https://www.youtube.com/watch?v=tapTU-xxAZA"
+                   className="cursor-pointer hover:underline">
+              <strong className="text-pink-300">Blender speed issue:</strong></a> EVERY way to SPEED up Cycles! Up to 1000% - Blender 3D - YouTube
+            </li>
+            <li><a href="https://www.youtube.com/watch?v=CBJp82tlR3M"
+                   className="cursor-pointer hover:underline">
+              <strong className="text-pink-300">Animation in blender:</strong> </a>Animation for Beginners! (Blender Tutorial) - YouTube
             </li>
             <li>
-              <strong className="text-pink-300">Blender speed issue:</strong> EVERY way to SPEED up Cycles! Up to 1000% - Blender 3D - YouTube
+              <a href="https://www.youtube.com/watch?v=HJSGoKbNBnQ"
+                 className="cursor-pointer hover:underline">
+              <strong className="text-pink-300">Sculpting in blender:</strong></a> Sculpting for beginners
             </li>
             <li>
-              <strong className="text-pink-300">Animation in blender:</strong> Animation for Beginners! (Blender Tutorial) - YouTube
-            </li>
-            <li>
-              <strong className="text-pink-300">Sculpting in blender:</strong> Sculpting for beginners
-            </li>
-            <li>
-              <strong className="text-pink-300">Donut Series By BlenderGuru:</strong> Beginner donut series
+              <a href="https://www.youtube.com/playlist?list=PLjEaoINr3zgEPv5y--4MKpciLaoQYZB1Z"
+              className="cursor-pointer hover:underline">
+              <strong className="text-pink-300">Donut Series By BlenderGuru:</strong> </a> Beginner donut series
+
             </li>
           </ul>
           <div className="mt-6 p-4 bg-pink-500/10 border border-pink-500/20 rounded-xl">
@@ -438,8 +446,6 @@ function GameDevTask({ task }: { task: any }) {
           })}
         </div>
       )}
-
-      <ListSection title="Examples & References" items={task.examplesAndReferences} />
     </>
   );
 }
