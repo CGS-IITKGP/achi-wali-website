@@ -8,7 +8,6 @@ import { formatValue } from "./utils/formatValue";
 interface PlayerRow {
   rank: number;
   name: string;
-  handle: string;
   value: number;
 }
 
@@ -87,9 +86,6 @@ const PodiumCard: React.FC<{
             {player.name}
           </div>
 
-          <div className="truncate text-[12px] text-white/45">
-            {player.handle}
-          </div>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { fredokaFont, jetbrainsMonoFont } from "@/app/fonts";
 import { GAMES, NAMES } from "@/app/games/sample-data/leaderboard-data";
 import  PodiumCard  from "./PodiumCard";
@@ -11,7 +11,6 @@ import { formatValue } from "./utils/formatValue";
 interface PlayerRow {
   rank: number;
   name: string;
-  handle: string;
   value: number;
 }
 
@@ -19,7 +18,6 @@ function buildBoard(type: "points" | "time"): PlayerRow[] {
   return NAMES.map((name, index) => ({
     rank: index + 1,
     name,
-    handle: "@" + name.toLowerCase(),
 
     value:
       type === "time"
@@ -31,6 +29,28 @@ function buildBoard(type: "points" | "time"): PlayerRow[] {
 const Leaderboard: React.FC = () => {
   const [gameId, setGameId] = useState<string>(GAMES[0].id);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [gameSearch, setGameSearch] = useState<string>("");
+  const [recentGames, setRecentGames] = useState<string[]>([]);
+
+  useEffect(() => {
+    const storedGames = localStorage.getItem("recentGames");
+    if (storedGames) {
+      setRecentGames(JSON.parse(storedGames));
+    }
+  }, []);
+
+  const handleGameSelect = (id: string): void => {
+    setGameId(id);
+    const updatedGames = [
+      id,
+      ...recentGames.filter((gameId) => gameId !== id),
+    ].slice(0, 5);
+    setRecentGames(updatedGames);
+    localStorage.setItem(
+      "recentGames",
+      JSON.stringify(updatedGames)
+    );
+  };
 
   const game = useMemo(
     () => GAMES.find((g) => g.id === gameId)!,
@@ -53,10 +73,21 @@ const Leaderboard: React.FC = () => {
 
   const filteredRows = useMemo(() => {
     return rest.filter((player) =>
-      player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      player.handle.toLowerCase().includes(searchTerm.toLowerCase())
+      player.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [rest, searchTerm]);
+
+  const filteredGames = useMemo(() => {
+    return GAMES.filter((game) =>
+      game.name
+        .toLowerCase()
+        .includes(gameSearch.toLowerCase())
+    );
+  }, [gameSearch]);
+
+  const recentGameObjects = recentGames
+    .map((id) => GAMES.find((g) => g.id === id))
+    .filter((g) => g !== undefined);
   
   return (
     <div
@@ -92,16 +123,53 @@ const Leaderboard: React.FC = () => {
             </p>
           </div>
         </header>
+        {/* Game Search */}
+        <div className="mb-4">
+          <div className="relative w-full max-w-xs">
+            <input
+              type="text"
+              placeholder="Search games..."
+              value={gameSearch}
+              onChange={(e) => setGameSearch(e.target.value)}
+              className="w-full rounded-lg border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-white placeholder-white/40 backdrop-blur-md transition-all focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+            />
 
+            {gameSearch && (
+              <button
+                onClick={() => setGameSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+              >
+                ×
+              </button>
+            )}
+
+            {gameSearch && (
+              <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-lg border border-white/10 bg-[#121212] shadow-lg">
+                {filteredGames.map((g) => (
+                  <button
+                    key={g.id}
+                    onClick={() => {
+                      handleGameSelect(g.id);
+                      setGameSearch("");
+                    }}
+                    className="block w-full px-4 py-2 text-left text-sm text-white hover:bg-pink-500/20"
+                  >
+                    {g.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
         {/* Game Selector */}
         <div className="mb-10 flex flex-wrap gap-2">
-          {GAMES.map((g) => {
+          {recentGameObjects.map((g) => {
             const active = g.id === gameId;
 
             return (
               <button
                 key={g.id}
-                onClick={() => setGameId(g.id)}
+                onClick={() => handleGameSelect(g.id)}
                 className={`game-button ${active ? "game-button-active" : ""}
                   rounded-md border px-4 py-2.5 text-[13px] font-medium transition-all duration-200 hover:-translate-y-[1px]`}
               >
@@ -116,7 +184,7 @@ const Leaderboard: React.FC = () => {
         <section className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
           {podium.map((p, idx) => (
             <PodiumCard
-              key={p.handle}
+              key={`${p.rank}-${p.name}`}
               player={p}
               place={idx + 1}
               unit={game.unit}
@@ -164,7 +232,7 @@ const Leaderboard: React.FC = () => {
             ) : (
              filteredRows.map((r) => (
               <li
-                key={r.handle}
+                key={`${r.rank}-${r.name}`}
                 className="grid grid-cols-12 items-center border-b border-white/[0.06] px-5 py-3.5 transition-colors hover:bg-[linear-gradient(160deg,rgba(255,61,139,0.28)_0%,rgba(20,8,24,0.7)_70%)]
                           hover:border-[rgba(255,61,139,0.6)]
                           hover:shadow-[0_0_0_1px_rgba(255,61,139,0.25),0_6px_18px_-10px_rgba(255,61,139,0.25)]"
@@ -185,9 +253,6 @@ const Leaderboard: React.FC = () => {
                       {r.name}
                     </div>
 
-                    <div className="truncate text-[11px] text-white/40">
-                      {r.handle}
-                    </div>
                   </div>
                 </div>
 
