@@ -1,10 +1,30 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Navbar from "../components/navbar";
 import Footer from "../footer";
 import GameClient from "./component/GameClient";
 import { IProject } from "../types/domain.types";
 import api from "../axiosApi";
+
+export const metadata: Metadata = {
+  title: "CGS Games",
+  description:
+    "Explore games developed by members of the Computer Graphics Society.",
+
+  openGraph: {
+    title: "CGS Games",
+    description:
+      "Explore games developed by members of the Computer Graphics Society.",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "CGS Games",
+    description:
+      "Explore games developed by members of the Computer Graphics Society.",
+  },
+};
 
 const fetchFeaturedGamesProjects = async () => {
   const apiResponse = await api("GET", "/featured", {
