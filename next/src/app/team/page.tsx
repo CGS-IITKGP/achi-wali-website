@@ -17,14 +17,16 @@ export const metadata: Metadata = {
   openGraph: {
     title: "CGS Team",
     description:
-      "Meet the members, executives, seniors and contributors of the Computer Graphics Society.",
+      "Meet the members of the Computer Graphics Society.",
+    images: ["/og/team-og.jpg"],
   },
 
   twitter: {
     card: "summary_large_image",
     title: "CGS Team",
     description:
-      "Meet the members, executives, seniors and contributors of the Computer Graphics Society.",
+      "Meet the members of the Computer Graphics Society.",
+    images: ["/og/team-og.jpg"],
   },
 };
 

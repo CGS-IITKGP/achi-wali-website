@@ -7,6 +7,8 @@ import GameClient from "./component/GameClient";
 import { IProject } from "../types/domain.types";
 import api from "../axiosApi";
 
+
+
 export const metadata: Metadata = {
   title: "CGS Games",
   description:
@@ -16,6 +18,7 @@ export const metadata: Metadata = {
     title: "CGS Games",
     description:
       "Explore games developed by members of the Computer Graphics Society.",
+    images: ["/og/games-og.jpg"],
   },
 
   twitter: {
@@ -23,6 +26,7 @@ export const metadata: Metadata = {
     title: "CGS Games",
     description:
       "Explore games developed by members of the Computer Graphics Society.",
+    images: ["/og/games-og.jpg"],
   },
 };
 
@@ -82,6 +86,14 @@ const getProjectsData = async () => {
 
 export default async function ProjectsPage() {
   const { gamesProject, featuredGamesProject } = await getProjectsData();
+
+  console.log(
+    gamesProject.map((game) => ({
+      title: game.title,
+      image: game.coverImgUrl,
+    }))
+  );
+
 
   return (
     <>

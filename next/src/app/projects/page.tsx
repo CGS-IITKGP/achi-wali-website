@@ -17,6 +17,7 @@ export const metadata: Metadata = {
     title: "CGS Projects",
     description:
       "Explore graphics, research and development projects created by members of the Computer Graphics Society.",
+    images: ["/og/projects-og.jpg"],
   },
 
   twitter: {
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
     title: "CGS Projects",
     description:
       "Explore graphics, research and development projects created by members of the Computer Graphics Society.",
+    images: ["/og/projects-og.jpg"],
   },
 };
 
