@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { ArrowRight, Calendar, Star } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,6 +17,27 @@ const robotoFont = Roboto({
   weight: ["300", "400", "500", "700"],
   subsets: ["latin"],
 });
+
+export const metadata: Metadata = {
+  title: "CGS Blog",
+  description:
+    "Discover insights, tutorials, and stories from the world of computer graphics, web development and game development.",
+
+  openGraph: {
+    title: "CGS Blog",
+    description:
+      "Discover insights, tutorials, and stories from the world of computer graphics, web development and game development.",
+    // images: ["/og/blog-og.jpg"],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "CGS Blog",
+    description:
+      "Discover insights, tutorials, and stories from the world of computer graphics, web development and game development.",
+    // images: ["/og/blog-og.jpg"],
+  },
+};
 
 const fetchAllBlogs = async (): Promise<IBlogOfList[]> => {
   const apiResponse = await api("GET", "/blog", {
