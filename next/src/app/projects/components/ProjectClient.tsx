@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { motion /*Variants*/ } from "framer-motion";
 import { righteousFont, robotoFont } from "../../fonts";
-import { ExternalLink, FlaskConical, Github } from "lucide-react";
+import { ExternalLink, FlaskConical, Github, Play, X } from "lucide-react";
 import { Image as GraphicsIcon } from "lucide-react";
 // import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import { FiMousePointer } from "react-icons/fi";
@@ -49,6 +49,18 @@ export default function ProjectsClient({
   const [filteredProjects, setFilteredProjects] = useState<IProject[]>(projects);
   const [portfolioFilter, setPortfolioFilter] = useState("ALL");
   const portfolioOptions = ["ALL", ...new Set(projects.map(p => p.portfolio))];
+
+  const [simulateProject, setSimulateProject] = useState<IProject | null>(null);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (simulateProject) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [simulateProject]);
 
   useEffect(() => {
     setHasMounted(true);
@@ -519,6 +531,19 @@ export default function ProjectsClient({
                           ),
                         )}
                       </div>
+                      {proj.portfolio === "RND" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSimulateProject(proj);
+                          }}
+                          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500/20 to-purple-500/20 px-4 py-2 text-xs sm:text-sm font-semibold text-white backdrop-blur-sm border border-pink-500/30 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(236,72,153,0.5)]"
+                        >
+                          <Play className="h-4 w-4" fill="currentColor" />
+                          Simulate
+                        </button>
+                      )}
+
 
                       <div className="mt-4 h-[1px] w-2/3 bg-gradient-to-r from-transparent via-pink-500/50 to-transparent animate-pulse" />
                     </div>
@@ -528,6 +553,37 @@ export default function ProjectsClient({
             )))}
         </div>
       </div>
+
+    {simulateProject && (
+      <div
+        className="fixed inset-0 z-50 flex items-start justify-center pt-32 px-6 pb-10 bg-black/60 backdrop-blur-sm"
+        onClick={() => setSimulateProject(null)}
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full h-[calc(100vh-12rem)] max-w-6xl rounded-3xl border-2 border-pink-500/30 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black shadow-[0_0_40px_-5px_rgba(236,72,153,0.4)] overflow-hidden"
+        >
+          <div className="absolute top-0 left-0 z-10 px-6 py-4">
+            <h1 className={`text-lg sm:text-xl font-bold text-white ${righteousFont.className}`}>
+              {simulateProject.title}
+            </h1>
+          </div>
+          <button
+            onClick={() => setSimulateProject(null)}
+            aria-label="Close simulation"
+            className="absolute top-4 right-4 z-10 flex items-center justify-center h-10 w-10 rounded-full bg-pink-500/20 border border-pink-500/40 text-white hover:bg-pink-500/40 hover:scale-110 transition-all duration-300"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+
+            <div className={`flex h-full w-full items-center justify-center text-gray-300 text-lg sm:text-xl ${righteousFont.className}`}>
+              No preview available.
+            </div>
+         
+        </div>
+      </div>
+    )}
     </>
   );
 }
