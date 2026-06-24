@@ -158,7 +158,7 @@ export default async function Home() {
             playsInline
             className="object-cover w-full h-full"
           >
-            <source src="/landingvideo.mp4" type="video/mp4" />
+            <source src="/landingvideo-optimised.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-black/50"></div>
         </div>
