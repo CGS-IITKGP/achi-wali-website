@@ -49,7 +49,7 @@ const serviceData: IServiceData[] = [
       "We craft engaging and interactive games using Unity, delivering dynamic gameplay experiences with smooth mechanics, intuitive controls, and immersive storytelling.",
     icon: (
       <Image
-        src={"/game-controller.png"}
+        src={"/game-controller.webp"}
         alt="Game Controller"
         width={100}
         height={100}
@@ -63,7 +63,7 @@ const serviceData: IServiceData[] = [
     description:
       "Our expertise ensures high-quality visuals, from detailed environments to dynamic lighting and textures. We create stunning animations and artwork that push creative boundaries.",
     icon: (
-      <Image src={"/rocket-3d.png"} alt="Animation" width={100} height={100} />
+      <Image src={"/rocket-3d.webp"} alt="Animation" width={100} height={100} />
     ),
     aosDelay: "500",
     link: "/projects",
@@ -74,7 +74,7 @@ const serviceData: IServiceData[] = [
       "We're at the forefront of game technology, researching advanced shaders, AI, and machine learning to pioneer innovative visual effects and AI-driven gameplay mechanics.",
     icon: (
       <Image
-        src={"/microscope-3d.png"}
+        src={"/microscope-3d.webp"}
         alt="Game Development"
         width={100}
         height={100}
