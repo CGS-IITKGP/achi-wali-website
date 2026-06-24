@@ -53,6 +53,7 @@ const serviceData: IServiceData[] = [
         alt="Game Controller"
         width={100}
         height={100}
+        sizes="100px"
       />
     ),
     aosDelay: "300",
@@ -63,7 +64,7 @@ const serviceData: IServiceData[] = [
     description:
       "Our expertise ensures high-quality visuals, from detailed environments to dynamic lighting and textures. We create stunning animations and artwork that push creative boundaries.",
     icon: (
-      <Image src={"/rocket-3d.webp"} alt="Animation" width={100} height={100} />
+      <Image src={"/rocket-3d.webp"} alt="Animation" width={100} height={100} sizes="100px"/>
     ),
     aosDelay: "500",
     link: "/projects",
@@ -78,6 +79,7 @@ const serviceData: IServiceData[] = [
         alt="Game Development"
         width={100}
         height={100}
+        sizes="100px"
       />
     ),
     aosDelay: "700",
