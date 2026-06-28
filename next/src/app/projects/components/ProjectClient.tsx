@@ -11,6 +11,7 @@ import { Image as GraphicsIcon } from "lucide-react";
 import { FiMousePointer } from "react-icons/fi";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { IProject } from "@/app/types/domain.types";
+import BoidsCanvas from "@/app/projects/components/BoidsCanvas";
 import { prettySafeImage } from "@/app/utils/pretty";
 
 // const detailsVariants = {
@@ -555,35 +556,57 @@ export default function ProjectsClient({
       </div>
 
     {simulateProject && (
-      <div
-        className="fixed inset-0 z-50 flex items-start justify-center pt-32 px-6 pb-10 bg-black/60 backdrop-blur-sm"
-        onClick={() => setSimulateProject(null)}
-      >
         <div
-          onClick={(e) => e.stopPropagation()}
-          className="relative w-full h-[calc(100vh-12rem)] max-w-6xl rounded-3xl border-2 border-pink-500/30 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black shadow-[0_0_40px_-5px_rgba(236,72,153,0.4)] overflow-hidden"
+          className="fixed inset-0 z-50 flex items-start justify-center pt-32 px-6 pb-10 bg-black/60 backdrop-blur-sm"
+          onClick={() => setSimulateProject(null)}
         >
-          <div className="absolute top-0 left-0 z-10 px-6 py-4">
-            <h1 className={`text-lg sm:text-xl font-bold text-white ${righteousFont.className}`}>
-              {simulateProject.title}
-            </h1>
-          </div>
-          <button
-            onClick={() => setSimulateProject(null)}
-            aria-label="Close simulation"
-            className="absolute top-4 right-4 z-10 flex items-center justify-center h-10 w-10 rounded-full bg-pink-500/20 border border-pink-500/40 text-white hover:bg-pink-500/40 hover:scale-110 transition-all duration-300"
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-6xl h-[calc(100vh-12rem)] rounded-3xl border-2 border-pink-500/30 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black shadow-[0_0_40px_-5px_rgba(236,72,153,0.4)] flex flex-col overflow-hidden"
           >
-            <X className="h-5 w-5" />
-          </button>
 
+            {/* ---------- HEADER ---------- */}
 
-            <div className={`flex h-full w-full items-center justify-center text-gray-300 text-lg sm:text-xl ${righteousFont.className}`}>
-              No preview available.
+            <div className="flex items-center justify-between px-8 py-5 border-b border-pink-500/20">
+
+              <h1
+                className={`text-xl font-bold text-white ${righteousFont.className}`}
+              >
+                {simulateProject.title}
+              </h1>
+
+              <button
+                onClick={() => setSimulateProject(null)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-500/40 text-white hover:bg-pink-500/40 hover:scale-110 transition-all"
+              >
+                ✕
+              </button>
+
             </div>
-         
+
+            {/* ---------- CONTENT ---------- */}
+
+            <div className="flex-1 p-6">
+
+              <div className="h-full rounded-2xl border border-pink-500/20 overflow-hidden bg-black">
+
+                {simulateProject.title === "Boids Simulation" ? (
+                  <BoidsCanvas />
+                ) : (
+                  <div
+                    className={`flex h-full w-full items-center justify-center text-gray-300 text-lg ${righteousFont.className}`}
+                  >
+                    No preview available.
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
+          </div>
         </div>
-      </div>
-    )}
+      )}
     </>
   );
 }
