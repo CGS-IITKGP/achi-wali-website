@@ -19,6 +19,7 @@ import {
   MAX_ASSET_UPLOAD_FILE_SIZE,
   MAX_ASSET_PREVIEW_SIZE,
 } from "../utils/config";
+import { count } from "console";
 
 type AllSections = "BLOGS" | "PROJECTS" | "PROFILE" | "ASSETS";
 
@@ -2256,6 +2257,8 @@ interface NewBlogModalProps {
 
 const NewBlogModal = (props: NewBlogModalProps) => {
   const [title, setTitle] = useState("");
+  const [titlecount, setTitlecount]=useState(0);
+  const maxlen =150;
   const [slug, setSlug] = useState("");
   const [tags, setTags] = useState("");
   const [coverImgUrl, setCoverImgUrl] = useState("");
@@ -2334,10 +2337,13 @@ const NewBlogModal = (props: NewBlogModalProps) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm text-gray-300 mb-2">Title</label>
+          <label className="block text-xs text-gray-300 mb-2">{titlecount}/{maxlen}</label>
           <input
             value={title}
             required
+            maxLength={maxlen}
             onChange={(e) => {
+              setTitlecount(e.target.value.length)
               setTitle(e.target.value);
               setSlug(generateSlugFromTitle(e.target.value));
             }}

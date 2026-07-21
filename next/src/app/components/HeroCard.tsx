@@ -96,7 +96,7 @@ const HeroCard: React.FC = () => {
     >
       <AnimatedBackground />
 
-      <div className="relative max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 z-10">
+      <div className="relative max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 z-0">
         {serviceData.map((item, index) => (
           <div
             key={index}
