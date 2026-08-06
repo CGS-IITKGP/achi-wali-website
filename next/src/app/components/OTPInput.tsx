@@ -49,7 +49,7 @@ const OTPInputComponent: React.FC<IOTPInputComponentProps> = ({
  return (
   <div className="flex flex-wrap justify-between gap-2 sm:gap-3 w-full">
     {Array.from({ length }, (_, index) => (
-      <div key={index} className="relative group">
+      <div key={`otp-digit-${index}`} className="relative group">
         <input
           type="text"
           maxLength={1}

@@ -12,7 +12,7 @@ const AnimatedBackground = React.memo(() => {
       <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black" />
       {[...Array(6)].map((_, i) => (
         <div
-          key={i}
+          key={`hero-bg-orb-${i}`}
           className="absolute rounded-full opacity-10 animate-float"
           style={{
             width: `${120 + i * 30}px`,
@@ -99,7 +99,7 @@ const HeroCard: React.FC = () => {
       <div className="relative max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 z-10">
         {serviceData.map((item, index) => (
           <div
-            key={index}
+            key={`service-card-${item.title}`}
             data-aos="fade-up"
             data-aos-delay={item.aosDelay}
             data-aos-once="true"

@@ -291,7 +291,7 @@ const UserProfile = () => {
                                         const Icon = getIconForLink(link.text);
                                         return (
                                             <a
-                                                key={index}
+                                                key={`user-link-${index}`}
                                                 href={link.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"

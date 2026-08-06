@@ -214,7 +214,7 @@ export default function GameClient({
                   >
                     {currentGame.tags?.map((tech, index) => (
                       <span
-                        key={index}
+                        key={`game-tech-${currentGame._id}-${index}`}
                         className="px-3 py-1 bg-gray-800/60 backdrop-blur-sm rounded-full text-gray-300 text-sm border border-gray-600/40"
                       >
                         {tech}
@@ -398,7 +398,7 @@ export default function GameClient({
         >
           {featuredGames.map((_, index) => (
             <button
-              key={index}
+              key={`game-dot-${index}`}
               onClick={() => selectGame(index)}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
                 selectedGame === index
@@ -538,7 +538,7 @@ export default function GameClient({
                   <div className="flex flex-wrap gap-2 mb-4">
                     {game.tags?.slice(0, 2).map((tech, techIndex) => (
                       <span
-                        key={techIndex}
+                        key={`card-tech-${game._id}-${techIndex}`}
                         className="px-2 py-1 bg-gray-800/60 text-gray-300 text-xs rounded-full border border-gray-600/40 hover:border-pink-500/40 hover:text-pink-300 transition-all duration-300"
                       >
                         {tech}
