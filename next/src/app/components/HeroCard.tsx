@@ -92,7 +92,7 @@ const HeroCard: React.FC = () => {
   return (
     <section
       id="services"
-      className="relative overflow-hidden py-20 px-6 sm:px-12 bg-black/40"
+      className="relative z-0 overflow-hidden py-20 px-6 sm:px-12 bg-black/40"
     >
       <AnimatedBackground />
 
