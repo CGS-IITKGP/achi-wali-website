@@ -309,6 +309,7 @@ export namespace SDIn {
         export type Get = {
             target: APIControl.GameScore.Get.Target;
             gameId: string;
+            gameToken?: string;
         };
     }
 

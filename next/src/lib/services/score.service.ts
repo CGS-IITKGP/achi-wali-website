@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { unstable_cache } from "next/cache";
 import { Types } from "mongoose";
 import scoreRepository from "@/lib/database/repos/score.repo";
 import { validateJWToken } from "@/lib/services/core/jwt.core.service";
@@ -8,7 +9,10 @@ import {
     ServiceSignature,
     SDIn,
     SDOut,
+    APIControl,
+    IScoreExportable,
 } from "@/lib/types/index.types";
+import gameUserRepository from "@/lib/database/repos/gameUser.repo";
 
 const create: ServiceSignature<
     SDIn.GameScore.Create,
@@ -43,8 +47,23 @@ const create: ServiceSignature<
         };
     }
 
-    // Step D: High-score check & Database operation
+    // Rate limit check using GameUser DB record
     const playerId = new Types.ObjectId(decodedPlayer._id);
+    const gameUser = await gameUserRepository.findById(playerId);
+
+    if (gameUser) {
+        const submitBlockedTill = gameUser.lastAttemptAt ? gameUser.lastAttemptAt.getTime() + 60 * 1000 : 0;
+        if (Date.now() < submitBlockedTill) {
+            return {
+                success: false,
+                errorCode: ESECs.TOO_MANY_REQUESTS,
+                errorMessage: "Please wait a moment before trying again.",
+            };
+        }
+        await gameUserRepository.updateById(playerId, { lastAttemptAt: new Date() });
+    }
+
+    // Step D: High-score check & Database operation
     const existingRecord = await scoreRepository.findOne({
         player: playerId,
         gameId: data.gameId,
@@ -75,7 +94,40 @@ const get: ServiceSignature<
     SDOut.GameScore.Get,
     false
 > = async (data) => {
-    const scores = await scoreRepository.getTopScores(data.gameId);
+    let scores: IScoreExportable[] = [];
+
+    if (data.target === APIControl.GameScore.Get.Target.MY_SCORES) {
+        if (!data.gameToken) {
+            return {
+                success: false,
+                errorCode: ESECs.INVALID_GAME_TOKEN,
+                errorMessage: "gameToken is required to fetch my scores.",
+            };
+        }
+
+        const decodedPlayer = await validateJWToken(data.gameToken, getGameSecretKey());
+        if (!decodedPlayer || !decodedPlayer._id) {
+            return {
+                success: false,
+                errorCode: ESECs.INVALID_GAME_TOKEN,
+                errorMessage: "Invalid or expired game session.",
+            };
+        }
+
+        const playerId = new Types.ObjectId(decodedPlayer._id);
+        const myScore = await scoreRepository.getMyScore(playerId, data.gameId);
+
+        if (myScore) {
+            scores = [myScore];
+        }
+    } else {
+        const fetchLeaderboard = unstable_cache(
+            async () => await scoreRepository.getTopScores(data.gameId),
+            ["leaderboard", data.gameId],
+            { revalidate: 10 }
+        );
+        scores = await fetchLeaderboard();
+    }
 
     const formattedScores = scores.map((score) => ({
         _id: score._id.toHexString(),

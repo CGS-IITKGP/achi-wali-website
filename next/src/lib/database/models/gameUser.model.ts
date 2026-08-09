@@ -26,6 +26,10 @@ const GameUserSchema = new Schema<IGameUser>(
             required: true,
             unique: true,
         },
+        lastAttemptAt: {
+            type: Schema.Types.Date,
+            default: null,
+        },
     },
     {
         timestamps: true,

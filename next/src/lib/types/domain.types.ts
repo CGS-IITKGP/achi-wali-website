@@ -201,12 +201,13 @@ export interface IGameUser {
     email: string;
     passwordHash: string;
     websiteUserId: Types.ObjectId;
+    lastAttemptAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
 }
 
 export type GameUserCreateType = Pick<IGameUser, "username" | "email" | "passwordHash" | "websiteUserId">;
-export type GameUserUpdateType = Partial<Pick<IGameUser, "username" | "passwordHash">>;
+export type GameUserUpdateType = Partial<Pick<IGameUser, "username" | "passwordHash" | "lastAttemptAt">>;
 
 export interface IScore {
     _id: Types.ObjectId;

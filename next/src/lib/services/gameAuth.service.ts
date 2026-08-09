@@ -20,6 +20,19 @@ const login: ServiceSignature<
         $or: [{ username: identifierLower }, { email: identifierLower }],
     });
 
+    if (player) {
+        const loginBlockedTill = player.lastAttemptAt ? player.lastAttemptAt.getTime() + 60 * 1000 : 0;
+        if (Date.now() < loginBlockedTill) {
+            return {
+                success: false,
+                errorCode: ESECs.TOO_MANY_REQUESTS,
+                errorMessage: "Please wait a moment before trying again.",
+            };
+        }
+
+        await gameUserRepository.updateById(player._id, { lastAttemptAt: new Date() });
+    }
+
     if (!player || !player.passwordHash) {
         return {
             success: false,

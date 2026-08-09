@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import GenericRepository from "./generic.repo";
 import ScoreModel from "@/lib/database/models/score.model";
 import {
@@ -31,6 +32,21 @@ class ScoreRepository extends GenericRepository<
                 .lean<IScoreExportable[]>();
         } catch (error) {
             throw new AppError("Failed to fetch leaderboard", { error });
+        }
+    }
+
+    async getMyScore(
+        playerId: Types.ObjectId,
+        gameId: string
+    ): Promise<IScoreExportable | null> {
+        await this.ensureDbConnection();
+
+        try {
+            return await ScoreModel.findOne({ player: playerId, gameId })
+                .populate({ path: "player", select: "username" })
+                .lean<IScoreExportable>();
+        } catch (error) {
+            throw new AppError("Failed to fetch player score", { error });
         }
     }
 }
