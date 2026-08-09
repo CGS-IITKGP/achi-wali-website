@@ -176,17 +176,21 @@ const serviceErrorCodeHandler = (
         case ESECs.INVALID_OTP:
         case ESECs.UNAUTHORIZED:
         case ESECs.GOOGLE_OAUTH_FAILED:
+        case ESECs.INVALID_GAME_TOKEN:
             return responseHandler.sendFailed(FailedResponseCodeEnum.UNAUTHORIZED, errorMessage);
 
         case ESECs.FORBIDDEN:
         case ESECs.NOT_TEAM_MEMBER:
+        case ESECs.INVALID_SCORE_SIGNATURE:
             return responseHandler.sendFailed(FailedResponseCodeEnum.FORBIDDEN, errorMessage);
+
 
         case ESECs.EMAIL_TAKEN:
         case ESECs.TEAM_NAME_TAKEN:
         case ESECs.SLUG_ALREADY_IN_USE:
         case ESECs.ALREADY_FEATURED:
         case ESECs.MEDIA_PUBLIC_ID_ALREADY_EXISTS:
+        case ESECs.GAME_USERNAME_TAKEN:
             return responseHandler.sendFailed(FailedResponseCodeEnum.CONFLICT, errorMessage);
 
         case ESECs.TOO_MANY_REQUESTS:

@@ -1,0 +1,40 @@
+import GenericRepository from "./generic.repo";
+import ScoreModel from "@/lib/database/models/score.model";
+import {
+    IScore,
+    IScoreExportable,
+    ScoreCreateType,
+    ScoreUpdateType,
+} from "@/lib/types/index.types";
+import AppError from "@/lib/utils/error";
+
+class ScoreRepository extends GenericRepository<
+    IScore,
+    ScoreCreateType,
+    ScoreUpdateType
+> {
+    constructor() {
+        super(ScoreModel);
+    }
+
+    async getTopScores(
+        gameId: string,
+        limit: number = 10
+    ): Promise<IScoreExportable[]> {
+        await this.ensureDbConnection();
+
+        try {
+            return await ScoreModel.find({ gameId })
+                .sort({ score: -1 })
+                .limit(limit)
+                .populate({ path: "player", select: "username" })
+                .lean<IScoreExportable[]>();
+        } catch (error) {
+            throw new AppError("Failed to fetch leaderboard", { error });
+        }
+    }
+}
+
+const scoreRepository = new ScoreRepository();
+
+export default scoreRepository;

@@ -39,6 +39,10 @@ export enum ESECs {
 
     MEDIA_NOT_FOUND,
     MEDIA_PUBLIC_ID_ALREADY_EXISTS,
+
+    INVALID_GAME_TOKEN,
+    INVALID_SCORE_SIGNATURE,
+    GAME_USERNAME_TAKEN,
 }
 
 export namespace SDIn {
@@ -284,6 +288,39 @@ export namespace SDIn {
         export type Remove = {
             _id: Types.ObjectId,
         };
+    }
+
+    export namespace GameAuth {
+        export type Login = {
+            identifier: string;
+            password: string;
+        };
+    }
+
+    export namespace GameScore {
+        export type Create = {
+            gameId: string;
+            score: number;
+            timestamp: number;
+            gameToken: string;
+            signature: string;
+        };
+
+        export type Get = {
+            target: APIControl.GameScore.Get.Target;
+            gameId: string;
+        };
+    }
+
+    export namespace GameProfile {
+        // POST body — username + password only; email is taken from the session server-side
+        export type Upsert = {
+            username: string;
+            password: string;
+        };
+
+        // GET — no body needed; session identifies the user
+        export type Get = object;
     }
 }
 
@@ -599,6 +636,43 @@ export namespace SDOut {
         export type UpdateTeam = EmptyObject;
         export type UpdateAssignment = EmptyObject;
         export type Remove = EmptyObject;
+    }
+
+    export namespace GameAuth {
+        export type Login = {
+            userId: string;
+            username: string;
+            gameToken: string;
+        };
+    }
+
+    export namespace GameProfile {
+        export type Upsert = {
+            message: string;
+        };
+
+        export type Get = {
+            linked: false;
+        } | {
+            linked: true;
+            username: string;
+        };
+    }
+
+    export namespace GameScore {
+        export type Create = EmptyObject;
+
+        export type Get = {
+            _id: string;
+            player: {
+                _id: string;
+                username: string;
+            };
+            gameId: string;
+            score: number;
+            createdAt: Date;
+            updatedAt: Date;
+        }[];
     }
 }
 

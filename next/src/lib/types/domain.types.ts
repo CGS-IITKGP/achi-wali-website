@@ -194,3 +194,37 @@ export type IFeaturedExportableAsList = {
     contentTitle: string;
     isHighlight: string;
 }
+
+export interface IGameUser {
+    _id: Types.ObjectId;
+    username: string;
+    email: string;
+    passwordHash: string;
+    websiteUserId: Types.ObjectId;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export type GameUserCreateType = Pick<IGameUser, "username" | "email" | "passwordHash" | "websiteUserId">;
+export type GameUserUpdateType = Partial<Pick<IGameUser, "username" | "passwordHash">>;
+
+export interface IScore {
+    _id: Types.ObjectId;
+    player: Types.ObjectId;
+    gameId: string;
+    score: number;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface IScoreExportable extends Omit<IScore, "player"> {
+    player: {
+        _id: Types.ObjectId;
+        username: string;
+    };
+}
+
+export type ScoreCreateType = Pick<IScore, "player" | "gameId" | "score">;
+export type ScoreUpdateType = Partial<ScoreCreateType>;
+
+

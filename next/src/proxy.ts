@@ -16,11 +16,11 @@ export async function proxy(request: NextRequest) {
         if (verifyToken !== null) {
             isAuthenticated = true;
 
-            if (verifyToken.roles.includes(EUserRole.MEMBER)) {
+            if (verifyToken.roles?.includes(EUserRole.MEMBER)) {
                 isMember = true;
             }
 
-            if (verifyToken.roles.includes(EUserRole.ADMIN)) {
+            if (verifyToken.roles?.includes(EUserRole.ADMIN)) {
                 isAdmin = true;
             }
         }
