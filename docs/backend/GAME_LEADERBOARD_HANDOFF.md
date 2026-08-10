@@ -2,6 +2,8 @@
 
 > This document combines the product vision (`idea.md`) with the **verified, working backend contract** (`LEADERBOARD_BACKEND_MAP.md`) into one place. The backend is fully built, tested end-to-end, and pushed to `bug_fixes`. Your job is to build the three pieces described below **against this contract exactly as written** — you do not need to touch any backend code.
 
+> **Last updated:** 2026-08-10 — Added `GET /api/game/list` endpoint; corrected rate-limit cooldown 60 s → 3 s; documented `unstable_cache` fix; leaderboard frontend wired to real backend; **reverted `score` to `number` and added `scoreStr` as `string`** for dual payload.
+
 ---
 
 ## 1. The Big Picture (what we're building and why)
@@ -145,6 +147,24 @@ This single endpoint handles **both** first-time creation and later updates — 
 
 **Deliverable:** A leaderboard UI on the website showing the top scores for a given game, live/near-live.
 
+### Fetching the list of available games
+
+Before rendering the game search bar and selection tabs, fetch the list of game IDs that actually have scores in the database:
+
+```
+GET /api/game/list
+Auth: none required — public endpoint
+```
+
+**Response:**
+```json
+{ "action": true, "data": ["space-runner", "possessed", "cookie-runner"] }
+```
+
+- `data` is a `string[]` of distinct `gameId` values — only games that have at least one score in the database.
+- Returns `[]` (empty array, not an error) if no scores have been submitted yet.
+- Use this to populate the search dropdown and the game tab buttons dynamically. **Do not use a hardcoded mock array** — this endpoint is the source of truth for which games are active.
+
 ### Fetching the leaderboard
 
 ```
@@ -178,7 +198,6 @@ Auth: none required — this is a public endpoint
 ### Optional: "My Score" view
 
 If you want a "your personal best" widget (separate from the top-10 board), there's a second mode:
-
 ```
 GET /api/game/score?target=my_scores&gameId=<gameId>&gameToken=<token>
 ```
@@ -197,6 +216,8 @@ When used, it returns **0 or 1 items** (the requesting player's own score, if th
 ```
 
 ### Checklist for this task
+- [ ] On mount: `GET /api/game/list` to fetch active game IDs; populate search bar and tabs from this live list
+- [ ] Handles empty game list gracefully ("No games have scores yet.")
 - [ ] Leaderboard component fetching `target=leaderboard&gameId=<gameId>`
 - [ ] Renders `player.username` + `score`, already sorted, max 10 rows
 - [ ] Polling (if live updates wanted) at a sensible interval (10–15s), respecting the server cache
@@ -254,8 +275,8 @@ async function computeSignature(userId, score, timestamp, gameSecret) {
 }
 ```
 
-- `userId` — exactly the string from the login response.
-- `score` — the integer score.
+- `score` — the **integer** score used for sorting and ranking.
+- `scoreStr` — a **string** in any format your game uses (e.g. `"1500"`, `"14m 43s"`, `"200pts"`, `"Level 7 - 42 kills"`). The backend stores exactly what you send and the frontend displays it.
 - `timestamp` — `Date.now()` (milliseconds) — **compute this once and reuse the exact same value in both the signature and the request body.** A mismatch here is the #1 cause of signature failures.
 - `gameSecret` — the shared `GAME_SECRET` value.
 
@@ -268,6 +289,7 @@ Body:
 {
   "gameId": "space-runner",
   "score": 1500,
+  "scoreStr": "1500",
   "timestamp": 1723165200000,
   "gameToken": "eyJhbGciOiJIUzI1Ni...",
   "signature": "<computed in Step 2>"
@@ -280,7 +302,7 @@ Body:
 ```json
 { "action": true, "data": {} }
 ```
-This is returned **whether or not the score actually changed anything** — if the submitted score isn't higher than the player's existing best, the server silently ignores the write but still tells you "success" so your game doesn't need special-case error handling for "you didn't beat your high score." Just show a normal "score submitted" confirmation either way.
+This is returned **whether or not the score actually changed anything** — if the submitted numeric score isn't strictly higher than the player's existing best, the server silently ignores the write but still tells you "success" so your game doesn't need special-case error handling for "you didn't beat your high score." Just show a normal "score submitted" confirmation either way.
 
 **Token expired/invalid (`401`):**
 ```json
@@ -294,8 +316,8 @@ This is returned **whether or not the score actually changed anything** — if t
 ```
 → This means a bug in your signature computation (usually a timestamp mismatch), not a real cheat attempt during normal testing. Double-check you're using the exact same `timestamp` value in both the hash and the body.
 
-### Rate limiting — new, be aware of this
-Both login and score submission are rate-limited server-side (roughly one attempt per 60 seconds per player). If you hammer the endpoints while testing, you'll start getting `429 Too Many Requests` (`ESECs.TOO_MANY_REQUESTS`) — this is expected behavior protecting against spam/brute-force, not a bug. Space out your test requests accordingly.
+### Rate limiting — updated
+Both login and score submission are rate-limited server-side with a **3-second** cooldown per player (previously 60 seconds, reduced 2026-08-10 for better UX). If you fire requests back-to-back faster than that during testing, you will get `429 Too Many Requests` — this is expected. In normal gameplay (one login at session start, one score submit at game-over) the limit is completely invisible to the player.
 
 ### Checklist for this task
 - [ ] Login screen using `identifier` (username or email) + password
@@ -304,7 +326,7 @@ Both login and score submission are rate-limited server-side (roughly one attemp
 - [ ] Correct signature computation with the exact SHA-256 formula above, same timestamp reused in both signature and body
 - [ ] Score submission on game-over, showing a generic "submitted" confirmation regardless of whether it was a new high score
 - [ ] Handles 401 (re-login) and 403 (check signature logic) distinctly
-- [ ] Test requests spaced out to respect the ~60s rate limit
+- [ ] Test requests spaced at least **3 seconds apart** to avoid triggering the rate limit
 
 ---
 
@@ -325,3 +347,15 @@ None. All previously known gaps (`target=my_scores` filtering, leaderboard cachi
 ## 9. Questions? Who to ask
 
 If anything in this doc doesn't match what you're actually seeing from the API, don't guess — flag it. The backend contract described here was verified line-by-line against the actual source code and tested end-to-end, so a mismatch likely means either a miscommunication on `gameId` naming, an environment/deployment issue, or something that changed after this doc was written.
+
+---
+
+## 10. Change Log
+
+| Date | Who | Change |
+|------|-----|--------|
+| 2026-08-10 | Backend | **New endpoint** `GET /api/game/list` — returns distinct active game IDs from the Score collection |
+| 2026-08-10 | Backend | **Rate-limit cooldown** reduced from 60 s → **3 s** for both `POST /api/game/login` and `POST /api/game/score` |
+| 2026-08-10 | Backend | **`unstable_cache` fix** — leaderboard `GET` was throwing 500 due to BSON ObjectId serialization; fixed in `score.service.ts` |
+| 2026-08-10 | Frontend | **Leaderboard UI** wired to real backend; game search bar and tabs now driven by `GET /api/game/list` instead of hardcoded mock |
+| 2026-08-10 | Backend + Frontend | **`score` reverted to `number`, `scoreStr` added as `string`** — supports numerical ranking while accepting any format (`"1500"`, `"14m 43s"`, `"200pts"`); high-score comparison restored |

@@ -10,6 +10,7 @@ const gameValidator = {
     createScore: z.object({
         gameId: allIbDField.shortString,
         score: z.number().int(),
+        scoreStr: allIbDField.shortString,
         timestamp: z.number().int().positive(),
         gameToken: allIbDField.longString,
         signature: allIbDField.shortString,
@@ -32,6 +33,7 @@ const gameValidator = {
         password: allIbDField.password,
     }),
     getProfile: z.object({}),
+    getGameList: z.object({}),
 };
 
 export default gameValidator;

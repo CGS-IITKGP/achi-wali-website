@@ -17,6 +17,12 @@ const ScoreSchema = new Schema<IScore>(
             type: Schema.Types.Number,
             required: true,
         },
+        scoreStr: {
+            type: Schema.Types.String,
+            required: true,
+            trim: true,
+            maxlength: 255,
+        },
     },
     {
         timestamps: true,

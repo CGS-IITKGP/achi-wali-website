@@ -2,9 +2,11 @@
 
 > **Source of truth:** Every claim in this document was verified against the actual implementation files listed in parentheses. Do not edit this document without re-reading those files.
 
+> **Last updated:** 2026-08-10 — Added `GET /api/game/list` endpoint; corrected rate-limit cooldown from 60 s → 3 s; documented `unstable_cache` serialization fix in `score.service.ts`; **reverted `score` to `number` and added `scoreStr` as `string`** for dual payload.
+
 **Who reads what:**
 - **👤 Profile Developer** — Read if you are building the website UI for users to check, create, or update their Game Profile credentials (`GET` / `POST /api/game/profile`).
-- **🏆 Leaderboard Developer** — Read if you are building the website UI to fetch and display the leaderboard (`GET /api/game/score`).
+- **🏆 Leaderboard Developer** — Read if you are building the website UI to fetch and display the leaderboard (`GET /api/game/score`, `GET /api/game/list`).
 - **🎮 Game Client Developer** — Read if you are building the actual game in Unity/WebGL and need to authenticate players and submit scores.
 
 ---
@@ -124,6 +126,42 @@ Verified against `src/lib/utils/responseHandler.ts`:
 - `message` and `errors` are **only present** when `action === false`.
 - `errors` entries follow the format `"fieldPath$ error message"` (e.g. `"gameId$ Required"`).
 
+### Endpoint: Fetch Active Game List
+
+**`GET /api/game/list`**
+
+Verified against: `src/app/api/game/list/route.ts`, `src/lib/services/gameList.service.ts`, `src/lib/database/repos/score.repo.ts`
+
+- **Authentication Required:** None (`requireAuth: false`).
+- **Query Parameters:** None.
+- **Purpose:** Returns an array of every distinct `gameId` string that has at least one score record in the `Score` collection. Use this to dynamically populate the game search bar and selector tabs in the leaderboard UI — so only games with real data are shown, not a hardcoded mock list.
+
+**Success Response (`200 OK`):**
+
+```json
+{
+  "action": true,
+  "data": ["space-runner", "possessed", "cookie-runner"]
+}
+```
+
+- `data` is a plain `string[]` of distinct `gameId` values. Order is not guaranteed — sort client-side if needed.
+- Returns an empty array `[]` (not an error) if no scores have been submitted yet.
+
+**TypeScript type for the response `data` field:**
+
+```typescript
+type SDOut.GameList.Get = string[];
+```
+
+**Server Error (`500 Internal Server Error`):**
+
+```json
+{ "action": null }
+```
+
+---
+
 ### Endpoint: Fetch Leaderboard
 
 **`GET /api/game/score?target=leaderboard&gameId=<gameId>`**
@@ -201,11 +239,14 @@ type SDOut.GameScore.Get = {
     username: string;
   };
   gameId: string;
-  score: number;
+  score: number;   // Used for numerical sorting and ranking
+  scoreStr: string; // Free-form string matching what the game submitted
   createdAt: Date;
   updatedAt: Date;
 }[];
 ```
+
+> 🐛 **`unstable_cache` serialization fix (2026-08-10):** The leaderboard `GET` was returning `500` because `unstable_cache` cannot serialize BSON `ObjectId` instances. Fixed in `src/lib/services/score.service.ts` by moving the `.toHexString()` formatting step **inside** the cached function so only plain strings/numbers reach the Next.js serializer.
 
 ---
 
@@ -352,7 +393,8 @@ Verified against: `src/app/api/game/score/route.ts`, `src/lib/services/score.ser
 | Field | Type | Rules | Required |
 |-------|------|-------|----------|
 | `gameId` | `string` | Trimmed, max 255 chars. Must match the `gameId` used for leaderboard queries. | Yes |
-| `score` | `number` | Integer. | Yes |
+| `score` | `number` | Integer. Used for high-score comparison (`submittedScore > existingScore`). | Yes |
+| `scoreStr` | `string` | Trimmed, max 255 chars. **Free-form** — formatted string (e.g. `"1500"`, `"14m 43s"`, `"200pts"`). | Yes |
 | `timestamp` | `number` | Positive integer. Unix ms (`Date.now()`). Must match the value used in the signature. | Yes |
 | `gameToken` | `string` | Trimmed, max 4095 chars. The JWT returned from login. | Yes |
 | `signature` | `string` | Trimmed, max 255 chars. The hex SHA-256 computed in Step 2. | Yes |
@@ -361,6 +403,7 @@ Verified against: `src/app/api/game/score/route.ts`, `src/lib/services/score.ser
 {
   "gameId": "space-runner",
   "score": 1500,
+  "scoreStr": "1500",
   "timestamp": 1723165200000,
   "gameToken": "eyJhbGciOiJIUzI1Ni...",
   "signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -371,9 +414,10 @@ Verified against: `src/app/api/game/score/route.ts`, `src/lib/services/score.ser
 1. Decodes and verifies `gameToken` using `GAME_SECRET`. Extracts `_id` (player's ObjectId hex).
 2. Reconstructs the signature as `SHA256("${decoded._id}:${score}:${timestamp}:${GAME_SECRET}")`.
 3. Compares reconstructed signature to submitted `signature`. Rejects with `403` if mismatch.
-4. Queries the DB for an existing score with `{ player: playerId, gameId }`.
+4. **Rate limit check** — queries `GameUser.lastAttemptAt`. If the last attempt was less than **3 seconds** ago, rejects with `429`. Otherwise stamps `lastAttemptAt = now()`.
+5. Queries the DB for an existing score with `{ player: playerId, gameId }`.
    - If **no record** exists: inserts a new document.
-   - If a record exists and `submittedScore > existingScore`: updates the record.
+   - If a record exists and `submittedScore > existingScore`: updates the record with both the new numeric `score` and formatted `scoreStr`.
    - If a record exists and `submittedScore <= existingScore`: **no DB write**, returns success silently.
 
 **Success Response (`200 OK`):**
@@ -413,7 +457,7 @@ Cause: The reconstructed SHA-256 does not match the submitted `signature`. Most 
 {
   "action": false,
   "message": "Bad Request.",
-  "errors": ["score$ Expected number, received string"]
+  "errors": ["score$ Required"]
 }
 ```
 
@@ -452,10 +496,11 @@ Cause: The reconstructed SHA-256 does not match the submitted `signature`. Most 
 | `player` | `ObjectId` | ref: `'GameUser'`, required |
 | `gameId` | `String` | required, trim |
 | `score` | `Number` | required |
+| `scoreStr` | `String` | required, trim. Free-form — any value the game submits (e.g. `"1500"`, `"14m 43s"`, `"200pts"`). |
 | `createdAt` | `Date` | auto |
 | `updatedAt` | `Date` | auto |
 
-**One record per `(player, gameId)` pair** (enforced in service logic, not a DB index — there is no unique compound index on these fields in the schema).
+**One record per `(player, gameId)` pair** (enforced in service logic). When a new score is submitted for an existing pair, the server checks if the submitted numeric `score` is strictly greater than the existing numeric `score`. If it is, both `score` and `scoreStr` are updated.
 
 ---
 
@@ -467,11 +512,26 @@ Verified against `src/lib/handler.ts` `serviceErrorCodeHandler` switch statement
 |-------------|-----------|---------|
 | `401 Unauthorized` | `INVALID_GAME_TOKEN` | `gameToken` JWT decode/verify failed |
 | `403 Forbidden` | `INVALID_SCORE_SIGNATURE` | SHA-256 signature mismatch |
+| `429 Too Many Requests` | `TOO_MANY_REQUESTS` | Login or score submission within the **3-second** cooldown window |
 
-Both codes are confirmed present in `ESECs` (lines 43–44 of `service.types.ts`) and confirmed wired in `handler.ts` (lines 179, 184).
+All three codes are confirmed present in `ESECs` and wired in `handler.ts`.
+
+> ⏱️ **Rate-limit cooldown: 3 seconds** (down from the original 60 seconds). Changed in `src/lib/services/gameAuth.service.ts` and `src/lib/services/score.service.ts` on 2026-08-10 to improve UX for legitimate players. The server stamps `GameUser.lastAttemptAt` on every login and every score submission; the next request is blocked only if it arrives within 3 s of the previous one. This is sufficient to stop bot brute-forcing without impacting normal players.
 
 ---
 
 ## ⚠️ Known Limitations — Not Yet Implemented
 
 No known limitations at this time.
+
+---
+
+## 📝 Change Log
+
+| Date | Change | Files |
+|------|--------|-------|
+| 2026-08-10 | **New endpoint** `GET /api/game/list` — returns distinct game IDs with scores | `route.ts`, `gameList.service.ts`, `score.repo.ts` |
+| 2026-08-10 | **Rate-limit cooldown reduced** from 60 s → **3 s** for both login and score submission | `gameAuth.service.ts`, `score.service.ts` |
+| 2026-08-10 | **`unstable_cache` serialization fix** — leaderboard GET was returning 500; formatting moved inside cached function | `score.service.ts` |
+| 2026-08-10 | **Leaderboard frontend wired** to real backend; GAMES mock replaced with live `GET /api/game/list` fetch | `Leaderboard.tsx` |
+| 2026-08-10 | **`score` reverted to `number`, `scoreStr` added as `string`** — supports numerical ranking while accepting any format (`"1500"`, `"14m 43s"`, `"200pts"`); high-score comparison restored | `score.model.ts`, `game.validator.ts`, `score.service.ts`, `service.types.ts`, `domain.types.ts`, `PodiumCard.tsx`, `formatValue.ts` |

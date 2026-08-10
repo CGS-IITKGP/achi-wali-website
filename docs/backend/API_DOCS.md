@@ -59,6 +59,7 @@
   - [POST /api/game/login](#post-apigamelogin)
   - [POST /api/game/score](#post-apigamescore)
   - [GET /api/game/score](#get-apigamescore)
+  - [GET /api/game/list](#get-apigamelist)
   - [GET /api/game/profile](#get-apigameprofile)
   - [POST /api/game/profile](#post-apigameprofile)
 
@@ -2321,6 +2322,15 @@ Authentication is session-based using HTTP-only JWT cookies.
     }
     ```
 
+  - **Rate Limit Error ( `429 Too Many Requests` ):** Returned if a login attempt arrives within **3 seconds** of the previous attempt for the same player (`TOO_MANY_REQUESTS`).
+
+    ```json
+    {
+      "action": false,
+      "message": "Please wait a moment before trying again."
+    }
+    ```
+
   - **Server Error ( `500 Internal Server Error` ):**
 
     ```json
@@ -2341,7 +2351,8 @@ Authentication is session-based using HTTP-only JWT cookies.
   | Field | Type | Rules | Required |
   |-------|------|-------|----------|
   | `gameId` | `string` | Trimmed, max 255 chars. | Yes |
-  | `score` | `number` | Integer. | Yes |
+  | `score` | `number` | Integer. Used for numerical ranking. | Yes |
+  | `scoreStr` | `string` | Trimmed, max 255 chars. **Free-form** — formatted string to display (e.g. `"1500"`, `"14m 43s"`, `"200pts"`). | Yes |
   | `timestamp` | `number` | Positive integer. Unix epoch ms. Must match value used to compute `signature`. | Yes |
   | `gameToken` | `string` | Trimmed, max 4095 chars. JWT from login. | Yes |
   | `signature` | `string` | Trimmed, max 255 chars. Hex SHA-256 of `"userId:score:timestamp:GAME_SECRET"`. | Yes |
@@ -2363,7 +2374,7 @@ Authentication is session-based using HTTP-only JWT cookies.
     {
       "action": false,
       "message": "Bad Request.",
-      "errors": ["score$ Expected number, received string"]
+      "errors": ["score$ Required"]
     }
     ```
 
@@ -2385,6 +2396,15 @@ Authentication is session-based using HTTP-only JWT cookies.
     }
     ```
 
+  - **Rate Limit Error ( `429 Too Many Requests` ):** Returned if a score submission arrives within **3 seconds** of the previous attempt for the same player (`TOO_MANY_REQUESTS`).
+
+    ```json
+    {
+      "action": false,
+      "message": "Please wait a moment before trying again."
+    }
+    ```
+
   - **Server Error ( `500 Internal Server Error` ):**
 
     ```json
@@ -2397,7 +2417,7 @@ Authentication is session-based using HTTP-only JWT cookies.
 
 ### `GET` /api/game/score
 
-- **Description:** Fetches the leaderboard (top-10 scores, sorted descending) for a given `gameId`. The `target` query parameter is validated but currently **ignored by the service** — `target=my_scores` returns the same global leaderboard as `target=leaderboard`. See `docs/backend/LEADERBOARD_BACKEND_MAP.md` Known Gaps.
+- **Description:** Fetches leaderboard scores for a given `gameId`. When `target=leaderboard`, returns the top-10 scores sorted descending (served from a 10-second server-side cache). When `target=my_scores`, requires a valid `gameToken` and returns 0 or 1 items — the requesting player's own score for that game.
 - **Authentication Required:** `False`
 - **Validator Schema:** `gameValidator.getScore` → `src/lib/validators/game.validator.ts`
 - **Data Unifier:** Extracts `target` and `gameId` from URL query parameters.
@@ -2407,6 +2427,7 @@ Authentication is session-based using HTTP-only JWT cookies.
   |-------|------|----------------|----------|
   | `target` | `string` | `"leaderboard"`, `"my_scores"` | Yes |
   | `gameId` | `string` | Trimmed, max 255 chars. | Yes |
+  | `gameToken` | `string` | Trimmed, max 4095 chars. JWT from login. | Yes if `target=my_scores` |
 
 - **Expected Responses:**
 
@@ -2424,6 +2445,7 @@ Authentication is session-based using HTTP-only JWT cookies.
           },
           "gameId": "space-runner",
           "score": 1500,
+          "scoreStr": "1500",
           "createdAt": "2026-08-09T01:23:42.000Z",
           "updatedAt": "2026-08-09T01:23:42.000Z"
         }
@@ -2440,6 +2462,35 @@ Authentication is session-based using HTTP-only JWT cookies.
       "errors": ["target$ Invalid enum value. Expected 'leaderboard' | 'my_scores', received 'bad'"]
     }
     ```
+
+  - **Server Error ( `500 Internal Server Error` ):**
+
+    ```json
+    {
+      "action": null
+    }
+    ```
+
+---
+
+### `GET` /api/game/list
+
+- **Description:** Returns an array of all distinct `gameId` strings that currently have at least one score record in the `Score` collection. Use this to drive game search bars and selection tabs in the leaderboard UI dynamically — so only games with real data are displayed.
+- **Authentication Required:** `False`
+- **Validator Schema:** `gameValidator.getGameList` → `z.object({})` *(no query params required)*
+- **Expected Query Params:** *None.*
+- **Expected Responses:**
+
+  - **Success ( `200 OK` ):** Returns a plain `string[]` of distinct game IDs. Order is not guaranteed.
+
+    ```json
+    {
+      "action": true,
+      "data": ["space-runner", "possessed", "cookie-runner"]
+    }
+    ```
+
+    Returns `[]` (empty array, not an error) if no scores have been submitted yet.
 
   - **Server Error ( `500 Internal Server Error` ):**
 

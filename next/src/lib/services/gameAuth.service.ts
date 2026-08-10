@@ -21,7 +21,7 @@ const login: ServiceSignature<
     });
 
     if (player) {
-        const loginBlockedTill = player.lastAttemptAt ? player.lastAttemptAt.getTime() + 60 * 1000 : 0;
+        const loginBlockedTill = player.lastAttemptAt ? player.lastAttemptAt.getTime() + 3 * 1000 : 0;
         if (Date.now() < loginBlockedTill) {
             return {
                 success: false,

@@ -49,6 +49,16 @@ class ScoreRepository extends GenericRepository<
             throw new AppError("Failed to fetch player score", { error });
         }
     }
+
+    async getDistinctGameIds(): Promise<string[]> {
+        await this.ensureDbConnection();
+
+        try {
+            return await ScoreModel.distinct("gameId");
+        } catch (error) {
+            throw new AppError("Failed to fetch distinct game IDs", { error });
+        }
+    }
 }
 
 const scoreRepository = new ScoreRepository();

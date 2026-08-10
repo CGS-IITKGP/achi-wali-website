@@ -214,6 +214,7 @@ export interface IScore {
     player: Types.ObjectId;
     gameId: string;
     score: number;
+    scoreStr: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -225,7 +226,7 @@ export interface IScoreExportable extends Omit<IScore, "player"> {
     };
 }
 
-export type ScoreCreateType = Pick<IScore, "player" | "gameId" | "score">;
+export type ScoreCreateType = Pick<IScore, "player" | "gameId" | "score" | "scoreStr">;
 export type ScoreUpdateType = Partial<ScoreCreateType>;
 
 

@@ -10,7 +10,6 @@ import {
     SDIn,
     SDOut,
     APIControl,
-    IScoreExportable,
 } from "@/lib/types/index.types";
 import gameUserRepository from "@/lib/database/repos/gameUser.repo";
 
@@ -52,7 +51,7 @@ const create: ServiceSignature<
     const gameUser = await gameUserRepository.findById(playerId);
 
     if (gameUser) {
-        const submitBlockedTill = gameUser.lastAttemptAt ? gameUser.lastAttemptAt.getTime() + 60 * 1000 : 0;
+        const submitBlockedTill = gameUser.lastAttemptAt ? gameUser.lastAttemptAt.getTime() + 3 * 1000 : 0;
         if (Date.now() < submitBlockedTill) {
             return {
                 success: false,
@@ -73,6 +72,7 @@ const create: ServiceSignature<
         if (data.score > existingRecord.score) {
             await scoreRepository.updateById(existingRecord._id, {
                 score: data.score,
+                scoreStr: data.scoreStr,
             });
         }
     } else {
@@ -80,6 +80,7 @@ const create: ServiceSignature<
             player: playerId,
             gameId: data.gameId,
             score: data.score,
+            scoreStr: data.scoreStr,
         });
     }
 
@@ -94,8 +95,6 @@ const get: ServiceSignature<
     SDOut.GameScore.Get,
     false
 > = async (data) => {
-    let scores: IScoreExportable[] = [];
-
     if (data.target === APIControl.GameScore.Get.Target.MY_SCORES) {
         if (!data.gameToken) {
             return {
@@ -117,29 +116,51 @@ const get: ServiceSignature<
         const playerId = new Types.ObjectId(decodedPlayer._id);
         const myScore = await scoreRepository.getMyScore(playerId, data.gameId);
 
-        if (myScore) {
-            scores = [myScore];
-        }
-    } else {
-        const fetchLeaderboard = unstable_cache(
-            async () => await scoreRepository.getTopScores(data.gameId),
-            ["leaderboard", data.gameId],
-            { revalidate: 10 }
-        );
-        scores = await fetchLeaderboard();
+        const formattedScores = myScore
+            ? [{
+                _id: myScore._id.toHexString(),
+                player: {
+                    _id: myScore.player._id.toHexString(),
+                    username: myScore.player.username,
+                },
+                gameId: myScore.gameId,
+                score: myScore.score,
+                scoreStr: myScore.scoreStr,
+                createdAt: myScore.createdAt,
+                updatedAt: myScore.updatedAt,
+            }]
+            : [];
+
+        return {
+            success: true,
+            data: formattedScores,
+        };
     }
 
-    const formattedScores = scores.map((score) => ({
-        _id: score._id.toHexString(),
-        player: {
-            _id: score.player._id.toHexString(),
-            username: score.player.username,
+    // target === LEADERBOARD
+    // Format inside the cache so only plain serializable values are cached —
+    // unstable_cache cannot handle BSON ObjectId or Mongoose Date instances.
+    const fetchLeaderboard = unstable_cache(
+        async () => {
+            const scores = await scoreRepository.getTopScores(data.gameId);
+            return scores.map((score) => ({
+                _id: score._id.toHexString(),
+                player: {
+                    _id: score.player._id.toHexString(),
+                    username: score.player.username,
+                },
+                gameId: score.gameId,
+                score: score.score,
+                scoreStr: score.scoreStr,
+                createdAt: score.createdAt,
+                updatedAt: score.updatedAt,
+            }));
         },
-        gameId: score.gameId,
-        score: score.score,
-        createdAt: score.createdAt,
-        updatedAt: score.updatedAt,
-    }));
+        ["leaderboard", data.gameId],
+        { revalidate: 10 }
+    );
+
+    const formattedScores = await fetchLeaderboard();
 
     return {
         success: true,

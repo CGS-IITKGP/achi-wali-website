@@ -300,7 +300,8 @@ export namespace SDIn {
     export namespace GameScore {
         export type Create = {
             gameId: string;
-            score: number;
+            score: number;  // Used for numerical sorting and ranking
+            scoreStr: string; // The formatted string to display (e.g. "14m 43s", "1500pts")
             timestamp: number;
             gameToken: string;
             signature: string;
@@ -321,6 +322,11 @@ export namespace SDIn {
         };
 
         // GET — no body needed; session identifies the user
+        export type Get = object;
+    }
+
+    export namespace GameList {
+        // No query params required — returns all distinct game IDs with scores
         export type Get = object;
     }
 }
@@ -671,9 +677,15 @@ export namespace SDOut {
             };
             gameId: string;
             score: number;
+            scoreStr: string;
             createdAt: Date;
             updatedAt: Date;
         }[];
+    }
+
+    export namespace GameList {
+        // Array of distinct game ID strings, e.g. ["space-runner", "possessed"]
+        export type Get = string[];
     }
 }
 
