@@ -1,19 +1,175 @@
 "use client";
 
-import Navbar from "../../components/navbar";
 import { robotoFont, righteousFont } from "../../fonts";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
   Play,
   Github,
   Gamepad2,
+  X,
 } from "lucide-react";
 import { IProject } from "@/app/types/index.types";
 import { prettySafeImage } from "@/app/utils/pretty";
+
+// Defined constants for fallback URLs to keep logic clean.
+// ⭐️ CHANGE: Added a default image path. MAKE SURE THIS FILE EXISTS IN /public
+const DEFAULT_GAME_IMAGE = "/placeholder-game.png"; 
+// How long to wait for the iframe to actually load before assuming the host
+// blocked framing (e.g. itch.io's frame-ancestors CSP) and showing a fallback.
+// NOTE: Unity/WebGL builds served through itch.io's embed wrapper commonly
+// take 8-15+ seconds to fire `onLoad` (itch's own loader scripts + analytics
+// run before the game's document finishes) — this must stay generous or
+// slow-but-working embeds get misclassified as "blocked".
+const EMBED_TIMEOUT_MS = 20000;
+// After this much time, we let the user know it's still working rather than
+// leaving them staring at a bare spinner with no explanation.
+const EMBED_SLOW_HINT_MS = 7000;
+
+// A fully separate component, rendered via a portal directly into
+// document.body (see the createPortal call in GameClient below). This is
+// what actually solves the "hidden behind the navbar" problem: any
+// motion.div ancestor with a CSS transform creates a new containing block,
+// which silently breaks `position: fixed` for anything nested inside it —
+// the fixed element ends up positioned relative to that ancestor instead of
+// the real viewport. Portaling straight to <body> sidesteps that entirely.
+function GamePlayerOverlay({
+  playingEmbedUrl,
+  title,
+  embedBlocked,
+  embedLoading,
+  embedSlow,
+  embedRetryCount,
+  onRetry,
+  onClose,
+  onIframeLoad,
+}: {
+  playingEmbedUrl: string | null;
+  title: string;
+  embedBlocked: boolean;
+  embedLoading: boolean;
+  embedSlow: boolean;
+  embedRetryCount: number;
+  onRetry: () => void;
+  onClose: () => void;
+  onIframeLoad: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      {playingEmbedUrl && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.25 }}
+          className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.25 }}
+            // aspect-video locks a 16:9 ratio; width and height caps keep it
+            // from overflowing on very wide or very tall viewports.
+            className="relative w-full max-w-[1600px] aspect-video max-h-[88vh] rounded-2xl overflow-hidden shadow-2xl border border-pink-500/20 bg-black flex flex-col"
+          >
+            <div className="px-4 py-3 bg-gray-950 border-b border-gray-800 flex justify-between items-center shrink-0">
+              <h3 className={`text-lg sm:text-xl font-bold text-white truncate pr-4 ${righteousFont.className}`}>
+                Playing: {title}
+              </h3>
+              <button
+                onClick={onClose}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg transition-colors shrink-0"
+              >
+                <X className="w-4 h-4" />
+                Close Game
+              </button>
+            </div>
+
+            <div className="relative w-full flex-1 bg-black">
+              {embedBlocked ? (
+                // FALLBACK: host refused to be framed (e.g. itch.io's
+                // frame-ancestors CSP), or something interrupted the load.
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
+                  <Gamepad2 className="w-12 h-12 text-gray-600" />
+                  <div className="space-y-2">
+                    <p className={`text-white text-lg font-semibold ${righteousFont.className}`}>
+                      This game didn&apos;t load
+                    </p>
+                    <p className={`text-gray-400 text-sm max-w-md ${robotoFont.className}`}>
+                      Either the host blocks in-page embedding for this
+                      link, or something (like a browser extension)
+                      interrupted the load. Try again, or open it
+                      directly.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      onClick={onRetry}
+                      className="flex items-center gap-2 px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 border border-gray-700"
+                    >
+                      Retry
+                    </button>
+                    <a
+                      href={playingEmbedUrl ?? undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105"
+                    >
+                      <Play className="w-4 h-4" />
+                      Open Game
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {embedLoading && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-gray-400 px-6 text-center z-10 bg-black">
+                      <div className="w-6 h-6 border-2 border-gray-600 border-t-pink-500 rounded-full animate-spin" />
+                      <span className={robotoFont.className}>Loading game…</span>
+                      {embedSlow && (
+                        <div className="space-y-2 mt-2">
+                          <p className={`text-gray-500 text-sm max-w-sm ${robotoFont.className}`}>
+                            This is taking a while — larger games can take
+                            a bit to load. Still waiting, or you can open
+                            it directly instead.
+                          </p>
+                          {playingEmbedUrl && (
+                            <a
+                              href={playingEmbedUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-pink-400 hover:text-pink-300 text-sm underline underline-offset-2"
+                            >
+                              Open in a new tab
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <iframe
+                    key={`${playingEmbedUrl}-${embedRetryCount}`}
+                    src={playingEmbedUrl ?? undefined}
+                    title={`Playing ${title}`}
+                    className="w-full h-full border-none"
+                    onLoad={onIframeLoad}
+                    allow="autoplay; fullscreen; gamepad"
+                    allowFullScreen
+                  ></iframe>
+                </>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
 
 interface GameClientProps {
   games?: IProject[];
@@ -26,370 +182,443 @@ export default function GameClient({
 }: GameClientProps) {
   const [selectedGame, setSelectedGame] = useState<number>(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [playingEmbedUrl, setPlayingEmbedUrl] = useState<string | null>(null);
+  // Tracks which game object is actually being played, so the in-page player
+  // shows the correct title/info regardless of whether the game came from the
+  // featured carousel or the full collection grid below.
+  const [playingGame, setPlayingGame] = useState<IProject | null>(null);
+  // Many hosts (itch.io included) send a `frame-ancestors` CSP header that
+  // silently blocks embedding in an iframe on another domain. The browser
+  // won't fire a JS error for this, so we detect it with a load timeout:
+  // if `onLoad` hasn't fired within EMBED_TIMEOUT_MS, we assume the host
+  // refused to be framed and fall back to an "open externally" prompt.
+  const [embedLoading, setEmbedLoading] = useState(false);
+  const [embedBlocked, setEmbedBlocked] = useState(false);
+  const [embedSlow, setEmbedSlow] = useState(false);
+  // Bumped to force a fresh iframe remount when the user hits "Retry" —
+  // needed because a browser extension (e.g. MetaMask) injecting into the
+  // itch.io frame can trip Unity's error handler and stall the load even
+  // though the embed itself isn't actually blocked.
+  const [embedRetryCount, setEmbedRetryCount] = useState(0);
+  // React Portals need `document` to exist, which isn't available during
+  // server rendering — this flips true after mount, once we're safely
+  // client-side, so the overlay only renders in the browser.
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  // Refs (not state) so the iframe's onLoad handler can directly cancel the
+  // pending timers below. Without this, a successful load doesn't stop the
+  // block-detection timer from still firing later and wrongly booting the
+  // player out of an already-working, in-progress game.
+  const embedSlowTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const embedBlockTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Define how many featured games exist once.
+  const numFeatured = featuredGames.length;
 
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    // Stop autoplay if user is playing a game or there are fewer than 2 games.
+    if (!isAutoPlaying || playingEmbedUrl || numFeatured < 2) return;
 
     const interval = setInterval(() => {
-      setSelectedGame((prev) => (prev + 1) % featuredGames.length);
+      setSelectedGame((prev) => (prev + 1) % numFeatured);
     }, 6000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying, featuredGames.length]);
+  }, [isAutoPlaying, numFeatured, playingEmbedUrl]);
+
+  // Reset the retry counter only when the *game* changes (not on every retry
+  // click, which would otherwise immediately undo the increment below).
+  useEffect(() => {
+    setEmbedRetryCount(0);
+  }, [playingEmbedUrl]);
+
+  // Lock page scroll while the full-screen game overlay is open.
+  useEffect(() => {
+    if (playingEmbedUrl) {
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+  }, [playingEmbedUrl]);
+
+  // Let users close the overlay with Escape as well as the button.
+  useEffect(() => {
+    if (!playingEmbedUrl) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleCloseGame();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playingEmbedUrl]);
+
+  useEffect(() => {
+    if (!playingEmbedUrl) {
+      setEmbedLoading(false);
+      setEmbedBlocked(false);
+      setEmbedSlow(false);
+      return;
+    }
+
+    setEmbedLoading(true);
+    setEmbedBlocked(false);
+    setEmbedSlow(false);
+
+    embedSlowTimeoutRef.current = setTimeout(() => {
+      setEmbedSlow(true);
+    }, EMBED_SLOW_HINT_MS);
+
+    embedBlockTimeoutRef.current = setTimeout(() => {
+      // If onLoad hasn't fired by now, the host almost certainly blocked
+      // framing (frame-ancestors CSP) rather than the game being slow.
+      setEmbedLoading(false);
+      setEmbedBlocked(true);
+    }, EMBED_TIMEOUT_MS);
+
+    return () => {
+      if (embedSlowTimeoutRef.current) clearTimeout(embedSlowTimeoutRef.current);
+      if (embedBlockTimeoutRef.current) clearTimeout(embedBlockTimeoutRef.current);
+    };
+  }, [playingEmbedUrl, embedRetryCount]);
+
+  // Handle setting safe index when clicking or autoplaying
+  const updateSelectedGame = (index: number) => {
+    setSelectedGame(index);
+    setIsAutoPlaying(false);
+    setPlayingEmbedUrl(null); // Close game if navigating
+    setPlayingGame(null);
+  };
 
   const nextGame = () => {
-    setSelectedGame((prev) => (prev + 1) % featuredGames.length);
-    setIsAutoPlaying(false);
+    const nextIndex = (selectedGame + 1) % numFeatured;
+    updateSelectedGame(nextIndex);
   };
 
   const prevGame = () => {
-    setSelectedGame(
-      (prev) => (prev - 1 + featuredGames.length) % featuredGames.length,
-    );
-    setIsAutoPlaying(false);
+    const prevIndex = (selectedGame - 1 + numFeatured) % numFeatured;
+    updateSelectedGame(prevIndex);
   };
 
   const selectGame = (index: number) => {
-    setSelectedGame(index);
-    setIsAutoPlaying(false);
+    updateSelectedGame(index);
   };
 
-  const getSelectedGameLinkUrl = (linkText: string): string => {
-    if (selectedGame >= 0 && selectedGame < featuredGames.length) {
-      return (
-        featuredGames[selectedGame].links.find((link) => {
-          return link.text === linkText;
-        })?.url ?? "#"
-      );
+  // ⭐️ SYSTEMIC FIX 1: Ensure helper strictly checks for non-empty string URLs.
+  // This helper is now robust against the DB returning "".
+  const getSelectedGameLinkUrl = (linkText: string): string | null => {
+    if (selectedGame >= 0 && selectedGame < numFeatured) {
+      const linkFound = featuredGames[selectedGame].links?.find((link) => {
+        return link.text === linkText;
+      });
+      // Explicitly check that url exists AND is not an empty string after trimming.
+      if (linkFound && linkFound.url && linkFound.url.trim() !== "") {
+        return linkFound.url;
+      }
     }
-    return "#";
+    return null;
   };
 
+  const handlePlayGame = (url: string, game?: IProject) => {
+    // The conditional logic in the UI already ensures url is valid, 
+    // but we check again here just to be absolutely sure.
+    if (!url || url.trim() === "") return;
+    setIsAutoPlaying(false);
+    setPlayingEmbedUrl(url);
+    // Remember which game this is so the player header/title is correct
+    // whether it came from the featured carousel or the collection grid.
+    setPlayingGame(game ?? null);
+    // Smooth scroll to top so player sees the game
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCloseGame = () => {
+    setPlayingEmbedUrl(null);
+    setPlayingGame(null);
+  };
+
+  // Safe retrieval of the current game object
   const currentGame = featuredGames[selectedGame] || {
     _id: "",
     title: "No Game Selected",
     description: "No game available at the moment.",
-    coverImgMediaKey: "",
+    coverImgUrl: "",
     tags: [],
     links: [],
   };
 
-  // If no games are available, show a message
+  // Show a message if no games are available from the API
   if (!games.length) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative">
-        <Navbar />
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center text-gray-400">
-            <h2 className="text-2xl font-bold mb-2">No Games Available</h2>
-            <p>Please check back later for our game collection.</p>
-          </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center text-gray-400">
+          <h2 className="text-2xl font-bold mb-2">No Games Available</h2>
+          <p>Please check back later for our game collection.</p>
         </div>
       </div>
     );
   }
 
+  // Pre-calculate URLs to keep rendering clean
+  const liveDemoUrl = getSelectedGameLinkUrl("live-demo");
+  const githubUrl = getSelectedGameLinkUrl("github");
+
+  // Helper for rendering image src safely with fallback
+  // ⭐️ SYSTEMIC FIX 2: Creates a safe URL for <Image src>. Never returns "".
+  const getSafeImageSrc = (url: string | undefined | null): string => {
+    if (!url || url.trim() === "") {
+      return DEFAULT_GAME_IMAGE;
+    }
+    // Utility might need adjustment if it doesn't handle "", but this check 
+    // handles the missing case correctly.
+    return prettySafeImage(url); 
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative">
-      <Navbar />
-
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-600/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
-      </div>
-
-      <div className="relative z-10 pt-16 sm:pt-20 lg:pt-24 px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 2xl:px-64 min-h-screen flex flex-col">
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h1
-                className={`text-4xl lg:text-6xl font-bold bg-gradient-to-r from-pink-400 via-pink-300 to-white bg-clip-text text-transparent ${righteousFont.className} mb-2`}
-              >
-                Game Gallery
-              </h1>
-              <p className={`text-gray-400 text-lg ${robotoFont.className}`}>
-                Featured Games by CGS
-              </p>
-            </div>
-
-            {/* <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-              className={`px-4 py-2 rounded-full border transition-all duration-300 ${
-                isAutoPlaying
-                  ? "bg-pink-500/20 border-pink-500/50 text-pink-300"
-                  : "bg-gray-800/50 border-gray-600/50 text-gray-400"
-              }`}
+    <div className="relative z-10 pt-16 sm:pt-20 lg:pt-24 px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 2xl:px-64 min-h-screen flex flex-col">
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="mb-8"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1
+              className={`text-4xl lg:text-6xl font-bold bg-gradient-to-r from-pink-400 via-pink-300 to-white bg-clip-text text-transparent ${righteousFont.className} mb-2`}
             >
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    isAutoPlaying ? "bg-pink-400 animate-pulse" : "bg-gray-500"
-                  }`}
-                ></div>
-                {isAutoPlaying ? "Auto-play ON" : "Auto-play OFF"}
-              </div>
-            </motion.button> */}
-          </div>
-        </motion.div>
-
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
-          <div className="lg:col-span-3 relative group">
-            <motion.div
-              key={selectedGame}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="relative h-[400px] lg:h-[600px] rounded-3xl overflow-hidden shadow-2xl border border-pink-500/20"
-            >
-              <Image
-                src={prettySafeImage(currentGame.coverImgUrl || "")}
-                alt={currentGame.title || "Game image"}
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                priority
-              />
-
-              <div
-                className={`absolute inset-0 bg-gradient-to-t from-pink-600 via-rose-500 to-orange-400 opacity-20`}
-              ></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-
-              <button
-                onClick={prevGame}
-                className="absolute left-4 top-1/2 transform -translate-y-[15vh] lg:-translate-y-1/2 z-50 w-12 h-12 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 border border-pink-500/30 hover:border-pink-500/60"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-
-              <button
-                onClick={nextGame}
-                className="absolute right-4 top-1/2 transform -translate-y-[15vh] lg:-translate-y-1/2 z-50 w-12 h-12 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 border border-pink-500/30 hover:border-pink-500/60"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-
-              <div className="absolute bottom-0 left-0 right-0 p-8">
-                <div className="space-y-4">
-                  {/* <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="inline-flex items-center gap-2 px-3 py-1 bg-pink-500/20 border border-pink-500/40 rounded-full text-pink-300 text-sm font-semibold backdrop-blur-sm"
-                  >
-                    {currentGame.icon}
-                    {currentGame.category}
-                  </motion.div> */}
-
-                  <motion.h2
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white drop-shadow-2xl ${righteousFont.className} leading-tight`}
-                  >
-                    {currentGame.title}
-                  </motion.h2>
-
-                  <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className={`text-gray-300 text-sm sm:text-base md:text-lg max-w-2xl ${robotoFont.className} line-clamp-3 sm:line-clamp-none`}
-                  >
-                    {currentGame.description}
-                  </motion.p>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    className="flex flex-wrap gap-2"
-                  >
-                    {currentGame.tags?.map((tech, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-gray-800/60 backdrop-blur-sm rounded-full text-gray-300 text-sm border border-gray-600/40"
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                    className="flex gap-4 mt-6"
-                  >
-                    {getSelectedGameLinkUrl("live-demo") ? (
-                      <a
-                        href={getSelectedGameLinkUrl("live-demo")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        // Active Style (Original)
-                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-pink-500/25"
-                      >
-                        <Play className="w-5 h-5" />
-                        Play Now
-                      </a>
-                    ) : (
-                      // Disabled State
-                      <span className="flex items-center gap-2 px-6 py-3 bg-gray-700/50 text-gray-400 font-semibold rounded-xl cursor-not-allowed shadow-lg">
-                        <Play className="w-5 h-5" />
-                        Live Demo N/A
-                      </span>
-                    )}
-
-                    {/* GitHub / View Code Link */}
-                    {getSelectedGameLinkUrl("github") ? (
-                      <a
-                        href={getSelectedGameLinkUrl("github")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        // Active Style (Original)
-                        className="flex items-center gap-2 px-6 py-3 bg-gray-800/60 hover:bg-gray-700/60 backdrop-blur-sm text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 border border-gray-600/40 hover:border-gray-500/60"
-                      >
-                        <Github className="w-5 h-5" />
-                        View Code
-                      </a>
-                    ) : (
-                      // Disabled State
-                      <span className="flex items-center gap-2 px-6 py-3 bg-gray-800/30 text-gray-500 font-semibold rounded-xl cursor-not-allowed border border-gray-800">
-                        <Github className="w-5 h-5" />
-                        Code N/A
-                      </span>
-                    )}
-                  </motion.div>
-                </div>
-              </div>
-
-              {isAutoPlaying && (
-                <div className="absolute top-4 left-4 right-4">
-                  <div className="w-full h-1 bg-gray-800/50 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-pink-500 to-pink-400"
-                      initial={{ width: "0%" }}
-                      animate={{ width: "100%" }}
-                      transition={{ duration: 6, ease: "linear" }}
-                      key={selectedGame}
-                    />
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </div>
-
-          <div className="lg:col-span-1 space-y-4">
-            <div className="flex lg:flex-col gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 px-2 -mx-2 snap-x snap-mandatory sm:snap-none">
-              {featuredGames.map((game, index) => (
-                <motion.div
-                  key={game._id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  onClick={() => selectGame(index)}
-                  className={`relative flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:h-[120px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 snap-center ${
-                    selectedGame === index
-                      ? "border-pink-500 shadow-lg shadow-pink-500/25 scale-105"
-                      : "border-gray-700/50 hover:border-pink-500/50 hover:scale-102"
-                  }`}
-                >
-                  <Image
-                    src={prettySafeImage(game.coverImgUrl)}
-                    alt={game.title}
-                    fill
-                    className="object-cover transition-all duration-300"
-                  />
-
-                  <div
-                    className={`absolute inset-0 transition-all duration-300 ${
-                      selectedGame === index
-                        ? "bg-pink-500/20"
-                        : "bg-black/40 hover:bg-black/20"
-                    }`}
-                  ></div>
-
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
-                    <div
-                      className={`mb-1 transition-all duration-300 ${
-                        selectedGame === index
-                          ? "text-pink-300 scale-110"
-                          : "text-white/80"
-                      }`}
-                    >
-                      <Gamepad2 className="w-6 h-6" />
-                    </div>
-                    <span
-                      className={`text-xs font-semibold text-center leading-tight ${
-                        selectedGame === index
-                          ? "text-pink-300"
-                          : "text-white/80"
-                      }`}
-                    >
-                      {game.title}
-                    </span>
-                  </div>
-
-                  {selectedGame === index && (
-                    <motion.div
-                      layoutId="activeGame"
-                      className="absolute -top-1 -left-1 -right-1 -bottom-1 border-2 border-pink-400 rounded-2xl"
-                      transition={{
-                        type: "spring",
-                        bounce: 0.2,
-                        duration: 0.6,
-                      }}
-                    />
-                  )}
-                </motion.div>
-              ))}
-            </div>
-
-            {/* <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="hidden lg:block mt-8 p-6 bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700/50"
-            >
-              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-pink-400" />
-                Gallery Stats
-              </h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Total Games</span>
-                  <span className="text-white font-semibold">
-                    {projects.length}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Current</span>
-                  <span className="text-pink-300 font-semibold">
-                    {selectedGame + 1}/{projects.length}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Auto-play</span>
-                  <span
-                    className={`font-semibold ${
-                      isAutoPlaying ? "text-green-400" : "text-gray-400"
-                    }`}
-                  >
-                    {isAutoPlaying ? "ON" : "OFF"}
-                  </span>
-                </div>
-              </div>
-            </motion.div> */}
+              Game Gallery
+            </h1>
+            <p className={`text-gray-400 text-lg ${robotoFont.className}`}>
+              Featured Games by CGS
+            </p>
           </div>
         </div>
+      </motion.div>
 
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-8 mb-8">
+        <div className="lg:col-span-3 relative group">
+          <motion.div
+            key={selectedGame}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="relative h-[400px] lg:h-[600px] rounded-3xl overflow-hidden shadow-2xl border border-pink-500/20 bg-black"
+          >
+            <AnimatePresence mode="wait">
+              {/* STANDARD INFO VIEW (the hero card always shows this now —
+                 the game player renders in its own full-screen overlay
+                 below so it gets proper room and a locked aspect ratio
+                 instead of being squeezed into this card). */}
+              <motion.div key="info" exit={{ opacity: 0 }} className="relative w-full h-full">
+                {/* FEATURED MAIN IMAGE */}
+                <Image
+                  // ⭐️ SAFE SOURCE USE
+                  src={getSafeImageSrc(currentGame.coverImgUrl)}
+                  alt={currentGame.title || "Game image"}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  // Optimization: preload featured image
+                  priority
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 75vw, 60vw"
+                />
+
+                <div className={`absolute inset-0 bg-gradient-to-t from-pink-600 via-rose-500 to-orange-400 opacity-20`}></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+
+                  {/* Navigation Arrows - Only show when NOT playing and >1 game */}
+                  {numFeatured > 1 && (
+                    <>
+                      <button
+                        onClick={prevGame}
+                        className="absolute left-4 top-1/2 transform -translate-y-[15vh] lg:-translate-y-1/2 z-20 w-12 h-12 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 border border-pink-500/30 hover:border-pink-500/60"
+                      >
+                        <ChevronLeft className="w-6 h-6" />
+                      </button>
+
+                      <button
+                        onClick={nextGame}
+                        className="absolute right-4 top-1/2 transform -translate-y-[15vh] lg:-translate-y-1/2 z-20 w-12 h-12 bg-black/50 hover:bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 border border-pink-500/30 hover:border-pink-500/60"
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
+                    </>
+                  )}
+
+                  <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
+                    <div className="space-y-4">
+                      <motion.h2
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white drop-shadow-2xl ${righteousFont.className} leading-tight`}
+                      >
+                        {currentGame.title}
+                      </motion.h2>
+
+                      <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                        className={`text-gray-300 text-sm sm:text-base md:text-lg max-w-2xl ${robotoFont.className} line-clamp-3 sm:line-clamp-none`}
+                      >
+                        {currentGame.description}
+                      </motion.p>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                        className="flex flex-wrap gap-2"
+                      >
+                        {currentGame.tags?.map((tech, index) => (
+                          <span
+                            key={index}
+                            className="px-3 py-1 bg-gray-800/60 backdrop-blur-sm rounded-full text-gray-300 text-sm border border-gray-600/40"
+                          >
+                            {tech}
+                          </span>
+                        ))}
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.7 }}
+                        className="flex gap-4 mt-6"
+                      >
+                        {/* FEATURED PLAY BUTTON - ONLY WORKS WITH VALID URL */}
+                        {liveDemoUrl ? (
+                          <button
+                            onClick={() => handlePlayGame(liveDemoUrl, currentGame)}
+                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-pink-500/25"
+                          >
+                            <Play className="w-5 h-5" />
+                            Play Now
+                          </button>
+                        ) : (
+                          <span className="flex items-center gap-2 px-6 py-3 bg-gray-700/50 text-gray-400 font-semibold rounded-xl cursor-not-allowed shadow-lg">
+                            <Play className="w-5 h-5" />
+                            Live Demo N/A
+                          </span>
+                        )}
+
+                        {githubUrl ? (
+                          <a
+                            href={githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-6 py-3 bg-gray-800/60 hover:bg-gray-700/60 backdrop-blur-sm text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 border border-gray-600/40 hover:border-gray-500/60"
+                          >
+                            <Github className="w-5 h-5" />
+                            View Code
+                          </a>
+                        ) : (
+                          <span className="flex items-center gap-2 px-6 py-3 bg-gray-800/30 text-gray-500 font-semibold rounded-xl cursor-not-allowed border border-gray-800">
+                            <Github className="w-5 h-5" />
+                            Code N/A
+                          </span>
+                        )}
+                      </motion.div>
+                    </div>
+                  </div>
+
+                  {/* Autoplay Progress Bar - Only show when NOT playing */}
+                  {isAutoPlaying && (
+                    <div className="absolute top-4 left-4 right-4 z-10">
+                      <div className="w-full h-1 bg-gray-800/50 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-pink-500 to-pink-400"
+                          initial={{ width: "0%" }}
+                          animate={{ width: "100%" }}
+                          transition={{ duration: 6, ease: "linear" }}
+                          key={selectedGame}
+                        />
+                      </div>
+                    </div>
+                  )}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+        </div>
+
+        {/* Thumbnail Sidebar */}
+        <div className="lg:col-span-1 space-y-4">
+          <div className="flex lg:flex-col gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 px-2 -mx-2 snap-x snap-mandatory sm:snap-none">
+            {featuredGames.map((game, index) => (
+              <motion.div
+                key={game._id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                onClick={() => selectGame(index)}
+                className={`relative flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-full lg:h-[120px] rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 border-2 snap-center ${
+                  selectedGame === index
+                    ? "border-pink-500 shadow-lg shadow-pink-500/25 scale-105"
+                    : "border-gray-700/50 hover:border-pink-500/50 hover:scale-102"
+                }`}
+              >
+                {/* SIDEBAR THUMBNAIL */}
+                <Image
+                  // ⭐️ SAFE SOURCE USE
+                  src={getSafeImageSrc(game.coverImgUrl)}
+                  alt={game.title}
+                  fill
+                  className="object-cover transition-all duration-300"
+                  sizes="(max-width: 768px) 100px, 250px"
+                />
+
+                <div
+                  className={`absolute inset-0 transition-all duration-300 ${
+                    selectedGame === index
+                      ? "bg-pink-500/20"
+                      : "bg-black/40 hover:bg-black/20"
+                  }`}
+                ></div>
+
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-2">
+                  <div
+                    className={`mb-1 transition-all duration-300 ${
+                      selectedGame === index
+                        ? "text-pink-300 scale-110"
+                        : "text-white/80"
+                    }`}
+                  >
+                    <Gamepad2 className="w-6 h-6" />
+                  </div>
+                  <span
+                    className={`text-xs font-semibold text-center leading-tight ${
+                      selectedGame === index
+                        ? "text-pink-300"
+                        : "text-white/80"
+                    }`}
+                  >
+                    {game.title}
+                  </span>
+                </div>
+
+                {selectedGame === index && (
+                  <motion.div
+                    layoutId="activeGameIndicator"
+                    className="absolute -top-1 -left-1 -right-1 -bottom-1 border-2 border-pink-400 rounded-2xl"
+                    transition={{
+                      type: "spring",
+                      bounce: 0.2,
+                      duration: 0.6,
+                    }}
+                  />
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Pagination Dots */}
+      {numFeatured > 1 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -408,9 +637,10 @@ export default function GameClient({
             />
           ))}
         </motion.div>
-      </div>
+      )}
 
-      <div className="min-h-screen flex flex-col pt-24 px-4 lg:px-16 xl:px-32 2xl:px-64 relative">
+      {/* COMPLETE COLLECTION SECTION */}
+      <div className="min-h-screen flex flex-col pt-24 px-0 relative">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -432,171 +662,187 @@ export default function GameClient({
                 members of CGS
               </p>
             </div>
-
-            {/* <div className="flex items-center gap-3 bg-gray-900/50 backdrop-blur-sm rounded-2xl p-2 border border-gray-700/50">
-              <button className="px-4 py-2 bg-pink-500/20 text-pink-300 rounded-xl font-semibold text-sm border border-pink-500/30 transition-all duration-300">
-                Grid View
-              </button>
-              <button className="px-4 py-2 text-gray-400 hover:text-white rounded-xl font-semibold text-sm transition-all duration-300">
-                List View
-              </button>
-            </div> */}
           </div>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-16 sm:mb-20">
-          {games.map((game, index) => (
-            <motion.div
-              key={game._id}
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -10, scale: 1.02 }}
-              className="group relative bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-700/30 hover:border-pink-500/40 shadow-xl hover:shadow-2xl hover:shadow-pink-500/10 transition-all duration-500 flex flex-col h-full"
-            >
-              <div className="relative h-48 lg:h-56 overflow-hidden">
-                <Image
-                  src={prettySafeImage(game.coverImgUrl || "")}
-                  alt={game.title || "Game image"}
-                  fill
-                  className="object-cover transition-all duration-700 group-hover:scale-110"
-                />{" "}
-                <div
-                  className={`absolute inset-0 bg-gradient-to-t from-pink-600 via-rose-500 to-orange-400 opacity-20 group-hover:opacity-30 transition-opacity duration-500`}
-                ></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                {/* <div className="absolute top-4 left-4">
-                  <div className="flex items-center gap-2 px-3 py-1 bg-black/70 backdrop-blur-sm rounded-full text-pink-300 text-sm font-semibold border border-pink-500/30">
-                    {game.icon}
-                    {game.category}
-                  </div>
-                </div> */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                  <div className="flex gap-3">
-                    {game.links?.find((link) => link.text === "live-demo") && (
-                      <motion.a
-                        href={
-                          game.links.find((link) => link.text === "live-demo")!
-                            .url
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={(e) => e.stopPropagation()} // Prevents event bubbling
-                        className="w-12 h-12 bg-pink-500/90 hover:bg-pink-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
-                      >
-                        <Play className="w-5 h-5" />
-                      </motion.a>
-                    )}
-                  </div>
-                </div>
-                {/* <div className="absolute top-4 right-4">
-                  <div className="flex items-center gap-1 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-full text-yellow-400 text-sm">
-                    <Star className="w-4 h-4 fill-current" />
-                    <span className="text-white font-semibold">4.8</span>
-                  </div>
-                </div> */}
-              </div>
+          {games.map((game, index) => {
+            // Find url object. Link is safe if url itself exists and isn't empty.
+            const liveDemoLinkObj = game.links?.find((link) => link.text === "live-demo");
+            // Check existence, non-emptiness, and valid string implicitly.
+            const isLiveDemoValid = liveDemoLinkObj && liveDemoLinkObj.url && liveDemoLinkObj.url.trim() !== "";
 
-              {/* `flex-1` pushes the footer (with the divider line) to the bottom. */}
-              <div className="p-6 flex flex-col flex-1">
-                <div className="flex-1 space-y-4">
-                  <div>
-                    {/* Fixed height for title (2 lines) */}
-                    <h3
-                      className={`text-xl lg:text-2xl font-bold text-white mb-2 group-hover:text-pink-300 transition-colors duration-300 ${righteousFont.className} h-16`}
-                    >
-                      {game.title}
-                    </h3>
+            const githubLinkObj = game.links?.find((link) => link.text === "github");
+            const isGithubValid = githubLinkObj && githubLinkObj.url && githubLinkObj.url.trim() !== "";
 
-                    {/*
-                    // =================================================================
-                    // ⭐️ CHANGE 1: More space for description
-                    //
-                    // `h-24` (6rem) fits 4 lines of text.
-                    // `line-clamp-4` cuts off anything after 4 lines.
-                    // This is the compromise: more text, but still uniform.
-                    // =================================================================
-                    */}
-                    <p
-                      className={`text-gray-400 text-sm leading-relaxed ${robotoFont.className} line-clamp-4 h-24`}
-                    >
-                      {game.description}
-                    </p>
-                  </div>
-
-                  {/*
-                  // =================================================================
-                  // ⭐️ CHANGE 2: Distance between tags and divider
-                  //
-                  // `mb-4` (1rem) adds the space you wanted.
-                  // This section is now perfectly aligned on all cards.
-                  // =================================================================
-                  */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {game.tags?.slice(0, 2).map((tech, techIndex) => (
+            return (
+              <motion.div
+                key={game._id}
+                initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -10, scale: 1.02 }}
+                onClick={() => {
+                  // Clicking the card plays the game directly in the
+                  // embedded on-site player instead of navigating away.
+                  if (isLiveDemoValid) {
+                    handlePlayGame(liveDemoLinkObj.url, game);
+                  }
+                }}
+                role={isLiveDemoValid ? "button" : undefined}
+                aria-label={isLiveDemoValid ? `Play ${game.title}` : undefined}
+                className={`group relative bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-700/30 hover:border-pink-500/40 shadow-xl hover:shadow-2xl hover:shadow-pink-500/10 transition-all duration-500 flex flex-col h-full ${
+                  isLiveDemoValid ? "cursor-pointer" : "cursor-default"
+                }`}
+              >
+                <div className="relative h-48 lg:h-56 overflow-hidden">
+                  {/* COLLECTION CARD IMAGE */}
+                  <Image
+                    // ⭐️ SAFE SOURCE USE
+                    src={getSafeImageSrc(game.coverImgUrl)}
+                    alt={game.title || "Game image"}
+                    fill
+                    className="object-cover transition-all duration-700 group-hover:scale-110"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw, 25vw"
+                  />
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-t from-pink-600 via-rose-500 to-orange-400 opacity-20 group-hover:opacity-30 transition-opacity duration-500`}
+                  ></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                  
+                  {/* Hover Play Button */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">
+                    <div className="flex gap-3">
+                      {isLiveDemoValid && (
+                        <motion.button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePlayGame(liveDemoLinkObj.url, game);
+                          }}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="w-12 h-12 bg-pink-500/90 hover:bg-pink-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
+                        >
+                          <Play className="w-5 h-5 fill-white" />
+                        </motion.button>
+                      )}
+                    </div>
+                    {isLiveDemoValid && (
                       <span
-                        key={techIndex}
-                        className="px-2 py-1 bg-gray-800/60 text-gray-300 text-xs rounded-full border border-gray-600/40 hover:border-pink-500/40 hover:text-pink-300 transition-all duration-300"
+                        className={`text-white text-xs font-semibold tracking-wide drop-shadow ${robotoFont.className}`}
                       >
-                        {tech}
-                      </span>
-                    ))}
-                    {(game.tags?.length ?? 0) > 2 && (
-                      <span className="px-2 py-1 bg-pink-500/20 text-pink-300 text-xs rounded-full border border-pink-500/40">
-                        +{(game.tags?.length ?? 0) - 2}
+                        Click to Play
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-gray-700/50">
-                  <div className="flex items-center gap-4 text-sm text-gray-400">
-                    <div className="flex items-center gap-2">
-                      <Image
-                        src={
-                          game.author?.profileImgUrl ||
-                          "/default-fallback-image.png"
-                        }
-                        alt="Author Profile"
-                        className="w-6 h-6 rounded-full object-cover border border-pink-500/20"
-                        width={24}
-                        height={24}
-                      />
+                <div className="p-6 flex flex-col flex-1">
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <h3
+                        className={`text-xl lg:text-2xl font-bold text-white mb-2 group-hover:text-pink-300 transition-colors duration-300 ${righteousFont.className} h-16`}
+                      >
+                        {game.title}
+                      </h3>
+                      <p
+                        className={`text-gray-400 text-sm leading-relaxed ${robotoFont.className} line-clamp-4 h-24`}
+                      >
+                        {game.description}
+                      </p>
+                    </div>
 
-                      <span>{game.author?.name || "Anonymous"}</span>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {game.tags?.slice(0, 2).map((tech, techIndex) => (
+                        <span
+                          key={techIndex}
+                          className="px-2 py-1 bg-gray-800/60 text-gray-300 text-xs rounded-full border border-gray-600/40 hover:border-pink-500/40 hover:text-pink-300 transition-all duration-300"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                      {(game.tags?.length ?? 0) > 2 && (
+                        <span className="px-2 py-1 bg-pink-500/20 text-pink-300 text-xs rounded-full border border-pink-500/40">
+                          +{(game.tags?.length ?? 0) - 2}
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    {game.links?.find((link) => link.text === "github") && (
-                      <motion.a
-                        href={
-                          game.links.find((link) => link.text === "github")!.url
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-8 h-8 bg-gray-800/60 hover:bg-pink-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-pink-300 transition-all duration-300"
-                      >
-                        <Github className="w-4 h-4" />
-                      </motion.a>
-                    )}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-700/50">
+                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                      <div className="flex items-center gap-2">
+                        <Image
+                          // ⭐️ AUTHOR IMAGE: Need same robustness for user profiles
+                          src={game.author?.profileImgUrl && game.author.profileImgUrl.trim() !== ""
+                                ? prettySafeImage(game.author.profileImgUrl)
+                                : DEFAULT_GAME_IMAGE} // Use general placeholder if user img is missing
+                          alt="Author Profile"
+                          className="w-6 h-6 rounded-full object-cover border border-pink-500/20"
+                          width={24}
+                          height={24}
+                        />
+                        <span>{game.author?.name || "Anonymous"}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {isGithubValid && (
+                        <motion.a
+                          href={githubLinkObj.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="w-8 h-8 bg-gray-800/60 hover:bg-pink-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-pink-300 transition-all duration-300"
+                        >
+                          <Github className="w-4 h-4" />
+                        </motion.a>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-pink-500/5 via-purple-500/5 to-pink-500/5 blur-xl"></div>
-              </div>
-            </motion.div>
-          ))}
+                <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-pink-500/5 via-purple-500/5 to-pink-500/5 blur-xl"></div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
+
+      {/* FULL-SCREEN GAME PLAYER OVERLAY
+          Portaled directly into document.body (not rendered here in the
+          normal tree) so it's never trapped inside a transformed ancestor
+          and always covers the true viewport, above the navbar. */}
+      {isMounted &&
+        createPortal(
+          <GamePlayerOverlay
+            playingEmbedUrl={playingEmbedUrl}
+            title={playingGame?.title ?? currentGame.title}
+            embedBlocked={embedBlocked}
+            embedLoading={embedLoading}
+            embedSlow={embedSlow}
+            embedRetryCount={embedRetryCount}
+            onRetry={() => setEmbedRetryCount((c) => c + 1)}
+            onClose={handleCloseGame}
+            onIframeLoad={() => {
+              // Cancel any pending timers now that the game has genuinely
+              // loaded — otherwise the block-detection timer set earlier
+              // would still fire later and incorrectly boot the player
+              // mid-game.
+              if (embedSlowTimeoutRef.current) clearTimeout(embedSlowTimeoutRef.current);
+              if (embedBlockTimeoutRef.current) clearTimeout(embedBlockTimeoutRef.current);
+              setEmbedLoading(false);
+              setEmbedBlocked(false);
+              setEmbedSlow(false);
+            }}
+          />,
+          document.body
+        )}
     </div>
   );
 }

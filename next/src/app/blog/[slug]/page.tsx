@@ -10,6 +10,9 @@ import { IBlog } from "@/app/types/domain.types";
 import remarkRehype from "remark-rehype";
 import rehypeStringify from "rehype-stringify";
 import rehypePrettyCode from "rehype-pretty-code";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { prettyDate } from "@/app/utils/pretty";
 import ShareButton from "../components/ShareButton";
 import Footer from "@/app/footer";
@@ -22,7 +25,9 @@ const fetchBlog = async (slug: string): Promise<IBlog> => {
   } else {
     const content = (apiResponse.data as IBlog).content;
     const processedContent = await remark()
+      .use(remarkMath)
       .use(remarkRehype)
+      .use(rehypeKatex)
       .use(rehypePrettyCode, {
         theme: "github-dark",
         keepBackground: false,
