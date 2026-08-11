@@ -27,7 +27,7 @@ const fetchBlog = async (slug: string): Promise<IBlog> => {
     
     // Fix display math blocks to ensure they have their own lines
     content = content.replace(/\$\$(.*?)\$\$/gs, (match, p1) => {
-      return `\n$$\n${p1.trim()}\n$$\n`;
+      return `\n\n$$\n${p1.trim()}\n$$\n\n`;
     });
 
     const processedContent = await remark()

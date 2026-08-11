@@ -6,12 +6,11 @@ async function run() {
   await mongoose.connect(uri);
   const db = mongoose.connection.db;
   const blogs = await db.collection("blogs").find({}).toArray();
-  console.log(`Found ${blogs.length} blogs.`);
   blogs.forEach(b => {
-    if (b.content.includes("frac")) {
+    if (b.content.includes("$$")) {
       console.log("-----");
       console.log("Slug:", b.slug);
-      console.log("Content around frac:\n", b.content.substring(b.content.indexOf("frac") - 100, b.content.indexOf("frac") + 300));
+      console.log("Content around $$:\n", JSON.stringify(b.content));
     }
   });
   process.exit(0);
