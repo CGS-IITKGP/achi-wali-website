@@ -23,7 +23,13 @@ const fetchBlog = async (slug: string): Promise<IBlog> => {
   if (apiResponse.action === null || apiResponse.action === false) {
     notFound();
   } else {
-    const content = (apiResponse.data as IBlog).content;
+    let content = (apiResponse.data as IBlog).content;
+    
+    // Fix display math blocks to ensure they have their own lines
+    content = content.replace(/\$\$(.*?)\$\$/gs, (match, p1) => {
+      return `\n$$\n${p1.trim()}\n$$\n`;
+    });
+
     const processedContent = await remark()
       .use(remarkMath)
       .use(remarkRehype)
