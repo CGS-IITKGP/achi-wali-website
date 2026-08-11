@@ -10,12 +10,66 @@ import { IBlog } from "@/app/types/domain.types";
 import remarkRehype from "remark-rehype";
 import rehypeStringify from "rehype-stringify";
 import rehypePrettyCode from "rehype-pretty-code";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
+import katex from "katex";
 import "katex/dist/katex.min.css";
 import { prettyDate } from "@/app/utils/pretty";
 import ShareButton from "../components/ShareButton";
 import Footer from "@/app/footer";
+
+/**
+ * Renders LaTeX math in an HTML string using KaTeX directly.
+ * Handles both display math ($$...$$) and inline math ($...$).
+ * This bypasses remark-math entirely for maximum robustness.
+ */
+function renderMathInHtml(html: string): string {
+  // First, handle display math: $$...$$
+  // The content may span multiple lines and may contain HTML tags from remark processing
+  html = html.replace(/\$\$([\s\S]*?)\$\$/g, (_match, tex: string) => {
+    // Strip any HTML tags that remark may have inserted (e.g., <p>, <br>)
+    const cleanTex = tex
+      .replace(/<[^>]*>/g, "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&#x27;/g, "'")
+      .replace(/&quot;/g, '"')
+      .trim();
+    try {
+      return katex.renderToString(cleanTex, {
+        displayMode: true,
+        throwOnError: false,
+        trust: true,
+      });
+    } catch {
+      return `<pre class="katex-error">${cleanTex}</pre>`;
+    }
+  });
+
+  // Then, handle inline math: $...$
+  // Match content between single $ delimiters (not spanning newlines)
+  html = html.replace(/\$([^\$\n]+?)\$/g, (_match, tex: string) => {
+    const cleanTex = tex
+      .replace(/<[^>]*>/g, "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&#x27;/g, "'")
+      .replace(/&quot;/g, '"')
+      .trim();
+    if (!cleanTex) return _match;
+    try {
+      return katex.renderToString(cleanTex, {
+        displayMode: false,
+        throwOnError: false,
+        trust: true,
+      });
+    } catch {
+      return _match;
+    }
+  });
+
+  return html;
+}
 
 const fetchBlog = async (slug: string): Promise<IBlog> => {
   const apiResponse = await api("GET", `/blog/view/${slug}`);
@@ -23,17 +77,10 @@ const fetchBlog = async (slug: string): Promise<IBlog> => {
   if (apiResponse.action === null || apiResponse.action === false) {
     notFound();
   } else {
-    let content = (apiResponse.data as IBlog).content;
-    
-    // Fix display math blocks to ensure they have their own lines
-    content = content.replace(/\$\$(.*?)\$\$/gs, (match, p1) => {
-      return `\n\n$$\n${p1.trim()}\n$$\n\n`;
-    });
+    const content = (apiResponse.data as IBlog).content;
 
     const processedContent = await remark()
-      .use(remarkMath)
       .use(remarkRehype)
-      .use(rehypeKatex)
       .use(rehypePrettyCode, {
         theme: "github-dark",
         keepBackground: false,
@@ -41,7 +88,8 @@ const fetchBlog = async (slug: string): Promise<IBlog> => {
       .use(rehypeStringify)
       .process(content);
 
-    const html = processedContent.toString();
+    // Post-process: render any LaTeX math found in the HTML
+    const html = renderMathInHtml(processedContent.toString());
     return {
       ...(apiResponse.data as IBlog),
       content: html,
