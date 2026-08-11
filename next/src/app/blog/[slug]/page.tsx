@@ -14,6 +14,7 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 import { prettyDate } from "@/app/utils/pretty";
 import ShareButton from "../components/ShareButton";
+import MathContent from "../components/MathContent";
 import Footer from "@/app/footer";
 
 /**
@@ -282,10 +283,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
           </div>
         </header>
 
-        <article
-          className="prose prose-xl prose-invert max-w-none mdx-content"
-          dangerouslySetInnerHTML={{ __html: blog.content }}
-        />
+        <MathContent html={blog.content} />
 
         <div className="py-6 border-t border-gray-800 flex flex-wrap gap-2">
           {blog.tags.map((tag) => (
