@@ -114,6 +114,7 @@ function ScrollPathCameraRig({
   onFocusChange,
   enabled,
   introCanStart,
+  isPlayable, // NEW PROP RECEIVED
 }: {
   onTelemetry: (t: Telemetry) => void;
   jumpRequest: JumpRequest | null;
@@ -122,6 +123,7 @@ function ScrollPathCameraRig({
   onFocusChange: (active: boolean) => void;
   enabled: boolean;
   introCanStart: boolean;
+  isPlayable: boolean;
 }) {
   const { camera } = useThree();
   const heroProgress = 0.556;
@@ -175,7 +177,9 @@ function ScrollPathCameraRig({
 
   useEffect(() => {
     const onWheel = (event: WheelEvent) => {
-      event.preventDefault();
+      // NEW: Completely ignore the mouse wheel until HTML logo finishes zooming
+      if (!isPlayable) return; 
+
       if (!introDone.current) return;
       if (focusActiveRef.current) onFocusChange?.(false);
       focusActiveRef.current = false;
@@ -185,6 +189,9 @@ function ScrollPathCameraRig({
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
+      // NEW: Ignore key scrolling until HTML logo finishes zooming
+      if (!isPlayable) return; 
+
       if (!introDone.current) return;
 
       const isForward = event.key === "ArrowDown" || event.key === "PageDown";
@@ -205,14 +212,14 @@ function ScrollPathCameraRig({
       }
     };
 
-    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("wheel", onWheel, { passive: true });
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, []);
+  }, [isPlayable, onFocusChange]); // NEW: Update listener when isPlayable changes
 
   useFrame((_, delta) => {
     if (!enabled) return;
@@ -402,7 +409,8 @@ function FreeCameraTelemetry({
   return null;
 }
 
-export default function ArcadeClient() {
+// NEW: Added isPlayable to the component props
+export default function ArcadeClient({ isPlayable = false }: { isPlayable?: boolean }) {
   const introTargetProgress = 0.556;
   const hotspotTriggerProgress = 1.0;
   const hotspotTriggerTolerance = 0.03;
@@ -453,8 +461,6 @@ export default function ArcadeClient() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [focusActive]);
 
-  // Separate effect for camera logger toggle so it never gets torn down
-  // by unrelated state changes and always captures the keypress.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "l" || event.key === "L") {
@@ -534,7 +540,7 @@ export default function ArcadeClient() {
         </div>
       )}
 
-      {/* Debug camera logger panel — toggle with "L" key */}
+      {/* Debug camera logger panel */}
       {cameraLoggerOn && (
         <div
           style={{
@@ -700,7 +706,7 @@ export default function ArcadeClient() {
       <div className="arcade-canvas-shell">
         <Canvas
           camera={{ position: [10.2, 4.9, 3.8], fov: 33, near: 0.1, far: 200 }}
-          shadows
+          shadows={{ type: THREE.PCFShadowMap }}
           gl={{
             antialias: true,
             toneMapping: THREE.ACESFilmicToneMapping,
@@ -724,6 +730,7 @@ export default function ArcadeClient() {
             onFocusChange={setFocusActive}
             enabled={!freeMove}
             introCanStart={introCanStart}
+            isPlayable={isPlayable} // NEW: Pass the prop into the Rig
           />
           <FreeCameraTelemetry
             onTelemetry={setTelemetry}

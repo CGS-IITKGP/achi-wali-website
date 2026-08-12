@@ -1,7 +1,10 @@
 .arcade-scroll-layout {
   min-height: 100vh;
   background: #000;
-  overflow: hidden;
+  /* overflow: clip preserves the visual clipping behaviour you want
+     WITHOUT creating a scroll container — which is what overflow: hidden
+     does and what silently kills position: sticky on children. */
+  overflow: clip;
 }
 
 .arcade-canvas-shell {
@@ -146,6 +149,49 @@
   border-color: rgba(82, 243, 255, 0.8);
 }
 
+/* Intro Track defines how long the scroll behavior lasts */
+.cgs-intro-track {
+  position: relative;
+  height: 250vh; /* Adjust height to change the zoom duration */
+  background: #000;
+  width: 100%;
+}
+
+/* Keeps the text pinned in the dead center while scrolling through the track */
+.cgs-intro-sticky {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  z-index: 50; /* Keeps it layered securely above background canvases */
+  pointer-events: none; /* Prevents text bounds from hijacking mouse/touch pointers */
+}
+
+/* Big Cyberpunk Styled Cinematic Text */
+.cgs-zoom-text {
+  font-size: 8rem; /* Base size */
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(82, 243, 255, 0.6), 0 0 40px rgba(82, 243, 255, 0.2);
+  transform-origin: center center;
+  will-change: transform, opacity; /* Optimizes GPU layers for lag-free performance */
+  transition: transform 0.05s linear; /* Smooths out jagged scroll wheel notches */
+}
+
+/* Ensures the dynamic WebGL component is framed correctly when active */
+.cgs-webgl-section {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: #000;
+  z-index: 10;
+}
 @keyframes hologramIn {
   0% {
     opacity: 0;
@@ -158,3 +204,4 @@
     filter: brightness(1) blur(0);
   }
 }
+ 
