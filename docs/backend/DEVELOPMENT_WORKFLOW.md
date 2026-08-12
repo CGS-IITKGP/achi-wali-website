@@ -316,7 +316,7 @@ export default eventValidator;
 | `_id` | `Types.ObjectId` | Validates hex string + transforms to ObjectId |
 | `shortString` | `string` | max 255 chars, trimmed |
 | `longString` | `string` | max 4095 chars, trimmed |
-| `bigString` | `string` | max 32767 chars, trimmed |
+| `bigString` | `string` | max 50000 chars, trimmed |
 | `slug` | `string` | URL-safe, lowercase, hyphens only |
 | `tags` | `string[]` | Lowercased automatically |
 | `mediaKey` | `string \| null` | max 1023 chars, nullable |

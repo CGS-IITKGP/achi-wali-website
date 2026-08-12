@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/authContext";
+import { EUserRole } from "../types/domain.types";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,21 +43,30 @@ export default function Navbar() {
   }, [isMenuOpen]);
 
   useEffect(() => {
-    setNavItems(() => {
-      return [
-        ...[
-          { name: "Selections" , href: "/selections"},
-          { name: "3D-View", href: "/3d" },
-          { name: "Games", href: "/games" },
-          { name: "Projects", href: "/projects" },
-          { name: "Blog", href: "/blog" },
-          { name: "Team", href: "/team" },
-        ],
-        user
-          ? { name: "Dashboard", href: "/dashboard" }
-          : { name: "Sign In", href: "/auth/sign-in" },
-      ];
-    });
+    const baseItems = [
+      { name: "Selections", href: "/selections" },
+      { name: "3D-View", href: "/3d" },
+      { name: "Games", href: "/games" },
+      { name: "Projects", href: "/projects" },
+      { name: "Blog", href: "/blog" },
+      { name: "Team", href: "/team" },
+    ];
+
+    if (user) {
+      baseItems.push({ name: "Profile", href: "/profile" });
+
+      const hasDashboardAccess = user.roles?.some((role) =>
+        [EUserRole.ADMIN, EUserRole.MEMBER, EUserRole.ROOT].includes(role)
+      );
+
+      if (hasDashboardAccess) {
+        baseItems.push({ name: "Dashboard", href: "/dashboard" });
+      }
+    } else {
+      baseItems.push({ name: "Sign In", href: "/auth/sign-in" });
+    }
+
+    setNavItems(baseItems);
   }, [user]);
 
   const toggleMenu = () => {

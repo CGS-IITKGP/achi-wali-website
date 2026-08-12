@@ -55,7 +55,7 @@
   - [DELETE /api/media/:id](#delete-apimediaid)
 - **Misc**
   - [GET /api/misc/health](#get-apimischealth)
-- **Game** *(leaderboard integration — see also [`docs/backend/LEADERBOARD_BACKEND_MAP.md`](file:///c:/Vajraksh%20new/Web_dev/achi-wali-website/docs/backend/LEADERBOARD_BACKEND_MAP.md) for the full spec)*
+- **Game** 
   - [POST /api/game/login](#post-apigamelogin)
   - [POST /api/game/score](#post-apigamescore)
   - [GET /api/game/score](#get-apigamescore)
@@ -520,7 +520,7 @@ Authentication is session-based using HTTP-only JWT cookies.
   |---------------|------------|----------------------------------------------------------------------------|----------|
   | `title`       | `string`   | Trimmed, max 255 chars                                                     | Yes      |
   | `slug`        | `string`   | Trimmed, max 255 chars, URL-friendly (`/^[a-z0-9]+(?:-[a-z0-9]+)*$/`)       | Yes      |
-  | `content`     | `string`   | Trimmed, max 32767 chars                                                   | Yes      |
+  | `content`     | `string`   | Trimmed, max 50000 chars                                                   | Yes      |
   | `tags`        | `string[]` | Array of strings, each max 31 chars, lowercased                            | Yes      |
   | `coverImgUrl` | `string`   | Max 1023 chars, not nullable (media key reference)                         | Yes      |
 
@@ -662,7 +662,7 @@ Authentication is session-based using HTTP-only JWT cookies.
   |-----------------|------------------|------------------------------------------------------------------|----------|
   | `title`         | `string`         | Trimmed, max 255 chars                                           | No       |
   | `slug`          | `string`         | Trimmed, max 255 chars, URL-friendly regex                       | No       |
-  | `content`       | `string`         | Trimmed, max 4095 chars                                          | No       |
+  | `content`       | `string`         | Trimmed, max 50000 chars                                         | No       |
   | `tags`          | `string[]`       | Array of strings, each max 31 chars, lowercased                  | No       |
   | `collaborators` | `string[]`       | Array of valid 24-char hex MongoDB ObjectIds                     | No       |
   | `coverImgUrl`   | `string \| null` | Max 1023 chars, nullable (set to `null` to remove)               | No       |
@@ -2641,7 +2641,7 @@ From `src/lib/validators/core.validator.ts` — `allIbDField`:
 | `teamId`              | `z.string().nullable()` → `ObjectId \| null` | Same as `_id` but allows `null`                      |
 | `shortString`         | `z.string()`                       | Trimmed, max 255 chars                                           |
 | `longString`          | `z.string()`                       | Trimmed, max 4095 chars                                          |
-| `bigString`           | `z.string()`                       | Trimmed, max 32767 chars                                         |
+| `bigString`           | `z.string()`                       | Trimmed, max 50000 chars                                         |
 | `boolean`             | `z.boolean()`                      | —                                                                |
 | `email`               | `z.email()`                        | Max 255 chars, lowercased                                        |
 | `password`            | `z.string()`                       | Max 255 chars                                                    |
