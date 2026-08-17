@@ -2,17 +2,78 @@ export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
 import "../lib/mdx.css";
+import "katex/dist/katex.min.css";
 import { remark } from "remark";
 import Link from "next/link";
 import Image from "next/image";
 import api from "@/app/axiosApi";
 import { IBlog } from "@/app/types/domain.types";
 import remarkRehype from "remark-rehype";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import rehypeStringify from "rehype-stringify";
 import rehypePrettyCode from "rehype-pretty-code";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import { prettyDate } from "@/app/utils/pretty";
 import ShareButton from "../components/ShareButton";
+import MathContent from "../components/MathContent";
 import Footer from "@/app/footer";
+
+/**
+ * Renders LaTeX math in an HTML string using KaTeX directly.
+ * Handles both display math ($$...$$) and inline math ($...$).
+ * This bypasses remark-math entirely for maximum robustness.
+ */
+function renderMathInHtml(html: string): string {
+  // First, handle display math: $$...$$
+  // The content may span multiple lines and may contain HTML tags from remark processing
+  html = html.replace(/\$\$([\s\S]*?)\$\$/g, (_match, tex: string) => {
+    // Strip any HTML tags that remark may have inserted (e.g., <p>, <br>)
+    const cleanTex = tex
+      .replace(/<[^>]*>/g, "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&#x27;/g, "'")
+      .replace(/&quot;/g, '"')
+      .trim();
+    try {
+      return katex.renderToString(cleanTex, {
+        displayMode: true,
+        throwOnError: false,
+        trust: true,
+      });
+    } catch {
+      return `<pre class="katex-error">${cleanTex}</pre>`;
+    }
+  });
+
+  // Then, handle inline math: $...$
+  // Match content between single $ delimiters (not spanning newlines)
+  html = html.replace(/\$([^\$\n]+?)\$/g, (_match, tex: string) => {
+    const cleanTex = tex
+      .replace(/<[^>]*>/g, "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&#x27;/g, "'")
+      .replace(/&quot;/g, '"')
+      .trim();
+    if (!cleanTex) return _match;
+    try {
+      return katex.renderToString(cleanTex, {
+        displayMode: false,
+        throwOnError: false,
+        trust: true,
+      });
+    } catch {
+      return _match;
+    }
+  });
+
+  return html;
+}
 
 const fetchBlog = async (slug: string): Promise<IBlog> => {
   const apiResponse = await api("GET", `/blog/view/${slug}`);
@@ -21,8 +82,11 @@ const fetchBlog = async (slug: string): Promise<IBlog> => {
     notFound();
   } else {
     const content = (apiResponse.data as IBlog).content;
+
     const processedContent = await remark()
+      .use(remarkMath)
       .use(remarkRehype)
+      .use(rehypeKatex)
       .use(rehypePrettyCode, {
         theme: "github-dark",
         keepBackground: false,
@@ -30,7 +94,8 @@ const fetchBlog = async (slug: string): Promise<IBlog> => {
       .use(rehypeStringify)
       .process(content);
 
-    const html = processedContent.toString();
+    // Post-process: render any LaTeX math found in the HTML
+    const html = renderMathInHtml(processedContent.toString());
     return {
       ...(apiResponse.data as IBlog),
       content: html,
@@ -223,10 +288,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
           </div>
         </header>
 
-        <article
-          className="prose prose-xl prose-invert max-w-none mdx-content"
-          dangerouslySetInnerHTML={{ __html: blog.content }}
-        />
+        <MathContent html={blog.content} />
 
         <div className="py-6 border-t border-gray-800 flex flex-wrap gap-2">
           {blog.tags.map((tag) => (
