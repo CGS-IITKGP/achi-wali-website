@@ -1,64 +1,121 @@
 export const dynamic = "force-dynamic";
 
-import { ArrowRight, Calendar, Star } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  Star,
+} from "lucide-react";
+
 import Link from "next/link";
 import Image from "next/image";
+
 import Navbar from "../components/navbar";
 import Footer from "../footer";
 import BlogList from "./components/BlogList";
-import { Righteous, Roboto } from "next/font/google";
+
+import { Righteous } from "next/font/google";
+
 import { IBlogOfList } from "../types/domain.types";
 import api from "../axiosApi";
-import { prettyDate, prettySafeImage } from "../utils/pretty";
 
-const righteousFont = Righteous({ weight: "400", subsets: ["latin"] });
-const robotoFont = Roboto({
-  weight: ["300", "400", "500", "700"],
+import {
+  prettyDate,
+  prettySafeImage,
+} from "../utils/pretty";
+
+const righteousFont = Righteous({
+  weight: "400",
   subsets: ["latin"],
 });
 
-const fetchAllBlogs = async (): Promise<IBlogOfList[]> => {
-  const apiResponse = await api("GET", "/blog", {
-    query: {
-      target: "all",
-    },
-  });
+const fetchAllBlogs =
+  async (): Promise<IBlogOfList[]> => {
+    const apiResponse = await api(
+      "GET",
+      "/blog",
+      {
+        query: {
+          target: "all",
+        },
+      }
+    );
 
-  if (apiResponse.action === true) {
-    return (apiResponse.data as IBlogOfList[]) || [];
-  } else if (apiResponse.action === null) {
-    console.log("Internal Server Error while fetching all blogs.");
-  } else if (apiResponse.action === false) {
-    console.error("API response error for all blogs:", apiResponse);
-  }
-  return [];
-};
+    if (apiResponse.action === true) {
+      return (
+        (apiResponse.data as IBlogOfList[]) ||
+        []
+      );
+    }
 
-const fetchFeaturedBlogs = async (): Promise<IBlogOfList[]> => {
-  const apiResponse = await api("GET", "/featured", {
-    query: {
-      target: "blog",
-    },
-  });
+    if (apiResponse.action === null) {
+      console.log(
+        "Internal Server Error while fetching all blogs."
+      );
+    }
 
-  if (apiResponse.action === true) {
-    return (apiResponse.data as IBlogOfList[]) || [];
-  } else if (apiResponse.action === null) {
-    console.log("Internal Server Error while fetching featured blogs.");
-  } else if (apiResponse.action === false) {
-    console.error("API response error for featured blogs:", apiResponse);
-  }
-  return [];
-};
+    if (apiResponse.action === false) {
+      console.error(
+        "API response error for all blogs:",
+        apiResponse
+      );
+    }
+
+    return [];
+  };
+
+const fetchFeaturedBlogs =
+  async (): Promise<IBlogOfList[]> => {
+    const apiResponse = await api(
+      "GET",
+      "/featured",
+      {
+        query: {
+          target: "blog",
+        },
+      }
+    );
+
+    if (apiResponse.action === true) {
+      return (
+        (apiResponse.data as IBlogOfList[]) ||
+        []
+      );
+    }
+
+    if (apiResponse.action === null) {
+      console.log(
+        "Internal Server Error while fetching featured blogs."
+      );
+    }
+
+    if (apiResponse.action === false) {
+      console.error(
+        "API response error for featured blogs:",
+        apiResponse
+      );
+    }
+
+    return [];
+  };
 
 export default async function Blog() {
-  const [blogs, featuredBlogs] = await Promise.all([
+  const [
+    blogs,
+    featuredBlogs,
+  ] = await Promise.all([
     fetchAllBlogs(),
     fetchFeaturedBlogs(),
   ]);
 
-  const blogsCount = blogs.length;
-  const tagsCount = new Set(blogs.flatMap((b) => b.tags)).size;
+  const blogsCount =
+    blogs.length;
+
+  const tagsCount =
+    new Set(
+      blogs.flatMap(
+        (blog) => blog.tags
+      )
+    ).size;
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -66,9 +123,11 @@ export default async function Blog() {
 
       <section className="relative pt-64 pb-16 overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-600/5 rounded-full blur-3xl animate-pulse delay-2000"></div>
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-pulse" />
+
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-600/5 rounded-full blur-3xl animate-pulse delay-2000" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -80,8 +139,9 @@ export default async function Blog() {
                 CGS Blog
               </span>
             </h1>
+
             <p
-              className={`text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed ${robotoFont.className}`}
+              className={`text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed ${righteousFont.className}`}
             >
               Discover insights, tutorials, and stories from the world of
               computer graphics, web development and game development.
@@ -90,21 +150,28 @@ export default async function Blog() {
             <div className="flex items-center justify-center gap-8 mt-8">
               <div className="text-center">
                 <div className="text-2xl font-bold text-pink-400">
-                  {blogsCount === -1 ? "Loading" : blogsCount}
+                  {blogsCount === -1
+                    ? "Loading"
+                    : blogsCount}
                 </div>
-                <div className="text-sm text-gray-500">Articles</div>
+
+                <div className="text-sm text-gray-500">
+                  Articles
+                </div>
               </div>
-              {/* <div className="w-px h-8 bg-gray-700"></div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-pink-400">1k+</div>
-                <div className="text-sm text-gray-500">Readers</div>
-              </div> */}
-              <div className="w-px h-8 bg-gray-700"></div>
+
+              <div className="w-px h-8 bg-gray-700" />
+
               <div className="text-center">
                 <div className="text-2xl font-bold text-pink-400">
-                  {tagsCount === -1 ? "Loading" : tagsCount}
+                  {tagsCount === -1
+                    ? "Loading"
+                    : tagsCount}
                 </div>
-                <div className="text-sm text-gray-500">Tags</div>
+
+                <div className="text-sm text-gray-500">
+                  Tags
+                </div>
               </div>
             </div>
           </div>
@@ -116,6 +183,7 @@ export default async function Blog() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 mb-12">
               <Star className="w-6 h-6 text-pink-400" />
+
               <h2
                 className={`text-3xl md:text-4xl font-bold text-white ${righteousFont.className}`}
               >
@@ -124,87 +192,116 @@ export default async function Blog() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {featuredBlogs.slice(0, 2).map((blog) => (
-                <article key={blog.slug} className="group">
-                  <Link href={`/blog/${blog.slug}`}>
-                    <div className="bg-gray-900/50 backdrop-blur-xl rounded-2xl border border-gray-800 overflow-hidden hover:border-pink-500/50 transition-all duration-500 h-full">
-                      <div className="relative h-64 overflow-hidden">
-                        <Image
-                          src={prettySafeImage(blog.coverImgUrl)}
-                          alt={blog.title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-700"
-                          unoptimized
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                        <div className="absolute top-4 left-4">
-                          <span className="px-3 py-1 bg-pink-500 text-white text-sm font-medium rounded-full">
-                            Featured
-                          </span>
-                        </div>
-                        <div className="absolute top-4 right-4">
-                          <span className="px-3 py-1 bg-black/50 backdrop-blur-sm text-white text-sm font-medium rounded-full">
-                            BLOG
-                          </span>
-                        </div>
-                      </div>
+              {featuredBlogs
+                .slice(0, 2)
+                .map((blog) => (
+                  <article
+                    key={blog.slug}
+                    className="group"
+                  >
+                    <Link
+                      href={`/blog/${blog.slug}`}
+                    >
+                      <div className="bg-gray-900/50 backdrop-blur-xl rounded-2xl border border-gray-800 overflow-hidden hover:border-pink-500/50 transition-all duration-500 h-full">
+                        <div className="relative h-64 overflow-hidden">
+                          <Image
+                            src={prettySafeImage(
+                              blog.coverImgUrl
+                            )}
+                            alt={blog.title}
+                            fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-700"
+                            unoptimized
+                          />
 
-                      <div className="p-8">
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {blog.tags.slice(0, 3).map((tag: string) => (
-                            <span
-                              key={tag}
-                              className="px-2 py-1 bg-gray-800/50 text-gray-300 text-xs rounded-lg"
-                            >
-                              #{tag}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                          <div className="absolute top-4 left-4">
+                            <span className="px-3 py-1 bg-pink-500 text-white text-sm font-medium rounded-full">
+                              Featured
                             </span>
-                          ))}
-                        </div>
+                          </div>
 
-                        <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-pink-400 transition-colors duration-300">
-                          {blog.title}
-                        </h3>
-
-                        <div className="flex items-center justify-between text-sm text-gray-500 mb-6">
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              <span suppressHydrationWarning={true}>
-                                {prettyDate(blog.createdAt)}
-                              </span>
-                            </div>
+                          <div className="absolute top-4 right-4">
+                            <span className="px-3 py-1 bg-black/50 backdrop-blur-sm text-white text-sm font-medium rounded-full">
+                              BLOG
+                            </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Image
-                              src={
-                                blog.author.profileImgUrl ||
-                                "/default-fallback-image.png"
-                              }
-                              alt="Profile Image"
-                              className="w-10 h-10 object-cover rounded-full border-2 border-pink-500/20"
-                              width={40}
-                              height={40}
-                            />
-                            <div>
-                              <div className="text-white font-medium">
-                                {blog.author.name}
+                        <div className="p-8">
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {blog.tags
+                              .slice(0, 3)
+                              .map(
+                                (
+                                  tag: string
+                                ) => (
+                                  <span
+                                    key={tag}
+                                    className="px-2 py-1 bg-gray-800/50 text-gray-300 text-xs rounded-lg"
+                                  >
+                                    #{tag}
+                                  </span>
+                                )
+                              )}
+                          </div>
+
+                          <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-pink-400 transition-colors duration-300">
+                            {blog.title}
+                          </h3>
+
+                          <div className="flex items-center justify-between text-sm text-gray-500 mb-6">
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+
+                                <span suppressHydrationWarning>
+                                  {prettyDate(
+                                    blog.createdAt
+                                  )}
+                                </span>
                               </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center justify-end mt-6 group-hover:text-pink-400 transition-colors duration-300">
-                          <span className="font-medium">Read Article</span>
-                          <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Image
+                                src={
+                                  blog.author
+                                    .profileImgUrl ||
+                                  "/default-fallback-image.png"
+                                }
+                                alt="Profile Image"
+                                className="w-10 h-10 object-cover rounded-full border-2 border-pink-500/20"
+                                width={40}
+                                height={40}
+                              />
+
+                              <div>
+                                <div className="text-white font-medium">
+                                  {
+                                    blog.author
+                                      .name
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-end mt-6 group-hover:text-pink-400 transition-colors duration-300">
+                            <span className="font-medium">
+                              Read Article
+                            </span>
+
+                            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                </article>
-              ))}
+                    </Link>
+                  </article>
+                ))}
             </div>
           </div>
         </section>
