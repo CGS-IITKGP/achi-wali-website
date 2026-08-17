@@ -61,7 +61,7 @@ export default function ForbiddenPage() {
       <div className="particles-container absolute inset-0 overflow-hidden pointer-events-none">
         {particles.map((_, i) => (
           <div
-            key={i}
+            key={`forbidden-particle-${i}`}
             className="absolute w-1 h-1 bg-pink-400 rounded-full opacity-30 animate-pulse"
             style={{
               left: `${Math.random() * 100}vw`,

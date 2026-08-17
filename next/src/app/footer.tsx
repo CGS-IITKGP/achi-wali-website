@@ -97,7 +97,7 @@ const Footer = () => {
                 { icon: <FaInstagram />, href: "https://instagram.com/cgs_iitkgp" },
               ].map(({ icon, href }, i) => (
                 <Link
-                  key={i}
+                  key={`social-icon-${i}`}
                   href={href}
                   target="_blank"
                   className="text-gray-400 hover:text-gray-900 hover:bg-pink-400 transition-all duration-300 flex items-center justify-center w-9 h-9 rounded-full bg-white/5 hover:-translate-y-1 hover:scale-110 border border-pink-500/20 hover:border-pink-400 shadow-sm"

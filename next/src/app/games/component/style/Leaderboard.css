@@ -1,0 +1,98 @@
+.leaderboard-root {
+  background:
+    radial-gradient(
+      1200px 600px at 85% -10%,
+      rgba(255,61,139,0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 500px at -10% 110%,
+      rgba(120,40,200,0.16),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      #0a0510 0%,
+      #0b0612 100%
+    );
+}
+
+.title {
+  font-size: clamp(44px, 6vw, 84px);
+  line-height: 0.95;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-shadow: 0 0 24px rgba(255,61,139,.45);
+}
+
+.game-button {
+  background: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+}
+
+.game-button-active {
+  background: rgba(255,61,139,0.12);
+  border-color: rgba(255,61,139,0.55);
+  color: #ffd1e3;
+  box-shadow: 0 0 24px -8px rgba(255,61,139,.45);
+}
+
+.podium-card {
+  background:
+    linear-gradient(
+      160deg,
+      rgba(255,255,255,0.04) 0%,
+      rgba(20,8,24,0.5) 70%
+    );
+
+  border-color: rgba(255,255,255,0.08);
+}
+
+.podium-card:hover {
+  background:
+    linear-gradient(
+      160deg,
+      rgba(255,61,139,0.18) 0%,
+      rgba(20,8,24,0.6) 70%
+    );
+
+  border-color: rgba(255,61,139,0.45);
+
+  box-shadow:
+    0 0 0 1px rgba(255,61,139,.35),
+    0 8px 40px -10px rgba(255,61,139,.45);
+
+  transform: scale(1.01) translateY(-6px);
+  transition: all 0.3s ease;
+}
+
+.place-number {
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.score-value {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.leaderboard-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 61, 139, 0.8) rgba(255, 255, 255, 0.05);
+}
+
+.leaderboard-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.leaderboard-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.leaderboard-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 61, 139, 0.8);
+  border-radius: 999px;
+}

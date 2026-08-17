@@ -420,7 +420,7 @@ export default function ProjectsClient({
           ) :(
             [...filteredProjects].reverse().map((proj, idx) => (
               <motion.div
-                key={idx}
+                key={`proj-grid-${proj._id || idx}`}
                 initial={{ opacity: 0, y: 30, scale: 0.95 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.5, delay: idx * 0.05 }}
@@ -485,7 +485,7 @@ export default function ProjectsClient({
                       <div className="flex flex-wrap justify-center gap-2">
                         {proj.tags.map((tag: string, i: number) => (
                           <span
-                            key={i}
+                            key={`proj-tag-${tag}-${i}`}
                             className="rounded-full border border-pink-500/30 bg-pink-500/10 px-3 py-1 text-xs text-pink-300 transition-all duration-300 hover:bg-pink-500/30 hover:text-white shadow-[0_0_8px_rgba(236,72,153,0.3)]"
                           >
                             {tag}
@@ -503,7 +503,7 @@ export default function ProjectsClient({
                             i: number,
                           ) => (
                             <a
-                              key={i}
+                              key={`proj-link-${i}`}
                               href={link.url}
                               target="_blank"
                               rel="noopener noreferrer"

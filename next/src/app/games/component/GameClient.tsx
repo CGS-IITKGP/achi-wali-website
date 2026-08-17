@@ -627,7 +627,7 @@ export default function GameClient({
         >
           {featuredGames.map((_, index) => (
             <button
-              key={index}
+              key={`game-dot-${index}`}
               onClick={() => selectGame(index)}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
                 selectedGame === index

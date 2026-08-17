@@ -314,7 +314,7 @@ function ListSection({ title, items }: { title: string; items: any[] | undefined
       <SectionTitle>{title}</SectionTitle>
       <ul className="space-y-2 sm:space-y-3">
         {items.map((item, index) => (
-          <li key={index} className="text-gray-300 leading-relaxed text-xs sm:text-base">
+          <li key={`list-item-${index}`} className="text-gray-300 leading-relaxed text-xs sm:text-base">
             •{" "}
             {typeof item === "object" && item.url ? (
               <a
@@ -549,7 +549,7 @@ export default function SelectionsPage() {
               <div className="space-y-3">
                 {currentPortfolio.tasks.map((task, index) => (
                   <button
-                    key={index}
+                    key={`sidebar-task-${index}`}
                     onClick={() => {
                       document.getElementById(`task-${index}`)?.scrollIntoView({
                         behavior: "smooth",
@@ -606,7 +606,7 @@ export default function SelectionsPage() {
             {currentPortfolio.tasks.map((task, index) => (
               <section
                 id={`task-${index}`}
-                key={index}
+                key={`task-section-${index}`}
                 className="scroll-mt-24 sm:scroll-mt-32 border border-pink-500/10 rounded-2xl sm:rounded-3xl p-4 sm:p-8 md:p-12 bg-white/[0.02] backdrop-blur-sm"
               >
                 {/* Number & Title Header */}

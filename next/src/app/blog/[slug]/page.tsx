@@ -2,12 +2,15 @@ export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
 import "../lib/mdx.css";
+import "katex/dist/katex.min.css";
 import { remark } from "remark";
 import Link from "next/link";
 import Image from "next/image";
 import api from "@/app/axiosApi";
 import { IBlog } from "@/app/types/domain.types";
 import remarkRehype from "remark-rehype";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import rehypeStringify from "rehype-stringify";
 import rehypePrettyCode from "rehype-pretty-code";
 import katex from "katex";
@@ -81,7 +84,9 @@ const fetchBlog = async (slug: string): Promise<IBlog> => {
     const content = (apiResponse.data as IBlog).content;
 
     const processedContent = await remark()
+      .use(remarkMath)
       .use(remarkRehype)
+      .use(rehypeKatex)
       .use(rehypePrettyCode, {
         theme: "github-dark",
         keepBackground: false,
