@@ -63,7 +63,7 @@ const allIbDField = {
         .transform((val) => (val === null ? null : new Types.ObjectId(val))),
     shortString: z.string().trim().max(255),
     longString: z.string().trim().max(4095),
-    bigString: z.string().trim().max(50000),
+    bigString: z.string().trim().max(65535),
     boolean: z.boolean(),
     email: z.email().max(255).toLowerCase(),
     password: z.string().max(255),

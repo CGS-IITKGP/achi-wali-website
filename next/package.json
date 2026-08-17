@@ -26,6 +26,7 @@
     "gray-matter": "^4.0.3",
     "jose": "^6.2.2",
     "jsonwebtoken": "^9.0.3",
+    "katex": "^0.18.4",
     "lucide-react": "^0.544.0",
     "mongodb": "^6.21.0",
     "mongoose": "^8.23.0",
