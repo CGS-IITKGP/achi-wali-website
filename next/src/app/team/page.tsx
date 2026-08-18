@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Image from "next/image";
 import Navbar from "../components/navbar";
 import TeamJPG from "../assets/team.jpg";
@@ -7,6 +8,27 @@ import Footer from "../footer";
 import api from "../axiosApi";
 import { ITeamExportable } from "../types/domain.types";
 import TeamPageClient from "./TeamPageClient";
+
+export const metadata: Metadata = {
+  title: "CGS Team",
+  description:
+    "Meet the members, executives, seniors and contributors of the Computer Graphics Society.",
+
+  openGraph: {
+    title: "CGS Team",
+    description:
+      "Meet the members of the Computer Graphics Society.",
+    images: ["/og/team-og.jpg"],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "CGS Team",
+    description:
+      "Meet the members of the Computer Graphics Society.",
+    images: ["/og/team-og.jpg"],
+  },
+};
 
 const fetchAllTeams = async () => {
   const apiResponse = await api("GET", "/team", {

@@ -1,11 +1,33 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import { IProject } from "@/app/types/index.types";
 import ProjectsClient from "./components/ProjectClient";
 import Navbar from "../components/navbar";
 import Footer from "../footer";
 import FireflyBackground from "../components/FireFlyBackground";
 import api from "../axiosApi";
+
+export const metadata: Metadata = {
+  title: "CGS Projects",
+  description:
+    "Explore graphics, research and development projects created by members of the Computer Graphics Society.",
+
+  openGraph: {
+    title: "CGS Projects",
+    description:
+      "Explore graphics, research and development projects created by members of the Computer Graphics Society.",
+    images: ["/og/projects-og.jpg"],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "CGS Projects",
+    description:
+      "Explore graphics, research and development projects created by members of the Computer Graphics Society.",
+    images: ["/og/projects-og.jpg"],
+  },
+};
 
 const fetchFeaturedGraphicsProjects = async () => {
   const apiResponse = await api("GET", "/featured", {

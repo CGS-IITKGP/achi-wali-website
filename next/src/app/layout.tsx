@@ -31,7 +31,6 @@ export default function RootLayout({
     <html lang="en" data-scroll-behavior="smooth" className="bg-[#0a0a0a] dark">
       <head>
         <link rel="shortcut icon" href={Logo.src} type="image/x-icon" />
-        <title>Computer Graphics Society</title>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0a0a] text-white`}
