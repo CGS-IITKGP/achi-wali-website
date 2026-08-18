@@ -79,6 +79,16 @@ export namespace APIControl {
             }
         }
     }
+
+    export namespace GameScore {
+        export namespace Get {
+            export enum Target {
+                LEADERBOARD = "leaderboard",
+                MY_SCORES = "my_scores",
+            }
+        }
+    }
 }
+
 
 /* eslint-enable @typescript-eslint/no-namespace */

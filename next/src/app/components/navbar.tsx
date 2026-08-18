@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/authContext";
+import { EUserRole } from "../types/domain.types";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,20 +43,29 @@ export default function Navbar() {
   }, [isMenuOpen]);
 
   useEffect(() => {
-    setNavItems(() => {
-      return [
-        ...[
-          { name: "3D-View", href: "/3d" },
-          { name: "Games", href: "/games" },
-          { name: "Projects", href: "/projects" },
-          { name: "Blog", href: "/blog" },
-          { name: "Team", href: "/team" },
-        ],
-        user
-          ? { name: "Dashboard", href: "/dashboard" }
-          : { name: "Sign In", href: "/auth/sign-in" },
-      ];
-    });
+    const baseItems = [
+      { name: "3D-View", href: "/3d" },
+      { name: "Games", href: "/games" },
+      { name: "Projects", href: "/projects" },
+      { name: "Blog", href: "/blog" },
+      { name: "Team", href: "/team" },
+    ];
+
+    if (user) {
+      baseItems.push({ name: "Profile", href: "/profile" });
+
+      const hasDashboardAccess = user.roles?.some((role) =>
+        [EUserRole.ADMIN, EUserRole.MEMBER, EUserRole.ROOT].includes(role)
+      );
+
+      if (hasDashboardAccess) {
+        baseItems.push({ name: "Dashboard", href: "/dashboard" });
+      }
+    } else {
+      baseItems.push({ name: "Sign In", href: "/auth/sign-in" });
+    }
+
+    setNavItems(baseItems);
   }, [user]);
 
   const toggleMenu = () => {
@@ -68,7 +78,7 @@ export default function Navbar() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`fixed top-0 left-0 w-full px-2 xs:px-4 lg:px-8 py-2 xs:py-3 lg:py-4 flex items-center justify-between z-999 transition-all duration-500 border-b ${
+        className={`fixed top-0 left-0 w-full px-2 xs:px-4 lg:px-8 py-2 xs:py-3 lg:py-4 flex items-center justify-between z-[999] transition-all duration-500 border-b ${
           scrolled
             ? "bg-black/90 backdrop-blur-xl shadow-2xl border-pink-500/20"
             : "bg-transparent border-transparent"
@@ -155,7 +165,7 @@ export default function Navbar() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
           onClick={toggleMenu}
-          className="lg:hidden relative z-60 p-2 rounded-xl bg-gray-900/50 backdrop-blur-lg border border-pink-500/30 hover:border-pink-500/60 transition-all duration-300 group"
+          className="lg:hidden relative z-[60] p-2 rounded-xl bg-gray-900/50 backdrop-blur-lg border border-pink-500/30 hover:border-pink-500/60 transition-all duration-300 group"
           aria-label="Toggle navigation menu"
         >
           <div className="flex flex-col items-center justify-center w-6 h-6 space-y-1">
@@ -197,7 +207,7 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 20, stiffness: 100 }}
-              className="fixed top-0 left-0 w-[280px] xs:w-80 h-full bg-gradient-to-b from-gray-900 via-black to-gray-900 z-1000 lg:hidden shadow-2xl border-r border-pink-500/30"
+              className="fixed top-0 left-0 w-[280px] xs:w-80 h-full bg-gradient-to-b from-gray-900 via-black to-gray-900 z-[1000] lg:hidden shadow-2xl border-r border-pink-500/30"
             >
               <div className="flex items-center justify-between p-4 xs:p-6 border-b border-pink-500/20">
                 <div className="flex items-center gap-2 xs:gap-3">

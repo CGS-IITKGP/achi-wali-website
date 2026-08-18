@@ -16,7 +16,7 @@ const AnimatedBackground = React.memo(() => {
 
       {[...Array(6)].map((_, i) => (
         <div
-          key={i}
+          key={`featured-bg-orb-${i}`}
           className="absolute rounded-full opacity-10 animate-float"
           style={{
             width: `${120 + i * 30}px`,
@@ -115,7 +115,7 @@ const ContentCard = React.memo<{
               <div className="flex flex-wrap gap-1.5 mb-auto">
                 {content.tags.slice(0, 3).map((tech, techIndex) => (
                   <span
-                    key={techIndex}
+                    key={`${content._id}-tag-${techIndex}`}
                     className="px-2 py-0.5 bg-white/5 rounded text-[10px] text-gray-300 border border-white/5"
                   >
                     {tech}
@@ -258,7 +258,7 @@ const FeaturedContent = ({ featured }: FeaturedContentProps) => {
           <div className="flex space-x-2">
             {featured.map((_, index) => (
               <button
-                key={index}
+                key={`featured-dot-${index}`}
                 onClick={() => selectContent(index)}
                 className={`w-2 h-2 rounded-full transition-all duration-200 ${
                   index === activeIndex

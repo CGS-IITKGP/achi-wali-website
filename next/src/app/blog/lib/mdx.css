@@ -191,4 +191,23 @@
     content: "* * *";
     @apply text-pink-400 text-2xl font-light tracking-widest;
   }
+
+  /* KaTeX math styling */
+  .katex-display {
+    @apply my-8 overflow-x-auto py-4;
+    text-align: center;
+  }
+
+  .katex-display > .katex {
+    @apply text-gray-100;
+  }
+
+  .katex {
+    @apply text-gray-100;
+    font-size: 1.1em;
+  }
+
+  .katex-error {
+    @apply text-red-400 bg-gray-900 p-4 rounded-lg my-4 overflow-x-auto text-sm font-mono;
+  }
 }

@@ -47,7 +47,7 @@ export interface ISetCookie {
 }
 
 export interface JWTPayload {
-    [key: string]: string | EUserRole[];
+    [key: string]: string | EUserRole[] | undefined;
     _id: string;
-    roles: EUserRole[];
+    roles?: EUserRole[];
 }

@@ -5,12 +5,13 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { motion /*Variants*/ } from "framer-motion";
 import { righteousFont, robotoFont } from "../../fonts";
-import { ExternalLink, FlaskConical, Github } from "lucide-react";
+import { ExternalLink, FlaskConical, Github, Play, X } from "lucide-react";
 import { Image as GraphicsIcon } from "lucide-react";
 // import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import { FiMousePointer } from "react-icons/fi";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { IProject } from "@/app/types/domain.types";
+import BoidsCanvas from "@/app/projects/components/BoidsCanvas";
 import { prettySafeImage } from "@/app/utils/pretty";
 
 // const detailsVariants = {
@@ -49,6 +50,18 @@ export default function ProjectsClient({
   const [filteredProjects, setFilteredProjects] = useState<IProject[]>(projects);
   const [portfolioFilter, setPortfolioFilter] = useState("ALL");
   const portfolioOptions = ["ALL", ...new Set(projects.map(p => p.portfolio))];
+
+  const [simulateProject, setSimulateProject] = useState<IProject | null>(null);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (simulateProject) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [simulateProject]);
 
   useEffect(() => {
     setHasMounted(true);
@@ -420,7 +433,7 @@ export default function ProjectsClient({
           ) :(
             [...filteredProjects].reverse().map((proj, idx) => (
               <motion.div
-                key={idx}
+                key={`proj-grid-${proj._id || idx}`}
                 initial={{ opacity: 0, y: 30, scale: 0.95 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.5, delay: idx * 0.05 }}
@@ -485,7 +498,7 @@ export default function ProjectsClient({
                       <div className="flex flex-wrap justify-center gap-2">
                         {proj.tags.map((tag: string, i: number) => (
                           <span
-                            key={i}
+                            key={`proj-tag-${tag}-${i}`}
                             className="rounded-full border border-pink-500/30 bg-pink-500/10 px-3 py-1 text-xs text-pink-300 transition-all duration-300 hover:bg-pink-500/30 hover:text-white shadow-[0_0_8px_rgba(236,72,153,0.3)]"
                           >
                             {tag}
@@ -503,7 +516,7 @@ export default function ProjectsClient({
                             i: number,
                           ) => (
                             <a
-                              key={i}
+                              key={`proj-link-${i}`}
                               href={link.url}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -519,6 +532,19 @@ export default function ProjectsClient({
                           ),
                         )}
                       </div>
+                      {proj.portfolio === "RND" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSimulateProject(proj);
+                          }}
+                          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-pink-500/20 to-purple-500/20 px-4 py-2 text-xs sm:text-sm font-semibold text-white backdrop-blur-sm border border-pink-500/30 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(236,72,153,0.5)]"
+                        >
+                          <Play className="h-4 w-4" fill="currentColor" />
+                          Simulate
+                        </button>
+                      )}
+
 
                       <div className="mt-4 h-[1px] w-2/3 bg-gradient-to-r from-transparent via-pink-500/50 to-transparent animate-pulse" />
                     </div>
@@ -528,6 +554,59 @@ export default function ProjectsClient({
             )))}
         </div>
       </div>
+
+    {simulateProject && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center pt-32 px-6 pb-10 bg-black/60 backdrop-blur-sm"
+          onClick={() => setSimulateProject(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-6xl h-[calc(100vh-12rem)] rounded-3xl border-2 border-pink-500/30 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black shadow-[0_0_40px_-5px_rgba(236,72,153,0.4)] flex flex-col overflow-hidden"
+          >
+
+            {/* ---------- HEADER ---------- */}
+
+            <div className="flex items-center justify-between px-8 py-5 border-b border-pink-500/20">
+
+              <h1
+                className={`text-xl font-bold text-white ${righteousFont.className}`}
+              >
+                {simulateProject.title}
+              </h1>
+
+              <button
+                onClick={() => setSimulateProject(null)}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-500/40 text-white hover:bg-pink-500/40 hover:scale-110 transition-all"
+              >
+                ✕
+              </button>
+
+            </div>
+
+            {/* ---------- CONTENT ---------- */}
+
+            <div className="flex-1 p-6">
+
+              <div className="h-full rounded-2xl border border-pink-500/20 overflow-hidden bg-black">
+
+                {simulateProject.title === "Boids Simulation" ? (
+                  <BoidsCanvas />
+                ) : (
+                  <div
+                    className={`flex h-full w-full items-center justify-center text-gray-300 text-lg ${righteousFont.className}`}
+                  >
+                    No preview available.
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
     </>
   );
 }
