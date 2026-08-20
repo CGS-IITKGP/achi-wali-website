@@ -1831,7 +1831,7 @@ const NewProjectModal = (props: NewProjectModalProps) => {
             </div>
 
             {extraLinks.map((link, index) => (
-              <div key={index} className="flex gap-2 items-center">
+              <div key={`extra-link-blog-${index}`} className="flex gap-2 items-center">
                 <input
                   value={link.text}
                   onChange={(e) =>
@@ -2183,7 +2183,7 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
             </div>
 
             {extraLinks.map((link, index) => (
-              <div key={index} className="flex gap-2 items-center">
+              <div key={`extra-link-proj-${index}`} className="flex gap-2 items-center">
                 <input
                   value={link.text}
                   onChange={(e) =>

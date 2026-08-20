@@ -4,9 +4,12 @@ import AppError from "@/lib/utils/error";
 import { JWTPayload } from "@/lib/types/index.types";
 
 
-const generateJWToken = async (payload: JWTPayload): Promise<string> => {
+const generateJWToken = async (
+    payload: JWTPayload,
+    customSecretKey?: Uint8Array
+): Promise<string> => {
     try {
-        const secretKey = getJWTSecretKey();
+        const secretKey = customSecretKey ?? getJWTSecretKey();
 
         const token = await new SignJWT(payload)
             .setProtectedHeader({ alg: "HS256" })
@@ -25,9 +28,12 @@ const generateJWToken = async (payload: JWTPayload): Promise<string> => {
 };
 
 
-const validateJWToken = async (token: string): Promise<JWTPayload | null> => {
+const validateJWToken = async (
+    token: string,
+    customSecretKey?: Uint8Array
+): Promise<JWTPayload | null> => {
     try {
-        const secretKey = getJWTSecretKey();
+        const secretKey = customSecretKey ?? getJWTSecretKey();
 
         const { payload } = await jwtVerify(token, secretKey);
 

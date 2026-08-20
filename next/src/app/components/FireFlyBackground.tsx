@@ -116,7 +116,7 @@ const FireflyBackground: React.FC<FireflyBackgroundProps> = ({
   return (
     <div className="fixed top-0 left-0 w-full h-full -z-10 bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {Array.from({ length: quantity }).map((_, i) => (
-        <div key={i} className="firefly"></div>
+        <div key={`firefly-${i}`} className="firefly"></div>
       ))}
     </div>
   );
