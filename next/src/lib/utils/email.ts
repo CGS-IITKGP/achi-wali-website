@@ -1,19 +1,28 @@
-import nodemailer, { SendMailOptions } from "nodemailer";
+import nodemailer, { SendMailOptions, Transporter } from "nodemailer";
 import AppError from "@/lib/utils/error";
 import getEnvVariable from "@/lib/utils/envVariable";
 import log, { ELogLevel } from './logger';
 import { IEmail } from '@/lib/types/index.types';
 
 
-const transporter = nodemailer.createTransport({
-    host: getEnvVariable("SMTP_HOST", true),
-    port: Number(getEnvVariable("SMTP_PORT", true)),
-    secure: true,
-    auth: {
-        user: getEnvVariable("SMTP_USERNAME", true),
-        pass: getEnvVariable("SMTP_PASSWORD", true),
-    },
-} as SendMailOptions);
+// Lazily create the transporter so env vars are only read at runtime,
+// not at build time when Next.js evaluates module-level code.
+let _transporter: Transporter | null = null;
+
+function getTransporter(): Transporter {
+    if (!_transporter) {
+        _transporter = nodemailer.createTransport({
+            host: getEnvVariable("SMTP_HOST", true),
+            port: Number(getEnvVariable("SMTP_PORT", true)),
+            secure: true,
+            auth: {
+                user: getEnvVariable("SMTP_USERNAME", true),
+                pass: getEnvVariable("SMTP_PASSWORD", true),
+            },
+        } as SendMailOptions);
+    }
+    return _transporter;
+}
 
 
 const sendEmail = async (data: IEmail): Promise<true> => {
@@ -26,7 +35,7 @@ const sendEmail = async (data: IEmail): Promise<true> => {
             html: data.html
         };
 
-        await transporter.sendMail(mailOptions);
+        await getTransporter().sendMail(mailOptions);
     } catch (error) {
         throw new AppError("Failed to send email.", {
             data,
@@ -39,7 +48,7 @@ const sendEmail = async (data: IEmail): Promise<true> => {
 
 const verifySMTPConnection = async (): Promise<boolean> => {
     try {
-        await transporter.verify();
+        await getTransporter().verify();
     } catch (error) {
         log(ELogLevel.FATAL, "SMTP: Couldn't connect to SMTP server.", {
             error
