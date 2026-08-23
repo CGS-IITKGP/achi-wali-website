@@ -62,27 +62,14 @@ const create: ServiceSignature<
         await gameUserRepository.updateById(playerId, { lastAttemptAt: new Date() });
     }
 
-    // Step D: High-score check & Database operation
-    const existingRecord = await scoreRepository.findOne({
+    // Step D: Always insert — append-only history
+    await scoreRepository.insert({
         player: playerId,
         gameId: data.gameId,
+        score: data.score,
+        scoreStr: data.scoreStr,
+        seed: data.seed,
     });
-
-    if (existingRecord) {
-        if (data.score > existingRecord.score) {
-            await scoreRepository.updateById(existingRecord._id, {
-                score: data.score,
-                scoreStr: data.scoreStr,
-            });
-        }
-    } else {
-        await scoreRepository.insert({
-            player: playerId,
-            gameId: data.gameId,
-            score: data.score,
-            scoreStr: data.scoreStr,
-        });
-    }
 
     return {
         success: true,
@@ -126,6 +113,7 @@ const get: ServiceSignature<
                 gameId: myScore.gameId,
                 score: myScore.score,
                 scoreStr: myScore.scoreStr,
+                seed: myScore.seed,
                 createdAt: myScore.createdAt,
                 updatedAt: myScore.updatedAt,
             }]
@@ -152,6 +140,7 @@ const get: ServiceSignature<
                 gameId: score.gameId,
                 score: score.score,
                 scoreStr: score.scoreStr,
+                seed: score.seed,
                 createdAt: score.createdAt,
                 updatedAt: score.updatedAt,
             }));

@@ -6,7 +6,6 @@ import Footer from "../footer";
 import GameClient from "./component/GameClient";
 import { IProject } from "../types/domain.types";
 import api from "../axiosApi";
-import Leaderboard from "./component/Leaderboard";
 
 
 export const metadata: Metadata = {
@@ -40,15 +39,6 @@ const fetchFeaturedGamesProjects = async () => {
 
   if (apiResponse.action === true) {
     return apiResponse.data as IProject[];
-  } else if (apiResponse.action === null) {
-    console.log(
-      "Internal Server Error while fetching featured graphics projects."
-    );
-  } else if (apiResponse.action === false) {
-    console.error(
-      "API response error while fetching featured graphics projects.",
-      apiResponse
-    );
   }
   return [];
 };
@@ -62,13 +52,6 @@ const fetchProjectGames = async () => {
 
   if (apiResponse.action === true) {
     return apiResponse.data as IProject[];
-  } else if (apiResponse.action === null) {
-    console.log("Internal Server Error while fetching all R&D projects.");
-  } else if (apiResponse.action === false) {
-    console.error(
-      "API response error while fetching all R&D projects.",
-      apiResponse
-    );
   }
   return [];
 };
@@ -88,20 +71,12 @@ const getProjectsData = async () => {
 export default async function ProjectsPage() {
   const { gamesProject, featuredGamesProject } = await getProjectsData();
 
-  console.log(
-    gamesProject.map((game) => ({
-      title: game.title,
-      image: game.coverImgUrl,
-    }))
-  );
-
 
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative">
         <Navbar />
         <GameClient games={gamesProject} featuredGames={featuredGamesProject} />
-        <Leaderboard />
         <Footer />
       </div>
     </>

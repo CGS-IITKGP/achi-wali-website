@@ -52,6 +52,10 @@ const ProjectSchema = new Schema<IProject>({
         type: Schema.Types.ObjectId,
         ref: 'Media',
     }],
+    isMinigame: {
+        type: Boolean,
+        default: false,
+    },
 }, {
     timestamps: true,
 });

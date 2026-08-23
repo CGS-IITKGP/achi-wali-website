@@ -3,14 +3,11 @@ import { allIbDField } from "./core.validator";
 import { APIControl } from "../types/api.types";
 
 const gameValidator = {
-    login: z.object({
-        identifier: allIbDField.shortString,
-        password: allIbDField.password,
-    }),
     createScore: z.object({
         gameId: allIbDField.shortString,
         score: z.number().int(),
         scoreStr: allIbDField.shortString,
+        seed: allIbDField.shortString,
         timestamp: z.number().int().positive(),
         gameToken: allIbDField.longString,
         signature: allIbDField.shortString,
@@ -30,10 +27,12 @@ const gameValidator = {
     }),
     upsertProfile: z.object({
         username: allIbDField.shortString,
-        password: allIbDField.password,
     }),
     getProfile: z.object({}),
     getGameList: z.object({}),
+    exchangeCode: z.object({
+        gameAuthCode: allIbDField.shortString,
+    }),
 };
 
 export default gameValidator;

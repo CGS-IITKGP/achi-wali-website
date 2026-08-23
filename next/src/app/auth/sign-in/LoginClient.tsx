@@ -29,6 +29,36 @@ export default function Login() {
   const { refreshUser } = useAuth();
   const router = useRouter();
 
+  // ── Game-auth cookie redirect ──────────────────────────────────
+  // If the user arrived here after a Google OAuth round-trip that was
+  // initiated from /game-auth, a game_auth_pending cookie carries the
+  // gameId and returnTo values. Read it, clear it, and redirect back
+  // to /game-auth so the game login flow can resume.
+  useEffect(() => {
+    const match = document.cookie.match(
+      /(?:^|;\s*)game_auth_pending=([^;]*)/
+    );
+    if (!match) return;
+
+    // Clear the cookie immediately
+    document.cookie =
+      "game_auth_pending=; path=/; max-age=0; SameSite=Lax";
+
+    try {
+      const { gameId, returnTo } = JSON.parse(
+        decodeURIComponent(match[1])
+      );
+      if (gameId && returnTo) {
+        router.replace(
+          `/game-auth?gameId=${encodeURIComponent(gameId)}&returnTo=${encodeURIComponent(returnTo)}`
+        );
+        return; // stop rendering this page
+      }
+    } catch {
+      // malformed cookie — fall through to normal sign-in page
+    }
+  }, [router]);
+
   // Floating particles animation
   useEffect(() => {
     const createParticle = () => {
