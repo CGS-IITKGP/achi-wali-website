@@ -23,6 +23,12 @@ const ScoreSchema = new Schema<IScore>(
             trim: true,
             maxlength: 255,
         },
+        seed: {
+            type: Schema.Types.String,
+            required: true,
+            trim: true,
+            maxlength: 255,
+        },
     },
     {
         timestamps: true,

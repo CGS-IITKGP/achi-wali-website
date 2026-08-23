@@ -1,12 +1,12 @@
 import createHandler from "@/lib/handler";
 import gameValidator from "@/lib/validators/game.validator";
-import gameAuthServices from "@/lib/services/gameAuth.service";
+import gameSessionServices from "@/lib/services/gameSession.service";
 
 const POST = createHandler({
     requireAuth: false,
-    validationSchema: gameValidator.login,
+    validationSchema: gameValidator.exchangeCode,
     options: {
-        service: gameAuthServices.login,
+        service: gameSessionServices.exchange,
     },
 });
 

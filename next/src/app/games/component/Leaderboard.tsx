@@ -39,7 +39,6 @@ const Leaderboard: React.FC = () => {
           setRecentGames(parsed);
         }
       } catch (err) {
-        console.error("Failed to parse recentGames from localStorage", err);
       }
     }
   }, []);
