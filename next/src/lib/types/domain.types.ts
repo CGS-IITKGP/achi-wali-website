@@ -91,6 +91,7 @@ export interface IProject {
     }[];
     coverImgUrl: string | null;
     media: Types.ObjectId[];
+    isMinigame?: boolean;
     createdAt: Date;
     updatedAt: Date;
 }

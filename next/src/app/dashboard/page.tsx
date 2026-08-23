@@ -980,6 +980,7 @@ const ProjectsSection = () => {
     tags: string[];
     coverImgUrl: string;
     links: Links[];
+    isMinigame?: boolean;
   }) => {
     const apiResponse = await api("POST", "/project", {
       body: {
@@ -989,6 +990,7 @@ const ProjectsSection = () => {
         tags: data.tags,
         coverImgUrl: data.coverImgUrl,
         links: data.links,
+        isMinigame: data.isMinigame,
       },
     });
 
@@ -1010,6 +1012,7 @@ const ProjectsSection = () => {
     tags: string[];
     coverImgUrl: string;
     links: Links[];
+    isMinigame?: boolean;
   }) => {
     const apiResponse = await api("PATCH", `/project/${data._id}`, {
       body: {
@@ -1019,6 +1022,7 @@ const ProjectsSection = () => {
         tags: data.tags,
         coverImgUrl: data.coverImgUrl,
         links: data.links,
+        isMinigame: data.isMinigame,
       },
     });
 
@@ -1563,6 +1567,7 @@ interface NewProjectModalProps {
     tags: string[];
     coverImgUrl: string;
     links: Links[];
+    isMinigame?: boolean;
   }) => Promise<void>;
 }
 
@@ -1574,6 +1579,7 @@ const NewProjectModal = (props: NewProjectModalProps) => {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [coverImgUrl, setCoverImgUrl] = useState("");
+  const [isMinigame, setIsMinigame] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
 
   const [githubUrl, setGithubUrl] = useState("");
@@ -1593,6 +1599,7 @@ const NewProjectModal = (props: NewProjectModalProps) => {
     setDescription("");
     setTags("");
     setCoverImgUrl("");
+    setIsMinigame(false);
 
     setGithubUrl("");
     setLiveUrl("");
@@ -1661,6 +1668,7 @@ const NewProjectModal = (props: NewProjectModalProps) => {
         .filter(Boolean),
       coverImgUrl,
       links,
+      isMinigame,
     });
 
     setLoading(false);
@@ -1746,6 +1754,19 @@ const NewProjectModal = (props: NewProjectModalProps) => {
             placeholder="three.js, multiplayer, shaders"
             className="form-input"
           />
+        </div>
+
+        <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+          <input
+            type="checkbox"
+            id="new-project-minigame"
+            checked={isMinigame}
+            onChange={(e) => setIsMinigame(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-700 bg-black/50 text-pink-500 focus:ring-pink-500/20 cursor-pointer"
+          />
+          <label htmlFor="new-project-minigame" className="text-sm text-gray-300 cursor-pointer select-none">
+            Is this an interactive Minigame?
+          </label>
         </div>
 
         <div>
@@ -1902,6 +1923,7 @@ interface UpdateProjectModalProps {
     tags: string[];
     coverImgUrl: string;
     links: Links[];
+    isMinigame?: boolean;
   }) => Promise<void>;
 }
 
@@ -1913,6 +1935,7 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [coverImgUrl, setCoverImgUrl] = useState("");
+  const [isMinigame, setIsMinigame] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
 
   const [githubUrl, setGithubUrl] = useState("");
@@ -1938,6 +1961,7 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
     setDescription(project.description);
     setTags(project.tags.join(", "));
     setCoverImgUrl(project.coverImgUrl || "");
+    setIsMinigame(project.isMinigame || false);
 
     const github = project.links.find((link) => link.text === "github");
     const live = project.links.find((link) => link.text === "live-link");
@@ -2013,6 +2037,7 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
         .filter(Boolean),
       coverImgUrl,
       links,
+      isMinigame,
     });
 
     setLoading(false);
@@ -2098,6 +2123,19 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
             placeholder="three.js, multiplayer, shaders"
             className="form-input"
           />
+        </div>
+
+        <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+          <input
+            type="checkbox"
+            id="update-project-minigame"
+            checked={isMinigame}
+            onChange={(e) => setIsMinigame(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-700 bg-black/50 text-pink-500 focus:ring-pink-500/20 cursor-pointer"
+          />
+          <label htmlFor="update-project-minigame" className="text-sm text-gray-300 cursor-pointer select-none">
+            Is this an interactive Minigame?
+          </label>
         </div>
 
         <div>

@@ -93,10 +93,11 @@ function GameAuthFlow() {
                 // Logged in — proceed to profile check
                 setStep("checking_profile");
             } else {
-                // Not logged in — save state in cookie and redirect to Google
+                // Not logged in — save state in cookie and redirect to standard login
                 setGameAuthCookie(gameId, returnTo);
                 setStep("redirecting_to_login");
-                window.location.href = "/api/auth/google";
+                const currentUrl = window.location.pathname + window.location.search;
+                window.location.href = `/auth/sign-in?redirect=${encodeURIComponent(currentUrl)}`;
             }
         };
 
