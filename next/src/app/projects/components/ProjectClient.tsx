@@ -635,7 +635,7 @@ export default function ProjectsClient({
                   <BoidsCanvas />
                 ) : simulateProject.title.toLowerCase().includes("fog") ? (
                   <iframe
-                    src="/build_web/FogSimulation.html"
+                    src="/rnd_projects/fog_engine/FogSimulation.html"
                     className="w-full h-full border-none"
                     allow="autoplay; fullscreen; pointer-lock"
                     title="Fog Simulation"
