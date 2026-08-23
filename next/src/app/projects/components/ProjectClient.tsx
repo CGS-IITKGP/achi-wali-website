@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { motion /*Variants*/ } from "framer-motion";
 import { righteousFont, robotoFont } from "../../fonts";
-import { ExternalLink, FlaskConical, Github, Play, X } from "lucide-react";
+import { ExternalLink, FlaskConical, Github, Play, X, Maximize, Minimize } from "lucide-react";
 import { Image as GraphicsIcon } from "lucide-react";
 // import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import { FiMousePointer } from "react-icons/fi";
@@ -52,6 +52,38 @@ export default function ProjectsClient({
   const portfolioOptions = ["ALL", ...new Set(projects.map(p => p.portfolio))];
 
   const [simulateProject, setSimulateProject] = useState<IProject | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const iframeContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleCloseModal = () => {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+    if (document.pointerLockElement && document.exitPointerLock) {
+      document.exitPointerLock();
+    }
+    setSimulateProject(null);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      iframeContainerRef.current?.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -558,7 +590,7 @@ export default function ProjectsClient({
     {simulateProject && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center pt-32 px-6 pb-10 bg-black/60 backdrop-blur-sm"
-          onClick={() => setSimulateProject(null)}
+          onClick={handleCloseModal}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -575,12 +607,21 @@ export default function ProjectsClient({
                 {simulateProject.title}
               </h1>
 
-              <button
-                onClick={() => setSimulateProject(null)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-500/40 text-white hover:bg-pink-500/40 hover:scale-110 transition-all"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={toggleFullscreen}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-500/40 text-white hover:bg-pink-500/40 hover:scale-110 transition-all"
+                  title="Toggle Fullscreen"
+                >
+                  {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                </button>
+                <button
+                  onClick={handleCloseModal}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-500/40 text-white hover:bg-pink-500/40 hover:scale-110 transition-all"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
             </div>
 
@@ -588,10 +629,18 @@ export default function ProjectsClient({
 
             <div className="flex-1 p-6">
 
-              <div className="h-full rounded-2xl border border-pink-500/20 overflow-hidden bg-black">
+              <div ref={iframeContainerRef} className="h-full w-full rounded-2xl border border-pink-500/20 overflow-hidden bg-black relative">
 
                 {simulateProject.title === "Boids Simulation" ? (
                   <BoidsCanvas />
+                ) : simulateProject.title.toLowerCase().includes("fog") ? (
+                  <iframe
+                    src="/build_web/FogSimulation.html"
+                    className="w-full h-full border-none"
+                    allow="autoplay; fullscreen; pointer-lock"
+                    title="Fog Simulation"
+                    onLoad={(e) => (e.target as HTMLIFrameElement).focus()}
+                  />
                 ) : (
                   <div
                     className={`flex h-full w-full items-center justify-center text-gray-300 text-lg ${righteousFont.className}`}
