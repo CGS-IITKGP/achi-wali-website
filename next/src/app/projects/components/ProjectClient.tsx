@@ -609,13 +609,6 @@ export default function ProjectsClient({
 
               <div className="flex items-center gap-4">
                 <button
-                  onClick={toggleFullscreen}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-500/40 text-white hover:bg-pink-500/40 hover:scale-110 transition-all"
-                  title="Toggle Fullscreen"
-                >
-                  {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-                </button>
-                <button
                   onClick={handleCloseModal}
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-500/40 text-white hover:bg-pink-500/40 hover:scale-110 transition-all"
                 >
@@ -627,9 +620,29 @@ export default function ProjectsClient({
 
             {/* ---------- CONTENT ---------- */}
 
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-6 flex gap-3">
 
-              <div ref={iframeContainerRef} className="h-full w-full rounded-2xl border border-pink-500/20 overflow-hidden bg-black relative">
+              {/* Left fullscreen button */}
+              <div className="flex flex-col items-center justify-center shrink-0">
+                <button
+                  onClick={toggleFullscreen}
+                  title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                  className="group flex flex-col items-center gap-2 rounded-2xl border border-pink-500/40 bg-pink-500/10 backdrop-blur-sm px-2 py-4 text-white hover:bg-pink-500/30 hover:border-pink-500/70 hover:shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all duration-300 hover:scale-105"
+                >
+                  {isFullscreen
+                    ? <Minimize className="h-5 w-5 text-pink-300 group-hover:text-white transition-colors" />
+                    : <Maximize className="h-5 w-5 text-pink-300 group-hover:text-white transition-colors" />
+                  }
+                  <span
+                    className={`text-[10px] text-pink-300 group-hover:text-white transition-colors [writing-mode:vertical-rl] rotate-180 tracking-widest uppercase ${righteousFont.className}`}
+                  >
+                    {isFullscreen ? "Exit" : "Fullscreen"}
+                  </span>
+                </button>
+              </div>
+
+              {/* Simulation area */}
+              <div ref={iframeContainerRef} className="flex-1 h-full rounded-2xl border border-pink-500/20 overflow-hidden bg-black relative">
 
                 {simulateProject.title === "Boids Simulation" ? (
                   <BoidsCanvas />
