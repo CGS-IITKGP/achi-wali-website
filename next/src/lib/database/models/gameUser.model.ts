@@ -16,10 +16,6 @@ const GameUserSchema = new Schema<IGameUser>(
             lowercase: true,
             trim: true,
         },
-        passwordHash: {
-            type: Schema.Types.String,
-            required: true,
-        },
         websiteUserId: {
             type: Schema.Types.ObjectId,
             ref: "User",
