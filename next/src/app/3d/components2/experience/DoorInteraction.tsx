@@ -140,11 +140,11 @@ export default function DoorInteraction({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const doorSound = new Audio("/music/Door.mp3");
+      const doorSound = new Audio("/music/door.mp3");
       doorSound.preload = "auto";
       doorAudioRef.current = doorSound;
 
-      const fahhSound = new Audio("/music/Fahh.mp3");
+      const fahhSound = new Audio("/music/fahh.mp3");
       fahhSound.preload = "auto";
       fahhAudioRef.current = fahhSound;
     }
