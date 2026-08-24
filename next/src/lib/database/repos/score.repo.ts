@@ -20,14 +20,10 @@ class ScoreRepository extends GenericRepository<
 
     /**
      * Leaderboard query — computes "best score per player" at read time.
-     * Uses an aggregation pipeline:
-     * 1. Match documents for the given gameId.
-     * 2. Sort by score descending (so $first in $group picks the best row).
-     * 3. Group by player, taking the max score and carrying through all fields
-     *    from the document that had the max score.
-     * 4. Sort grouped results by maxScore descending.
-     * 5. Limit to N.
-     * 6. $lookup to join the player's username from the gameusers collection.
+     * Daily Leaderboard with Fallback:
+     * - If scores exist for today (UTC), shows today's leaderboard.
+     * - If no scores have been logged today yet (e.g. early morning), falls back to the
+     *   most recent active day so the board is never blank before the first play of the day.
      */
     async getTopScores(
         gameId: string,
@@ -36,12 +32,39 @@ class ScoreRepository extends GenericRepository<
         await this.ensureDbConnection();
 
         try {
-            const results = await ScoreModel.aggregate([
-                // 1. Match by gameId
-                { $match: { gameId } },
+            // Determine start of today in UTC
+            const now = new Date();
+            const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 
-                // 2. Sort by score descending — ensures $first picks the best row
-                { $sort: { score: -1 as const } },
+            // Check if scores exist for today
+            const hasScoresToday = await ScoreModel.exists({
+                gameId,
+                createdAt: { $gte: startOfToday },
+            });
+
+            let dateFilter: Record<string, any> = {};
+            if (hasScoresToday) {
+                dateFilter = { createdAt: { $gte: startOfToday } };
+            } else {
+                // Find the most recent date with scores for this game
+                const latestDoc = await ScoreModel.findOne({ gameId })
+                    .sort({ createdAt: -1 })
+                    .select("createdAt")
+                    .lean<{ createdAt?: Date } | null>();
+
+                if (latestDoc && latestDoc.createdAt) {
+                    const latestDate = new Date(latestDoc.createdAt);
+                    const startOfLatestDay = new Date(Date.UTC(latestDate.getUTCFullYear(), latestDate.getUTCMonth(), latestDate.getUTCDate(), 0, 0, 0, 0));
+                    dateFilter = { createdAt: { $gte: startOfLatestDay } };
+                }
+            }
+
+            const results = await ScoreModel.aggregate([
+                // 1. Match by gameId and date range (today or latest active day)
+                { $match: { gameId, ...dateFilter } },
+
+                // 2. Sort by score descending — ensures $first in $group picks the highest score
+                { $sort: { score: -1 as const, createdAt: 1 as const } },
 
                 // 3. Group by player, take the best-scoring document's fields
                 {
@@ -72,15 +95,20 @@ class ScoreRepository extends GenericRepository<
                         as: "playerDoc",
                     },
                 },
-                { $unwind: "$playerDoc" },
+                {
+                    $unwind: {
+                        path: "$playerDoc",
+                        preserveNullAndEmptyArrays: true,
+                    },
+                },
 
                 // 7. Project into the expected IScoreExportable shape
                 {
                     $project: {
                         _id: "$docId",
                         player: {
-                            _id: "$playerDoc._id",
-                            username: "$playerDoc.username",
+                            _id: { $ifNull: ["$playerDoc._id", "$_id"] },
+                            username: { $ifNull: ["$playerDoc.username", "Anonymous"] },
                         },
                         gameId: 1,
                         score: 1,

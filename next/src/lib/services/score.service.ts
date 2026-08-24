@@ -126,30 +126,21 @@ const get: ServiceSignature<
     }
 
     // target === LEADERBOARD
-    // Format inside the cache so only plain serializable values are cached —
-    // unstable_cache cannot handle BSON ObjectId or Mongoose Date instances.
-    const fetchLeaderboard = unstable_cache(
-        async () => {
-            const scores = await scoreRepository.getTopScores(data.gameId);
-            return scores.map((score) => ({
-                _id: score._id.toHexString(),
-                player: {
-                    _id: score.player._id.toHexString(),
-                    username: score.player.username,
-                },
-                gameId: score.gameId,
-                score: score.score,
-                scoreStr: score.scoreStr,
-                seed: score.seed,
-                createdAt: score.createdAt,
-                updatedAt: score.updatedAt,
-            }));
+    // Query freshly from repository for real-time live polling
+    const rawScores = await scoreRepository.getTopScores(data.gameId);
+    const formattedScores = rawScores.map((score: any) => ({
+        _id: typeof score._id === "string" ? score._id : score._id?.toHexString?.() || String(score._id),
+        player: {
+            _id: typeof score.player?._id === "string" ? score.player._id : score.player?._id?.toHexString?.() || String(score.player?._id || ""),
+            username: score.player?.username || "Anonymous",
         },
-        ["leaderboard", data.gameId],
-        { revalidate: 10 }
-    );
-
-    const formattedScores = await fetchLeaderboard();
+        gameId: score.gameId,
+        score: score.score,
+        scoreStr: score.scoreStr,
+        seed: score.seed,
+        createdAt: score.createdAt,
+        updatedAt: score.updatedAt,
+    }));
 
     return {
         success: true,
