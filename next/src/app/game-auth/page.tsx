@@ -146,9 +146,24 @@ function GameAuthFlow() {
                 setStep("redirecting_to_game");
 
                 // Build the redirect URL
-                const redirectUrl = new URL(returnTo);
-                redirectUrl.searchParams.set("gameAuthCode", code);
-                window.location.href = redirectUrl.toString();
+                try {
+                  // Safely construct the URL even if returnTo is a relative path
+                  const base = window.location.origin;
+                  const redirectUrl = new URL(returnTo, base);
+                  
+                  // Append the auth code safely
+                  redirectUrl.searchParams.set("gameAuthCode", code);
+                  
+                  // Strip any hash (like #mini-games) so it doesn't break query parameter reading on the other side
+                  redirectUrl.hash = "";
+                  
+                  // Force a hard navigation
+                  window.location.href = redirectUrl.toString();
+                } catch (error) {
+                  console.error("Redirect parsing error:", error);
+                  // Fallback string manipulation if URL construction fails
+                  window.location.href = `${returnTo}${returnTo.includes('?') ? '&' : '?'}gameAuthCode=${code}`;
+                }
             } else {
                 setErrorMessage(
                     (codeResponse.action === false ? codeResponse.message : null) ||
