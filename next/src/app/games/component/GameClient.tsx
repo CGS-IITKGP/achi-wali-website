@@ -341,7 +341,7 @@ export default function GameClient({
     if (playId && code) {
       const targetGame = games.find((g) => g._id === playId);
       if (targetGame) {
-        const liveDemoLinkObj = targetGame.links?.find((link) => link.text === "live-demo");
+        const liveDemoLinkObj = targetGame.links?.find((link) => link.text === "live-demo" || link.text === "live-link");
         if (liveDemoLinkObj && liveDemoLinkObj.url && liveDemoLinkObj.url.trim() !== "") {
           let originalUrl = liveDemoLinkObj.url;
           let finalUrl = originalUrl;
@@ -367,8 +367,8 @@ export default function GameClient({
           searchParams.delete("play");
           searchParams.delete("gameAuthCode");
           const newSearch = searchParams.toString();
-          const cleanUrl = `${window.location.pathname}${newSearch ? "?" + newSearch : ""}`;
-          window.history.replaceState({}, "", cleanUrl);
+          const cleanUrl = `${window.location.pathname}${newSearch ? "?" + newSearch : ""}${window.location.hash}`;
+          window.history.replaceState({}, document.title, cleanUrl);
         }
       }
     }
@@ -478,7 +478,7 @@ export default function GameClient({
   const getSelectedGameLinkUrl = (linkText: string): string | null => {
     if (selectedGame >= 0 && selectedGame < numFeatured) {
       const linkFound = featuredGames[selectedGame].links?.find((link) => {
-        return link.text === linkText;
+        return link.text === linkText || (linkText === "live-demo" && link.text === "live-link");
       });
       // Explicitly check that url exists AND is not an empty string after trimming.
       if (linkFound && linkFound.url && linkFound.url.trim() !== "") {
@@ -835,7 +835,7 @@ export default function GameClient({
         {miniGames.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-16">
             {miniGames.map((game, index) => {
-              const liveDemoLinkObj = game.links?.find((link) => link.text === "live-demo");
+              const liveDemoLinkObj = game.links?.find((link) => link.text === "live-demo" || link.text === "live-link");
               const isLiveDemoValid = liveDemoLinkObj && liveDemoLinkObj.url && liveDemoLinkObj.url.trim() !== "";
               const githubLinkObj = game.links?.find((link) => link.text === "github");
               const isGithubValid = githubLinkObj && githubLinkObj.url && githubLinkObj.url.trim() !== "";
@@ -1000,7 +1000,7 @@ export default function GameClient({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-16 sm:mb-20">
           {regularGames.map((game, index) => {
             // Find url object. Link is safe if url itself exists and isn't empty.
-            const liveDemoLinkObj = game.links?.find((link) => link.text === "live-demo");
+            const liveDemoLinkObj = game.links?.find((link) => link.text === "live-demo" || link.text === "live-link");
             // Check existence, non-emptiness, and valid string implicitly.
             const isLiveDemoValid = liveDemoLinkObj && liveDemoLinkObj.url && liveDemoLinkObj.url.trim() !== "";
 
