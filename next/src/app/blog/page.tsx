@@ -127,7 +127,7 @@ export default async function Blog() {
 
           <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
 
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-pink-600/5 rounded-full blur-3xl animate-pulse delay-2000" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-pink-600/5 rounded-full blur-3xl animate-pulse delay-2000" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -135,7 +135,7 @@ export default async function Blog() {
             <h1
               className={`text-5xl md:text-7xl lg:text-8xl font-bold mb-6 ${righteousFont.className}`}
             >
-              <span className="bg-gradient-to-r from-pink-400 via-pink-300 to-white bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-pink-400 via-pink-300 to-white bg-clip-text text-transparent">
                 CGS Blog
               </span>
             </h1>
@@ -214,7 +214,7 @@ export default async function Blog() {
                             unoptimized
                           />
 
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
                           <div className="absolute top-4 left-4">
                             <span className="px-3 py-1 bg-pink-500 text-white text-sm font-medium rounded-full">
