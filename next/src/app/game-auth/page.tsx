@@ -147,22 +147,23 @@ function GameAuthFlow() {
 
                 // Build the redirect URL
                 try {
-                  // Safely construct the URL even if returnTo is a relative path
-                  const base = window.location.origin;
-                  const redirectUrl = new URL(returnTo, base);
+                  // 1. Ensure returnTo is a valid string, fallback to /games if not
+                  let safeReturnTo = (returnTo && typeof returnTo === "string") ? returnTo : "/games";
                   
-                  // Append the auth code safely
-                  redirectUrl.searchParams.set("gameAuthCode", code);
+                  // 2. Strip out any hash (like #mini-games) that breaks query parameters
+                  safeReturnTo = safeReturnTo.split("#")[0];
                   
-                  // Strip any hash (like #mini-games) so it doesn't break query parameter reading on the other side
-                  redirectUrl.hash = "";
+                  // 3. Figure out if we need a '?' or '&'
+                  const separator = safeReturnTo.includes("?") ? "&" : "?";
                   
-                  // Force a hard navigation
-                  window.location.href = redirectUrl.toString();
+                  // 4. Build the final URL
+                  const finalRedirectUrl = `${safeReturnTo}${separator}gameAuthCode=${code}`;
+                  
+                  // 5. Hard redirect (bypasses Next.js router bugs)
+                  window.location.replace(finalRedirectUrl);
                 } catch (error) {
-                  console.error("Redirect parsing error:", error);
-                  // Fallback string manipulation if URL construction fails
-                  window.location.href = `${returnTo}${returnTo.includes('?') ? '&' : '?'}gameAuthCode=${code}`;
+                  // Absolute worst-case fallback
+                  window.location.replace(`/games?gameAuthCode=${code}`);
                 }
             } else {
                 setErrorMessage(
