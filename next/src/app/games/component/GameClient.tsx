@@ -13,10 +13,13 @@ import {
   Gamepad2,
   X,
   Trophy,
+  Copy,
+  Check,
 } from "lucide-react";
 import { IProject } from "@/app/types/index.types";
 import { prettySafeImage } from "@/app/utils/pretty";
 import api from "../../axiosApi";
+import Leaderboard from "./Leaderboard";
 
 // Defined constants for fallback URLs to keep logic clean.
 // ⭐️ CHANGE: Added a default image path. MAKE SURE THIS FILE EXISTS IN /public
@@ -65,8 +68,23 @@ function GamePlayerOverlay({
   const [leaderboardScores, setLeaderboardScores] = useState<any[]>([]);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
-  // Fetch scores when the overlay opens or gameId changes
+  let extractedAuthCode: string | null = null;
+  if (playingEmbedUrl) {
+    const match = playingEmbedUrl.match(/[?&]gameAuthCode=([^&#]+)/);
+    if (match) extractedAuthCode = decodeURIComponent(match[1]);
+  }
+
+  const handleCopyCode = () => {
+    if (extractedAuthCode) {
+      navigator.clipboard.writeText(extractedAuthCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    }
+  };
+
+  // Fetch scores when the overlay opens or gameId changes (polls every 5s)
   useEffect(() => {
     if (!playingEmbedUrl || !gameId) {
       setLeaderboardScores([]);
@@ -74,8 +92,8 @@ function GamePlayerOverlay({
       return;
     }
 
-    const fetchScores = async () => {
-      setLoadingLeaderboard(true);
+    const fetchScores = async (isInitial = false) => {
+      if (isInitial) setLoadingLeaderboard(true);
       try {
         const response = await api("GET", "/game/score", {
           query: { target: "leaderboard", gameId },
@@ -85,11 +103,14 @@ function GamePlayerOverlay({
         }
       } catch (error) {
       } finally {
-        setLoadingLeaderboard(false);
+        if (isInitial) setLoadingLeaderboard(false);
       }
     };
 
-    fetchScores();
+    fetchScores(true);
+
+    const interval = setInterval(() => fetchScores(false), 5000);
+    return () => clearInterval(interval);
   }, [playingEmbedUrl, gameId]);
 
   return (
@@ -110,7 +131,7 @@ function GamePlayerOverlay({
             className="relative w-full max-w-[1600px] aspect-video max-h-[88vh] rounded-2xl overflow-hidden shadow-2xl border border-pink-500/20 bg-black flex flex-col"
           >
             <div className="px-4 py-3 bg-gray-950 border-b border-gray-800 flex justify-between items-center shrink-0">
-              <div className="flex items-center gap-3 truncate pr-4">
+              <div className="flex items-center gap-2 sm:gap-3 truncate pr-4">
                 <h3 className={`text-lg sm:text-xl font-bold text-white truncate ${righteousFont.className}`}>
                   Playing: {title}
                 </h3>
@@ -125,6 +146,29 @@ function GamePlayerOverlay({
                   >
                     <Trophy className="w-3.5 h-3.5 fill-current" />
                     Leaderboard
+                  </button>
+                )}
+                {extractedAuthCode && !embedBlocked && (
+                  <button
+                    onClick={handleCopyCode}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-300 ${
+                      copiedCode
+                        ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                        : "bg-purple-900/30 border-purple-500/30 text-purple-200 hover:text-white hover:border-purple-400 hover:bg-purple-800/40"
+                    }`}
+                    title={`Game Auth Code: ${extractedAuthCode}`}
+                  >
+                    {copiedCode ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        Code Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-purple-400" />
+                        Copy Login Code
+                      </>
+                    )}
                   </button>
                 )}
               </div>
@@ -327,6 +371,7 @@ export default function GameClient({
   const [embedRetryCount, setEmbedRetryCount] = useState(0);
   // React Portals need `document` to exist, which isn't available during
   const [isMounted, setIsMounted] = useState(false);
+  const [isGlobalLeaderboardOpen, setIsGlobalLeaderboardOpen] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -820,11 +865,18 @@ export default function GameClient({
           viewport={{ once: true }}
           className="mb-10"
         >
-          <h2
-            className={`text-4xl lg:text-5xl font-bold bg-gradient-to-r from-pink-400 via-pink-300 to-white bg-clip-text text-transparent ${righteousFont.className} mb-4`}
-          >
-            Mini Games
-          </h2>
+          <div className="flex items-center justify-between sm:justify-start gap-4 mb-4">
+            <h2 className={`text-4xl lg:text-5xl font-bold bg-gradient-to-r from-pink-400 via-pink-300 to-white bg-clip-text text-transparent ${righteousFont.className}`}>
+              Mini Games
+            </h2>
+            <button 
+              onClick={() => setIsGlobalLeaderboardOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 bg-gray-900/80 backdrop-blur-md border border-gray-700 hover:border-pink-500 rounded-xl text-white transition-all shadow-lg hover:shadow-pink-500/20"
+            >
+              <Trophy className="w-5 h-5 text-pink-500"/>
+              <span className="text-sm sm:text-base font-semibold">Global Ranks</span>
+            </button>
+          </div>
           <p
             className={`text-gray-400 text-lg ${robotoFont.className} max-w-2xl`}
           >
@@ -1174,6 +1226,49 @@ export default function GameClient({
               setEmbedSlow(false);
             }}
           />,
+          document.body
+        )}
+
+      {/* FULL-SCREEN GLOBAL LEADERBOARD MODAL */}
+      {isMounted &&
+        createPortal(
+          <AnimatePresence>
+            {isGlobalLeaderboardOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6"
+                onClick={() => setIsGlobalLeaderboardOpen(false)}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  transition={{ duration: 0.25 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-950/95 border border-pink-500/30 rounded-3xl shadow-2xl p-4 sm:p-6"
+                >
+                  <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-800">
+                    <div className="flex items-center gap-2">
+                      <Trophy className="w-6 h-6 text-pink-500" />
+                      <h3 className={`text-xl sm:text-2xl font-bold text-white ${righteousFont.className}`}>
+                        Global Leaderboards
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setIsGlobalLeaderboardOpen(false)}
+                      className="p-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white hover:border-pink-500/40 transition-all"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <Leaderboard />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
           document.body
         )}
     </div>

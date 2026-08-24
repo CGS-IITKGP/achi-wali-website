@@ -67,7 +67,7 @@ const Leaderboard: React.FC = () => {
     localStorage.setItem("recentGames", JSON.stringify(updatedGames));
   };
 
-  // Fetch leaderboard scores (polls every 12 seconds)
+  // Fetch leaderboard scores (live polling every 5 seconds)
   useEffect(() => {
     const fetchScores = async () => {
       const response = await api("GET", "/game/score", {
@@ -90,7 +90,7 @@ const Leaderboard: React.FC = () => {
 
     fetchScores();
 
-    const interval = setInterval(fetchScores, 12000);
+    const interval = setInterval(fetchScores, 5000);
     return () => clearInterval(interval);
   }, [selectedGameId]);
 

@@ -1,6 +1,21 @@
 import createHandler from "@/lib/handler";
 import gameValidator from "@/lib/validators/game.validator";
 import scoreServices from "@/lib/services/score.service";
+import { NextResponse } from "next/server";
+
+// OPTIONS preflight handler — required so browsers don't get a 405 and block
+// the actual POST/GET before it is sent (cross-origin preflight for JSON content-type).
+export function OPTIONS() {
+    return new NextResponse(null, {
+        status: 204,
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,OPTIONS,POST",
+            "Access-Control-Allow-Headers": "Content-Type, Accept, X-Requested-With",
+            "Access-Control-Max-Age": "86400",
+        },
+    });
+}
 
 const POST = createHandler({
     requireAuth: false,
