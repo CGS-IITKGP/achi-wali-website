@@ -33,7 +33,7 @@
     .control-item { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
     .control-keys { display: flex; gap: 4px; align-items: center; }
     kbd { background: rgba(236,72,153,0.15); border: 1px solid rgba(236,72,153,0.4); color: #f472b6; font-weight: 600; font-size: 11px; padding: 3px 7px; border-radius: 6px; box-shadow: 0 2px 0 rgba(0,0,0,0.5); font-family: inherit; }
-    .control-desc { color: #d1d5db; font-weight: 500; }
+
     #loading-overlay { position: absolute; inset: 0; z-index: 40; background: radial-gradient(circle at center,#18181b 0%,#09090b 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; transition: opacity 0.6s ease, visibility 0.6s ease; }
     #loading-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
     .spinner-ring { width: 54px; height: 54px; border: 3px solid rgba(236,72,153,0.15); border-top-color: #ec4899; border-right-color: #a855f7; border-radius: 50%; animation: spin 0.9s cubic-bezier(0.55,0.15,0.45,0.85) infinite; box-shadow: 0 0 25px rgba(236,72,153,0.3); }
@@ -87,13 +87,10 @@
           <div class="control-item"><span class="control-desc">Cinematic / Fly-Through</span><div class="control-keys"><kbd>4</kbd></div></div>
 
           <div class="section-label">Fog &amp; Scene</div>
-          <div class="control-item"><span class="control-desc">Decrease Fog Density</span><div class="control-keys"><kbd>[</kbd></div></div>
-          <div class="control-item"><span class="control-desc">Increase Fog Density</span><div class="control-keys"><kbd>]</kbd></div></div>
-          <div class="control-item"><span class="control-desc">Toggle Fog On / Off</span><div class="control-keys"><kbd>H</kbd></div></div>
-          <div class="control-item"><span class="control-desc">Toggle Terrain Wireframe</span><div class="control-keys"><kbd>J</kbd></div></div>
-          <div class="control-item"><span class="control-desc">Toggle Skybox</span><div class="control-keys"><kbd>K</kbd></div></div>
-          <div class="control-item"><span class="control-desc">Toggle Fortress Geometry</span><div class="control-keys"><kbd>L</kbd></div></div>
-          <div class="control-item"><span class="control-desc">Toggle ImGui Panel</span><div class="control-keys"><kbd>M</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Fog Density Control</span><div class="control-keys"><kbd>]</kbd> / <kbd>[</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Height Falloff Rate</span><div class="control-keys"><kbd>H</kbd> / <kbd>J</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Wind Speed</span><div class="control-keys"><kbd>K</kbd> / <kbd>L</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Map Visualization</span><div class="control-keys"><kbd>M</kbd></div></div>
         </div>
       </div>
     </div>
