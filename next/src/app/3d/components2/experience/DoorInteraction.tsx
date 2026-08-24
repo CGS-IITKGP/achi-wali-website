@@ -134,13 +134,43 @@ export default function DoorInteraction({
     return () => cancelAnimationFrame(frame);
   }, [enabled, initializeDoors, onInteractionChange]);
 
+  // Audio references for Door and Restricted sounds
+  const doorAudioRef = useRef<HTMLAudioElement | null>(null);
+  const fahhAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const doorSound = new Audio("/music/Door.mp3");
+      doorSound.preload = "auto";
+      doorAudioRef.current = doorSound;
+
+      const fahhSound = new Audio("/music/Fahh.mp3");
+      fahhSound.preload = "auto";
+      fahhAudioRef.current = fahhSound;
+    }
+  }, []);
+
+  const playDoorSound = useCallback(() => {
+    if (doorAudioRef.current) {
+      doorAudioRef.current.currentTime = 0;
+      doorAudioRef.current.play().catch(() => {});
+    }
+  }, []);
+
+  const playFahhSound = useCallback(() => {
+    if (fahhAudioRef.current) {
+      fahhAudioRef.current.currentTime = 0;
+      fahhAudioRef.current.play().catch(() => {});
+    }
+  }, []);
+
   const getPrompt = useCallback((name: string) => {
     if (name === NORMAL_DOOR) {
       const door = doorsRef.current[NORMAL_DOOR];
       return door?.open ? "[O] Close Door" : "[O] Open Door";
     }
     if (RESTRICTED_DOORS.includes(name) || name === RND_DOOR || RESTRICTED_MAIN_DOORS.includes(name)) {
-      return "[O] Check Access";
+      return "[O] Check Security Clearance";
     }
     if (name === MAIN_LEFT || name === MAIN_RIGHT) {
       const door = doorsRef.current[MAIN_RIGHT];
@@ -150,9 +180,15 @@ export default function DoorInteraction({
   }, []);
 
   const getMessage = useCallback((name: string) => {
-    if (RESTRICTED_DOORS.includes(name)) return "ACCESS RESTRICTED - JOIN CGS TO EXPLORE";
-    if (name === RND_DOOR) return "R&D WORKS INSIDE - PROCESS ONGOING...";
-    if (RESTRICTED_MAIN_DOORS.includes(name)) return "ENTRY RESTRICTED - GO OUT FROM OTHER MAIN DOOR";
+    if (RESTRICTED_DOORS.includes(name)) {
+      return "⛔ [SECURITY CLEARANCE REQUIRED] High-Security Sector — Join CGS to Decrypt & Explore!";
+    }
+    if (name === RND_DOOR) {
+      return "⚠️ [CLASSIFIED - LEVEL 5 CLEARANCE] R&D Quantum Lab: Experimental Shaders & Physics in Progress... KEEP OUT!";
+    }
+    if (RESTRICTED_MAIN_DOORS.includes(name)) {
+      return "⛔ [EMERGENCY AIRLOCK SEALED] Exit Hatchway Locked: Please Use Designated Main Airlock!";
+    }
     return null;
   }, []);
 
@@ -165,12 +201,15 @@ export default function DoorInteraction({
     
     setIsMainDoorOpen(shouldOpen); 
 
+    // Play door sound effect
+    playDoorSound();
+
     // NEW: tell SceneCollision directly, no transform-guessing needed
     window.__setDoorOpen?.("MAINDOOR", shouldOpen);
 
     onInteractionChange?.(shouldOpen ? "[O] Close Door" : "[O] Open Door");
     setPromptText(shouldOpen ? "[O] Close Door" : "[O] Open Door");
-  }, [onInteractionChange]);
+  }, [onInteractionChange, playDoorSound]);
 
   const toggleDoor01 = useCallback(() => {
     const door = doorsRef.current[NORMAL_DOOR];
@@ -181,12 +220,15 @@ export default function DoorInteraction({
     
     setIsRoom1Open(shouldOpen); 
 
+    // Play door sound effect
+    playDoorSound();
+
     // NEW: tell SceneCollision directly, no transform-guessing needed
     window.__setDoorOpen?.("DOOR01", shouldOpen);
 
     onInteractionChange?.(shouldOpen ? "[O] Close Door" : "[O] Open Door");
     setPromptText(shouldOpen ? "[O] Close Door" : "[O] Open Door");
-  }, [onInteractionChange]);
+  }, [onInteractionChange, playDoorSound]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -198,6 +240,9 @@ export default function DoorInteraction({
       if (active === NORMAL_DOOR) return toggleDoor01();
       if (active === MAIN_LEFT || active === MAIN_RIGHT) return toggleMainDoor();
 
+      // Restricted door attempted -> play Fahh sound effect
+      playFahhSound();
+
       const message = getMessage(active);
       if (message) {
         onInteractionChange?.(message);
@@ -206,7 +251,7 @@ export default function DoorInteraction({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, toggleDoor01, toggleMainDoor, getMessage, onInteractionChange]);
+  }, [enabled, toggleDoor01, toggleMainDoor, getMessage, onInteractionChange, playFahhSound]);
 
   useFrame((_, delta) => {
     if (!enabled || !initializedRef.current) return;
@@ -265,17 +310,26 @@ export default function DoorInteraction({
               0%, 100% { transform: translateY(0); }
               50% { transform: translateY(-10px); }
             }
+            @keyframes cgsMagentaPulse {
+              0%, 100% {
+                box-shadow: 0 0 25px rgba(236, 72, 153, 0.45), inset 0 0 12px rgba(236, 72, 153, 0.2);
+                border-color: rgba(236, 72, 153, 0.75);
+              }
+              50% {
+                box-shadow: 0 0 40px rgba(236, 72, 153, 0.8), inset 0 0 18px rgba(236, 72, 153, 0.4);
+                border-color: #FFFFFF;
+              }
+            }
             .cyber-wayfinder {
-              background: rgba(10, 15, 20, 0.85);
-              border: 1px solid rgba(74, 222, 128, 0.4);
-              border-radius: 8px;
-              color: #4ADE80;
+              background: rgba(10, 5, 12, 0.92);
+              border: 1.5px solid rgba(236, 72, 153, 0.8);
+              border-radius: 10px;
+              color: #FFFFFF;
               font-family: 'Inter', 'Segoe UI', sans-serif;
               font-weight: 700;
               text-transform: uppercase;
-              box-shadow: 0 0 20px rgba(74, 222, 128, 0.15);
-              backdrop-filter: blur(8px);
-              animation: smoothFloat 2.5s ease-in-out infinite;
+              backdrop-filter: blur(12px);
+              animation: smoothFloat 2.5s ease-in-out infinite, cgsMagentaPulse 2.2s ease-in-out infinite;
             }
           `}
         </style>
@@ -293,9 +347,12 @@ export default function DoorInteraction({
                   whiteSpace: "nowrap",
                   pointerEvents: "none",
                   letterSpacing: "2px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
                 }}
               >
-                ← More Way Here
+                <span style={{ color: "#EC4899", fontWeight: 900 }}>←</span> More Way Here
               </div>
             </div>
           </Html>
@@ -309,14 +366,17 @@ export default function DoorInteraction({
             <div className="cyber-wayfinder">
               <div
                 style={{
-                  padding: "8px 16px",
+                  padding: "10px 20px",
                   fontSize: "14px",
                   whiteSpace: "nowrap",
                   pointerEvents: "none",
                   letterSpacing: "1.5px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
                 }}
               >
-                ↓ MEETING ROOM
+                <span style={{ color: "#EC4899", fontWeight: 900 }}>↓</span> MEETING ROOM
               </div>
             </div>
           </Html>

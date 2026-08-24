@@ -249,10 +249,39 @@ export default function VideoInteraction({
     }
   }, []);
 
+  const notifTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showNotification = useCallback((text: string, durationMs: number = 3000) => {
+    if (notifTimeoutRef.current) clearTimeout(notifTimeoutRef.current);
+    setNotification(text);
+    notifTimeoutRef.current = setTimeout(() => {
+      setNotification(null);
+    }, durationMs);
+  }, []);
+
   useEffect(() => {
     if (!enabled) return;
 
     const handleKeyDown = async (event: KeyboardEvent) => {
+      // 1. SPACEBAR: Pause / Resume the currently playing video
+      if (event.code === "Space" || event.key === " ") {
+        const activeVid = isMainPlayingRef.current ? mainVideoRef.current : demoVideoRef.current;
+        if (activeVid) {
+          event.preventDefault(); // Prevent page scroll
+          if (event.repeat) return;
+
+          if (activeVid.paused) {
+            await activeVid.play().catch(() => {});
+            showNotification(isMainPlayingRef.current ? "▶ RESUMED CGS VIDEO" : "▶ RESUMED DEMO VIDEO", 2500);
+          } else {
+            activeVid.pause();
+            showNotification(isMainPlayingRef.current ? "⏸ PAUSED CGS VIDEO" : "⏸ PAUSED DEMO VIDEO", 2500);
+          }
+        }
+        return;
+      }
+
+      // 2. ENTER: Switch between Main Showcase TV Video and Ambient Demo Video
       if (event.key !== "Enter" && event.code !== "Enter") return;
       if (event.repeat) return;
       
@@ -269,23 +298,23 @@ export default function VideoInteraction({
         demoVid.currentTime = 0;
         await demoVid.play().catch(()=>{});
         isMainPlayingRef.current = false;
+        showNotification("◀ SWITCHED BACK TO DEMO VIDEO", 3000);
       } else {
         demoVid.pause();
         applyTextures(true);
         mainVid.currentTime = 0; 
         await mainVid.play().catch(()=>{}); 
         isMainPlayingRef.current = true;
-        
-        setNotification("▶ WATCH THE MAIN TV SCREEN!");
-        setTimeout(() => {
-          setNotification(null);
-        }, 4500);
+        showNotification("▶ WATCH THE MAIN TV SCREEN! (PRESS [SPACE] TO PAUSE)", 4500);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [enabled, applyTextures]);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (notifTimeoutRef.current) clearTimeout(notifTimeoutRef.current);
+    };
+  }, [enabled, applyTextures, showNotification]);
 
   useFrame(() => {
     if (!enabled || !laptopWorldPos) return;
@@ -344,14 +373,14 @@ export default function VideoInteraction({
             }
             @keyframes pinBlink {
               0%, 100% {
-                filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.85))
-                        drop-shadow(0 0 14px rgba(59, 130, 246, 0.6));
+                filter: drop-shadow(0 0 6px rgba(236, 72, 153, 0.85))
+                        drop-shadow(0 0 16px rgba(236, 72, 153, 0.6));
                 opacity: 1;
               }
               50% {
-                filter: drop-shadow(0 0 14px rgba(37, 99, 235, 1))
-                        drop-shadow(0 0 26px rgba(59, 130, 246, 0.9));
-                opacity: 0.7;
+                filter: drop-shadow(0 0 16px rgba(236, 72, 153, 1))
+                        drop-shadow(0 0 28px rgba(236, 72, 153, 0.9));
+                opacity: 0.75;
               }
             }
             @keyframes groundShadowPulse {
@@ -414,7 +443,7 @@ export default function VideoInteraction({
               margin-left: -20px;
               margin-top: -20px;
               border-radius: 50%;
-              border: 2px solid #3b82f6;
+              border: 2px solid #EC4899;
               animation: radarPulse 1.8s ease-out infinite;
             }
 
@@ -425,8 +454,8 @@ export default function VideoInteraction({
             .waypoint-enter-label {
               margin-top: 10px;
               padding: 6px 16px;
-              background: rgba(10, 20, 40, 0.85);
-              border: 1px solid rgba(59, 130, 246, 0.6);
+              background: rgba(18, 5, 16, 0.92);
+              border: 1px solid rgba(236, 72, 153, 0.75);
               border-radius: 20px;
               color: #ffffff;
               font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -434,22 +463,23 @@ export default function VideoInteraction({
               font-size: 13px;
               letter-spacing: 1px;
               text-transform: uppercase;
-              box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+              box-shadow: 0 0 16px rgba(236, 72, 153, 0.5);
               animation: enterLabelPulse 1s ease-in-out infinite;
               white-space: nowrap;
             }
 
             .mario-notification-box {
-              background: #FBD000;
-              border: 4px solid #000000;
-              box-shadow: 8px 8px 0px #000000;
-              font-family: 'Courier New', Courier, monospace;
-              color: #000000;
-              font-weight: 900;
-              padding: 16px 32px;
+              background: rgba(18, 5, 15, 0.94);
+              border: 2px solid #EC4899;
+              box-shadow: 0 0 25px rgba(236, 72, 153, 0.55), inset 0 0 15px rgba(236, 72, 153, 0.2);
+              font-family: 'Inter', 'Segoe UI', sans-serif;
+              color: #FFFFFF;
+              font-weight: 800;
+              padding: 14px 28px;
               text-transform: uppercase;
-              border-radius: 4px;
-              letter-spacing: 1px;
+              border-radius: 10px;
+              letter-spacing: 1.5px;
+              backdrop-filter: blur(12px);
             }
           `}
         </style>
@@ -468,7 +498,7 @@ export default function VideoInteraction({
                 >
                   <path
                     d="M20 0C9 0 0 9 0 20c0 14 20 32 20 32s20-18 20-32C40 9 31 0 20 0z"
-                    fill="#2563eb"
+                    fill="#EC4899"
                     stroke="#ffffff"
                     strokeWidth="3"
                   />

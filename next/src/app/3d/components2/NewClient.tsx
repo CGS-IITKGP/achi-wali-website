@@ -198,29 +198,57 @@ export default function NewClient({ games = [] }: NewClientProps) {
 
       {experienceMode && (
         <>
-          <div style={{ position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: "7px", height: "7px", borderRadius: "50%", background: "rgba(255,255,255,0.95)", boxShadow: "0 0 8px rgba(255,255,255,0.75)", pointerEvents: "none", zIndex: 100 }} />
+          <div style={{ position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: "7px", height: "7px", borderRadius: "50%", background: "#FFFFFF", boxShadow: "0 0 10px #EC4899, 0 0 20px rgba(236, 72, 153, 0.8)", pointerEvents: "none", zIndex: 100 }} />
           {interactionText && (
-            <div style={{ position: "fixed", left: "50%", top: "calc(50% + 38px)", transform: "translateX(-50%)", padding: "9px 16px", borderRadius: "9px", background: "rgba(0,0,0,0.72)", border: "1px solid rgba(255,255,255,0.2)", backdropFilter: "blur(8px)", color: "#ffffff", fontSize: "14px", fontWeight: 500, whiteSpace: "nowrap", pointerEvents: "none", zIndex: 101 }}>
+            <div
+              style={{
+                position: "fixed",
+                left: "50%",
+                top: "calc(50% + 38px)",
+                transform: "translateX(-50%)",
+                padding: interactionText.includes("⛔") || interactionText.includes("⚠️") ? "12px 24px" : "9px 18px",
+                borderRadius: "10px",
+                background: interactionText.includes("⛔") || interactionText.includes("⚠️")
+                  ? "rgba(18, 5, 16, 0.94)"
+                  : "rgba(10, 8, 14, 0.88)",
+                border: interactionText.includes("⛔") || interactionText.includes("⚠️")
+                  ? "1.5px solid #EC4899"
+                  : "1px solid rgba(236, 72, 153, 0.5)",
+                boxShadow: interactionText.includes("⛔") || interactionText.includes("⚠️")
+                  ? "0 0 25px rgba(236, 72, 153, 0.6), inset 0 0 12px rgba(236, 72, 153, 0.25)"
+                  : "0 4px 18px rgba(0,0,0,0.6)",
+                backdropFilter: "blur(12px)",
+                color: "#FFFFFF",
+                fontSize: "14px",
+                fontWeight: 600,
+                letterSpacing: "0.8px",
+                whiteSpace: "nowrap",
+                pointerEvents: "none",
+                zIndex: 101,
+              }}
+            >
               {interactionText}
             </div>
           )}
           {!pointerLocked && (
-            <div style={{ position: "fixed", left: "50%", top: "calc(50% + 85px)", transform: "translateX(-50%)", padding: "8px 14px", borderRadius: "8px", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.75)", fontSize: "12px", pointerEvents: "none", zIndex: 101 }}>
+            <div style={{ position: "fixed", left: "50%", top: "calc(50% + 85px)", transform: "translateX(-50%)", padding: "8px 14px", borderRadius: "8px", background: "rgba(10, 5, 12, 0.75)", border: "1px solid rgba(236, 72, 153, 0.4)", color: "rgba(255,255,255,0.85)", fontSize: "12px", pointerEvents: "none", zIndex: 101, letterSpacing: "1px", textTransform: "uppercase" }}>
               CLICK THE SCENE TO LOOK AROUND
             </div>
           )}
           <div style={{ position: "fixed", top: "25px", right: "25px", zIndex: 110, pointerEvents: "auto" }}>
-            <button type="button" onClick={exitExperience} style={{ padding: "10px 18px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.25)", background: "rgba(0,0,0,0.65)", backdropFilter: "blur(10px)", color: "#ffffff", fontSize: "13px", fontWeight: 500, cursor: "pointer", boxShadow: "0 5px 20px rgba(0,0,0,0.35)" }}>
+            <button type="button" onClick={exitExperience} style={{ padding: "10px 18px", borderRadius: "10px", border: "1px solid rgba(236, 72, 153, 0.5)", background: "rgba(10, 5, 12, 0.8)", backdropFilter: "blur(10px)", color: "#ffffff", fontSize: "13px", fontWeight: 600, cursor: "pointer", boxShadow: "0 0 15px rgba(236, 72, 153, 0.3)" }}>
               EXIT EXPERIENCE
             </button>
           </div>
-          <div style={{ position: "fixed", left: "25px", bottom: "25px", zIndex: 110, padding: "10px 14px", borderRadius: "10px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.8)", fontSize: "12px", lineHeight: "1.7", pointerEvents: "none" }}>
-            <div><strong>WASD</strong> Move</div>
-            <div><strong>MOUSE</strong> Look</div>
-            <div><strong>O</strong> Interact</div>
-            <div><strong>ENTER</strong> Video</div>
-            <div><strong>ESC</strong> Release Mouse</div>
-            <div><strong>SCROLL WHEEL</strong> INCREASE/DECREASE SPEED</div>
+          <div style={{ position: "fixed", left: "25px", bottom: "25px", zIndex: 110, padding: "12px 18px", borderRadius: "10px", background: "rgba(10, 5, 14, 0.85)", backdropFilter: "blur(12px)", border: "1px solid rgba(236, 72, 153, 0.4)", color: "rgba(255,255,255,0.9)", fontSize: "12px", lineHeight: "1.8", pointerEvents: "none", boxShadow: "0 0 20px rgba(0,0,0,0.6)" }}>
+            <div><strong style={{ color: "#EC4899" }}>WASD</strong> Move</div>
+            <div><strong style={{ color: "#EC4899" }}>SHIFT + WASD</strong> Sprint (2x Speed)</div>
+            <div><strong style={{ color: "#EC4899" }}>MOUSE</strong> Look</div>
+            <div><strong style={{ color: "#EC4899" }}>O</strong> Interact / Doors</div>
+            <div><strong style={{ color: "#EC4899" }}>ENTER</strong> Play Video</div>
+            <div><strong style={{ color: "#EC4899" }}>SPACE</strong> Pause / Resume Video</div>
+            <div><strong style={{ color: "#EC4899" }}>ESC</strong> Release Mouse</div>
+            <div><strong style={{ color: "#EC4899" }}>SCROLL WHEEL</strong> Speed (+ / -)</div>
           </div>
         </>
       )}

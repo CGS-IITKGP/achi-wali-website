@@ -260,11 +260,15 @@ export default function FirstPersonController({
     if (keys["d"] || keys["arrowright"]) movement.add(right);
     if (keys["a"] || keys["arrowleft"]) movement.sub(right);
 
+    // Sprint modifier: Double speed when Shift is held
+    const isSprinting = Boolean(keys["shift"]);
+    const speedMultiplier = isSprinting ? 2.0 : 1.0;
+
     if (movement.lengthSq() > 0) {
       movement.normalize();
       
-      // Use the dynamic speed value
-      movement.multiplyScalar(moveSpeedRef.current * delta);
+      // Use dynamic speed value with sprint multiplier
+      movement.multiplyScalar(moveSpeedRef.current * speedMultiplier * delta);
       camera.position.add(movement);
     }
 
