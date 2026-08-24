@@ -1594,6 +1594,17 @@ const NewProjectModal = (props: NewProjectModalProps) => {
     }
   }, [props.open]);
 
+  useEffect(() => {
+    if (portfolio === "GAME") {
+      setExtraLinks((prev) => {
+        if (!prev.some((link) => link.text === "live-demo")) {
+          return [...prev, { text: "live-demo", url: "" }];
+        }
+        return prev;
+      });
+    }
+  }, [portfolio]);
+
   const cleanModalData = () => {
     setTitle("");
     setDescription("");
@@ -1668,7 +1679,7 @@ const NewProjectModal = (props: NewProjectModalProps) => {
         .filter(Boolean),
       coverImgUrl,
       links,
-      isMinigame,
+      isMinigame: portfolio === "GAME" ? isMinigame : false,
     });
 
     setLoading(false);
@@ -1756,18 +1767,20 @@ const NewProjectModal = (props: NewProjectModalProps) => {
           />
         </div>
 
-        <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
-          <input
-            type="checkbox"
-            id="new-project-minigame"
-            checked={isMinigame}
-            onChange={(e) => setIsMinigame(e.target.checked)}
-            className="w-4 h-4 rounded border-gray-700 bg-black/50 text-pink-500 focus:ring-pink-500/20 cursor-pointer"
-          />
-          <label htmlFor="new-project-minigame" className="text-sm text-gray-300 cursor-pointer select-none">
-            Is this an interactive Minigame?
-          </label>
-        </div>
+        {portfolio === "GAME" && (
+          <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+            <input
+              type="checkbox"
+              id="new-project-minigame"
+              checked={isMinigame}
+              onChange={(e) => setIsMinigame(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-700 bg-black/50 text-pink-500 focus:ring-pink-500/20 cursor-pointer"
+            />
+            <label htmlFor="new-project-minigame" className="text-sm text-gray-300 cursor-pointer select-none">
+              Is this an interactive Minigame?
+            </label>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm text-gray-300 mb-2">
@@ -1855,11 +1868,16 @@ const NewProjectModal = (props: NewProjectModalProps) => {
               <div key={`extra-link-blog-${index}`} className="flex gap-2 items-center">
                 <input
                   value={link.text}
+                  disabled={portfolio === "GAME" && link.text === "live-demo"}
                   onChange={(e) =>
                     updateExtraLink(index, "text", e.target.value)
                   }
                   placeholder="type"
-                  className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white"
+                  className={`w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 ${
+                    portfolio === "GAME" && link.text === "live-demo"
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-white"
+                  }`}
                 />
                 <input
                   value={link.url}
@@ -1953,6 +1971,17 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
     }
   }, [project]);
 
+  useEffect(() => {
+    if (portfolio === "GAME") {
+      setExtraLinks((prev) => {
+        if (!prev.some((link) => link.text === "live-demo")) {
+          return [...prev, { text: "live-demo", url: "" }];
+        }
+        return prev;
+      });
+    }
+  }, [portfolio]);
+
   const resetModalData = () => {
     if (!project) return;
 
@@ -2037,7 +2066,7 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
         .filter(Boolean),
       coverImgUrl,
       links,
-      isMinigame,
+      isMinigame: portfolio === "GAME" ? isMinigame : false,
     });
 
     setLoading(false);
@@ -2125,18 +2154,20 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
           />
         </div>
 
-        <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
-          <input
-            type="checkbox"
-            id="update-project-minigame"
-            checked={isMinigame}
-            onChange={(e) => setIsMinigame(e.target.checked)}
-            className="w-4 h-4 rounded border-gray-700 bg-black/50 text-pink-500 focus:ring-pink-500/20 cursor-pointer"
-          />
-          <label htmlFor="update-project-minigame" className="text-sm text-gray-300 cursor-pointer select-none">
-            Is this an interactive Minigame?
-          </label>
-        </div>
+        {portfolio === "GAME" && (
+          <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+            <input
+              type="checkbox"
+              id="update-project-minigame"
+              checked={isMinigame}
+              onChange={(e) => setIsMinigame(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-700 bg-black/50 text-pink-500 focus:ring-pink-500/20 cursor-pointer"
+            />
+            <label htmlFor="update-project-minigame" className="text-sm text-gray-300 cursor-pointer select-none">
+              Is this an interactive Minigame?
+            </label>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm text-gray-300 mb-2">
@@ -2224,11 +2255,16 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
               <div key={`extra-link-proj-${index}`} className="flex gap-2 items-center">
                 <input
                   value={link.text}
+                  disabled={portfolio === "GAME" && link.text === "live-demo"}
                   onChange={(e) =>
                     updateExtraLink(index, "text", e.target.value)
                   }
                   placeholder="type"
-                  className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white"
+                  className={`w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 ${
+                    portfolio === "GAME" && link.text === "live-demo"
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-white"
+                  }`}
                 />
                 <input
                   value={link.url}
