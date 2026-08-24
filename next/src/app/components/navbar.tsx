@@ -52,7 +52,6 @@ export default function Navbar() {
     ];
 
     if (user) {
-      baseItems.push({ name: "Profile", href: "/profile" });
 
       const hasDashboardAccess = user.roles?.some((role) =>
         [EUserRole.ADMIN, EUserRole.MEMBER, EUserRole.ROOT].includes(role)
