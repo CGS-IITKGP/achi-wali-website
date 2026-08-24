@@ -184,7 +184,7 @@ export default function DoorInteraction({
       return "⛔ [SECURITY CLEARANCE REQUIRED] High-Security Sector — Join CGS to Decrypt & Explore!";
     }
     if (name === RND_DOOR) {
-      return "⚠️ [CLASSIFIED - LEVEL 5 CLEARANCE] R&D Quantum Lab: Experimental Shaders & Physics in Progress... KEEP OUT!";
+      return "⚠️ [CLASSIFIED - LEVEL 5 CLEARANCE] BLACK ROOM: Experimental Shaders & Physics in Progress... KEEP OUT!";
     }
     if (RESTRICTED_MAIN_DOORS.includes(name)) {
       return "⛔ [EMERGENCY AIRLOCK SEALED] Exit Hatchway Locked: Please Use Designated Main Airlock!";
@@ -376,7 +376,7 @@ export default function DoorInteraction({
                   gap: "8px",
                 }}
               >
-                <span style={{ color: "#EC4899", fontWeight: 900 }}>↓</span> MEETING ROOM
+                <span style={{ color: "#EC4899", fontWeight: 900 }}>↓</span> DISCUSSION ROOM
               </div>
             </div>
           </Html>
