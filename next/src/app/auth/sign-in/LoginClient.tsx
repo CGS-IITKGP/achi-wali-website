@@ -29,35 +29,7 @@ export default function Login() {
   const { refreshUser } = useAuth();
   const router = useRouter();
 
-  // ── Game-auth cookie redirect ──────────────────────────────────
-  // If the user arrived here after a Google OAuth round-trip that was
-  // initiated from /game-auth, a game_auth_pending cookie carries the
-  // gameId and returnTo values. Read it, clear it, and redirect back
-  // to /game-auth so the game login flow can resume.
-  useEffect(() => {
-    const match = document.cookie.match(
-      /(?:^|;\s*)game_auth_pending=([^;]*)/
-    );
-    if (!match) return;
 
-    // Clear the cookie immediately
-    document.cookie =
-      "game_auth_pending=; path=/; max-age=0; SameSite=Lax";
-
-    try {
-      const { gameId, returnTo } = JSON.parse(
-        decodeURIComponent(match[1])
-      );
-      if (gameId && returnTo) {
-        router.replace(
-          `/game-auth?gameId=${encodeURIComponent(gameId)}&returnTo=${encodeURIComponent(returnTo)}`
-        );
-        return; // stop rendering this page
-      }
-    } catch {
-      // malformed cookie — fall through to normal sign-in page
-    }
-  }, [router]);
 
   // Floating particles animation
   useEffect(() => {
@@ -97,7 +69,7 @@ export default function Login() {
       toast.success("Signed in successfully!");
       refreshUser();
       const searchParams = new URLSearchParams(window.location.search);
-      const callbackUrl = searchParams.get("callbackUrl") || "/";
+      const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect") || "/";
       router.push(callbackUrl);
     }
 
@@ -345,8 +317,10 @@ export default function Login() {
                 <div className="flex-grow border-t border-white/10"></div>
               </div> */}
 
-              <Link
-                href="/api/auth/google"
+              <button
+                onClick={() => {
+                  window.location.href = `/api/auth/google${window.location.search}`;
+                }}
                 className="w-full py-3 px-6 border border-white/20 text-white font-semibold rounded-xl transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group flex items-center justify-center space-x-3 bg-white/5 hover:bg-white/10"
               >
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-pink-400/0 via-pink-400/5 to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
@@ -359,7 +333,7 @@ export default function Login() {
                 <span className={`relative z-10 ${paragraph_font.className}`}>
                   Sign in with Google
                 </span>
-              </Link>
+              </button>
 
               {/* Sign Up Link */}
               <div className="text-center mt-8">
