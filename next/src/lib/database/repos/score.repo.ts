@@ -36,9 +36,16 @@ class ScoreRepository extends GenericRepository<
             const now = new Date();
             const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 
+            // Attempt to cast gameId to ObjectId if it's a valid hex string, otherwise keep it as a string
+            // This fixes the aggregation bug where Mongoose doesn't auto-cast strings to ObjectIds in $match
+            let matchGameId: any = gameId;
+            if (Types.ObjectId.isValid(gameId)) {
+                matchGameId = new Types.ObjectId(gameId);
+            }
+
             // Check if scores exist for today
             const hasScoresToday = await ScoreModel.exists({
-                gameId,
+                gameId: matchGameId,
                 createdAt: { $gte: startOfToday },
             });
 
@@ -47,7 +54,7 @@ class ScoreRepository extends GenericRepository<
                 dateFilter = { createdAt: { $gte: startOfToday } };
             } else {
                 // Find the most recent date with scores for this game
-                const latestDoc = await ScoreModel.findOne({ gameId })
+                const latestDoc = await ScoreModel.findOne({ gameId: matchGameId })
                     .sort({ createdAt: -1 })
                     .select("createdAt")
                     .lean<{ createdAt?: Date } | null>();
@@ -61,7 +68,7 @@ class ScoreRepository extends GenericRepository<
 
             const results = await ScoreModel.aggregate([
                 // 1. Match by gameId and date range (today or latest active day)
-                { $match: { gameId, ...dateFilter } },
+                { $match: { gameId: matchGameId, ...dateFilter } },
 
                 // 2. Sort by score descending — ensures $first in $group picks the highest score
                 { $sort: { score: -1 as const, createdAt: 1 as const } },
