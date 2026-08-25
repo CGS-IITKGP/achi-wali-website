@@ -20,7 +20,10 @@ const GET = createHandler({
   requireAuth: false,
   options: {
     service: authService.googleOAuth,
-    onSuccess: (sDOut) => {
+    onSuccess: (sDOut, req) => {
+      const { searchParams } = new URL(req.url);
+      const state = searchParams.get("state");
+      
       return {
         responseData: {},
         cookies: [
@@ -30,7 +33,7 @@ const GET = createHandler({
             options: cookieOptions.jwt,
           },
         ],
-        redirectUrl: getEnvVariable("GOOGLE_OAUTH_SUCCESSFUL_REDIRECT", true),
+        redirectUrl: state || "/",
       };
     },
   },

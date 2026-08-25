@@ -7,12 +7,15 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/authContext";
 import { EUserRole } from "../types/domain.types";
+import { useRouter } from "next/navigation";
+import api from "../axiosApi";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const router = useRouter();
 
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [navItems, setNavItems] = useState([
     { name: "Home", href: "/" },
@@ -158,6 +161,28 @@ export default function Navbar() {
               <span className="text-white font-semibold">GitHub</span>
             </Link>
           </motion.div>
+
+          {/* New Sign Out Button */}
+          {user && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <button
+                onClick={async () => {
+                  await api("POST", "/auth/sign-out", {});
+                  refreshUser();
+                  router.push("/");
+                }}
+                className="flex items-center gap-2 bg-gradient-to-r from-gray-900 to-black px-4 py-2 rounded-full hover:from-red-900/40 hover:to-red-800/40 transition-all duration-300 shadow-lg border border-gray-700 hover:border-red-500/50 group"
+              >
+                <span className="text-gray-300 group-hover:text-red-400 text-sm font-medium transition-colors">Sign Out</span>
+              </button>
+            </motion.div>
+          )}
         </div>
         <motion.button
           initial={{ opacity: 0 }}

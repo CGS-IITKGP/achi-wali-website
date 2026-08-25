@@ -671,6 +671,7 @@ export namespace SDOut {
             player: {
                 _id: string;
                 username: string;
+                profileImgUrl: string | null;
             };
             gameId: string;
             score: number;

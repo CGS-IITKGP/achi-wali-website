@@ -47,10 +47,23 @@ const Leaderboard: React.FC = () => {
   useEffect(() => {
     const fetchGameList = async () => {
       const response = await api("GET", "/game/list");
-      if (response.action === true) {
-        setGameIds(response.data as string[]);
+      if (response.action === true && Array.isArray(response.data)) {
+        const fetched = response.data as string[];
+        setGameIds(fetched);
+        if (fetched.length > 0) {
+          // If selectedGameId is not in the list or is default, switch to the first active game with scores
+          setSelectedGameId((current) => {
+            if (!current || !fetched.includes(current)) {
+              return fetched[0];
+            }
+            return current;
+          });
+          setRecentGames((prev) => {
+            const combined = Array.from(new Set([...fetched, ...prev]));
+            return combined.slice(0, 5);
+          });
+        }
       }
-      // On error we fall back to an empty list — UI handles empty state gracefully
       setGamesLoading(false);
     };
 
@@ -69,28 +82,35 @@ const Leaderboard: React.FC = () => {
 
   // Fetch leaderboard scores (live polling every 5 seconds)
   useEffect(() => {
-    const fetchScores = async () => {
-      const response = await api("GET", "/game/score", {
-        query: {
-          target: "leaderboard",
-          gameId: selectedGameId,
-        },
-      });
+    if (!selectedGameId) return;
 
-      if (response.action === true) {
-        setScores(response.data as SDOut.GameScore.Get);
-        setScoresError(null);
-      } else if (response.action === false) {
-        setScoresError(response.message);
-      } else if (response.action === null) {
-        setScoresError("Failed to fetch leaderboard. Please try again.");
+    const fetchScores = async (isInitial = false) => {
+      if (isInitial) setScoresLoading(true);
+      try {
+        const response = await api("GET", "/game/score", {
+          query: {
+            target: "leaderboard",
+            gameId: selectedGameId,
+          },
+        });
+
+        if (response.action === true) {
+          setScores(response.data as SDOut.GameScore.Get);
+          setScoresError(null);
+        } else if (response.action === false) {
+          setScoresError(response.message);
+        } else if (response.action === null) {
+          setScoresError("Failed to fetch leaderboard. Please try again.");
+        }
+      } catch (e) {
+      } finally {
+        if (isInitial) setScoresLoading(false);
       }
-      setScoresLoading(false);
     };
 
-    fetchScores();
+    fetchScores(true);
 
-    const interval = setInterval(fetchScores, 5000);
+    const interval = setInterval(() => fetchScores(false), 5000);
     return () => clearInterval(interval);
   }, [selectedGameId]);
 
@@ -101,9 +121,17 @@ const Leaderboard: React.FC = () => {
     return map;
   }, []);
 
-  // Display name for a game ID — fall back to the ID itself if not in GAMES
-  const gameName = (id: string) => gameMetaById.get(id)?.name ?? id;
-  const gameTag = (id: string) => gameMetaById.get(id)?.tag ?? "";
+  // Display name for a game ID — fall back to a formatted title if not in static GAMES
+  const gameName = (id: string) => {
+    if (!id) return "";
+    const known = gameMetaById.get(id)?.name;
+    if (known) return known;
+    return id
+      .split(/[-_]/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  };
+  const gameTag = (id: string) => gameMetaById.get(id)?.tag ?? "arcade";
 
   // Games visible in the search dropdown — filtered by the search input
   const filteredGameIds = useMemo(() => {
@@ -326,7 +354,7 @@ const Leaderboard: React.FC = () => {
 
                         <div className="col-span-7 flex min-w-0 items-center gap-3">
                           <img
-                            src="/default-fallback-image.png"
+                            src={r.player.profileImgUrl || "/default-fallback-image.png"}
                             alt={r.player.username}
                             className="h-9 w-9 rounded-full object-cover"
                           />
