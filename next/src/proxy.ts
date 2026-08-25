@@ -38,6 +38,10 @@ export async function proxy(request: NextRequest) {
 
     if (isAuthenticated && isAuthPage) {
         // Fix: Removed hardcoded /dashboard redirect trap
+        const callbackUrl = request.nextUrl.searchParams.get("callbackUrl") || request.nextUrl.searchParams.get("redirect");
+        if (callbackUrl && callbackUrl.startsWith("/")) {
+            return NextResponse.redirect(new URL(callbackUrl, request.url));
+        }
         return NextResponse.redirect(new URL("/", request.url));
     }
 
