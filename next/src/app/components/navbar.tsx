@@ -177,9 +177,9 @@ export default function Navbar() {
                   refreshUser();
                   router.push("/");
                 }}
-                className="flex items-center gap-2 bg-gradient-to-r from-gray-900 to-black px-4 py-2 rounded-full hover:from-red-900/40 hover:to-red-800/40 transition-all duration-300 shadow-lg border border-gray-700 hover:border-red-500/50 group"
+                className="text-sm font-medium text-gray-300 hover:text-white px-4 py-2 rounded-full hover:bg-white/10 transition-all duration-300"
               >
-                <span className="text-gray-300 group-hover:text-red-400 text-sm font-medium transition-colors">Sign Out</span>
+                Sign Out
               </button>
             </motion.div>
           )}

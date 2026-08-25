@@ -304,7 +304,7 @@ function GamePlayerOverlay({
                           >
                             <div className="flex items-center gap-3">
                               <span
-                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                                   index === 0
                                     ? "bg-pink-500 text-white"
                                     : index === 1
@@ -316,11 +316,24 @@ function GamePlayerOverlay({
                               >
                                 {index + 1}
                               </span>
-                              <span className="text-sm font-semibold text-white truncate max-w-[120px]">
-                                {score.player?.username || "Anonymous"}
-                              </span>
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Image
+                                  src={
+                                    score.player?.profileImgUrl
+                                      ? prettySafeImage(score.player.profileImgUrl)
+                                      : DEFAULT_GAME_IMAGE
+                                  }
+                                  alt={score.player?.username || "Player"}
+                                  width={24}
+                                  height={24}
+                                  className="w-6 h-6 rounded-full object-cover shrink-0"
+                                />
+                                <span className="text-sm font-semibold text-white truncate max-w-[100px]">
+                                  {score.player?.username || "Anonymous"}
+                                </span>
+                              </div>
                             </div>
-                            <span className="text-sm font-bold text-pink-400">
+                            <span className="text-sm font-bold text-pink-400 shrink-0">
                               {score.scoreStr}
                             </span>
                           </div>
