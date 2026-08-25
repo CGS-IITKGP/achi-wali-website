@@ -92,14 +92,22 @@ function GamePlayerOverlay({
       return;
     }
 
+    if (!isLeaderboardOpen) return;
+
     const fetchScores = async (isInitial = false) => {
       if (isInitial) setLoadingLeaderboard(true);
       try {
+        console.log("[InGameLeaderboard] Fetching scores for gameId:", gameId);
         const response = await api("GET", "/game/score", {
-          query: { target: "leaderboard", gameId },
+          query: {
+            target: "leaderboard",
+            gameId: gameId,
+          },
         });
+        console.log("[InGameLeaderboard] Received scores:", response);
+
         if (response.action === true) {
-          setLeaderboardScores((response.data as any[]) || []);
+          setLeaderboardScores(response.data as any[]);
         }
       } catch (error) {
       } finally {
@@ -111,7 +119,7 @@ function GamePlayerOverlay({
 
     const interval = setInterval(() => fetchScores(false), 5000);
     return () => clearInterval(interval);
-  }, [playingEmbedUrl, gameId]);
+  }, [playingEmbedUrl, gameId, isLeaderboardOpen]);
 
   return (
     <AnimatePresence>
