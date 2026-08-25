@@ -40,11 +40,6 @@ function GameAuthFlow() {
     const { user, isLoading } = useAuth();
     const router = useRouter();
 
-    useEffect(() => {
-        if (!isLoading && user) {
-            router.push("/games");
-        }
-    }, [user, isLoading, router]);
 
     // Helper: set a short-lived cookie storing gameId/returnTo
     const setGameAuthCookie = useCallback((gId: string, rTo: string) => {

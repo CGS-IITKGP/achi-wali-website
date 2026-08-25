@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const GET = async (req: NextRequest): Promise<NextResponse> => {
   const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-  const callbackUrl = req.nextUrl.searchParams.get("callbackUrl") || "/";
+  const callbackUrl = req.nextUrl.searchParams.get("callbackUrl") || req.nextUrl.searchParams.get("redirect") || "/";
 
   googleAuthUrl.searchParams.set(
     "client_id",

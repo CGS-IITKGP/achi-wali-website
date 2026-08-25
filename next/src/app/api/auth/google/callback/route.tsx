@@ -33,7 +33,7 @@ const GET = createHandler({
             options: cookieOptions.jwt,
           },
         ],
-        redirectUrl: state || "/",
+        redirectUrl: new URL(state || "/", req.url).toString(),
       };
     },
   },
