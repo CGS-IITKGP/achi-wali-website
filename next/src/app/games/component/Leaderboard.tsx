@@ -291,32 +291,46 @@ const Leaderboard: React.FC = () => {
           <>
             {/* Podium */}
             {podium.length > 0 && (
-              <section className="mb-10 flex items-end justify-center gap-2 md:gap-4">
+              <section className="mb-10 grid grid-cols-3 items-end justify-center gap-2 md:gap-4">
                 {podium.length > 1 && (
-                  <div className="w-1/3 order-1 mb-4 md:mb-8">
+                  <div className="order-1">
                     <PodiumCard
                       key={podium[1]._id}
-                      player={{ username: podium[1].player.username, score: podium[1].score, scoreStr: podium[1].scoreStr }}
+                      player={{
+                        username: podium[1].player.username,
+                        score: podium[1].score,
+                        scoreStr: podium[1].scoreStr,
+                      }}
                       place={2}
                       unit="pts"
                     />
                   </div>
                 )}
+
                 {podium.length > 0 && (
-                  <div className="w-1/3 order-2 z-10">
+                  <div className="order-2 z-10">
                     <PodiumCard
                       key={podium[0]._id}
-                      player={{ username: podium[0].player.username, score: podium[0].score, scoreStr: podium[0].scoreStr }}
+                      player={{
+                        username: podium[0].player.username,
+                        score: podium[0].score,
+                        scoreStr: podium[0].scoreStr,
+                      }}
                       place={1}
                       unit="pts"
                     />
                   </div>
                 )}
+
                 {podium.length > 2 && (
-                  <div className="w-1/3 order-3 mb-8 md:mb-16">
+                  <div className="order-3">
                     <PodiumCard
                       key={podium[2]._id}
-                      player={{ username: podium[2].player.username, score: podium[2].score, scoreStr: podium[2].scoreStr }}
+                      player={{
+                        username: podium[2].player.username,
+                        score: podium[2].score,
+                        scoreStr: podium[2].scoreStr,
+                      }}
                       place={3}
                       unit="pts"
                     />
