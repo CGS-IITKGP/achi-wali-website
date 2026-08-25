@@ -43,13 +43,13 @@ const PodiumCard: React.FC<{
     <div
       className={`
         podium-card
-        relative overflow-hidden rounded-xl border p-5 backdrop-blur-xl
-        ${isFirst ? "podium-card-first scale-[1.03]" : ""}
+        relative overflow-hidden rounded-xl border p-3 md:p-5 backdrop-blur-xl
+        ${isFirst ? "podium-card-first md:scale-[1.03]" : ""}
       `}
     >
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-3 md:mb-5 flex flex-col md:flex-row md:items-center justify-between gap-1 md:gap-0">
         <span
-          className="rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-[0.3em]"
+          className="rounded-full border px-1.5 py-0.5 md:px-2.5 md:py-1 text-[8px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] self-start md:self-auto text-center"
           style={{
             borderColor: s.ring,
             color: s.accent,
@@ -59,7 +59,7 @@ const PodiumCard: React.FC<{
         </span>
 
         <span
-          className={`${righteousFont.className} place-number`}
+          className={`${righteousFont.className} place-number text-lg md:text-3xl`}
           style={{
             color: s.accent,
           }}
@@ -68,31 +68,31 @@ const PodiumCard: React.FC<{
         </span>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col md:flex-row items-center md:items-center gap-2 md:gap-4">
         <img
           src="/default-fallback-image.png"
           alt={player.username}
-          className="h-14 w-14 rounded-full object-cover"
+          className="h-10 w-10 md:h-14 md:w-14 rounded-full object-cover"
           style={{
             boxShadow: `0 0 0 2px ${s.ring}`,
           }}
         />
-        <div className="min-w-0">
+        <div className="min-w-0 text-center md:text-left">
           <div
-            className={`${righteousFont.className} truncate text-xl font-semibold text-white`}
+            className={`${righteousFont.className} truncate text-xs md:text-xl font-semibold text-white`}
           >
             {player.username}
           </div>
         </div>
       </div>
 
-      <div className="mt-6">
-        <div className="text-[10px] uppercase tracking-[0.22em] text-white/40">
+      <div className="mt-4 md:mt-6 text-center md:text-left">
+        <div className="text-[8px] md:text-[10px] uppercase tracking-[0.22em] text-white/40">
           Score
         </div>
 
         <div
-          className={`${righteousFont.className} score-value tabular-nums`}
+          className={`${righteousFont.className} score-value tabular-nums text-sm md:text-2xl`}
           style={{
             color: isFirst ? "#ff3d8b" : "#fff",
           }}
