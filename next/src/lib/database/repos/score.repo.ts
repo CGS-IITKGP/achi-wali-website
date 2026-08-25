@@ -36,12 +36,9 @@ class ScoreRepository extends GenericRepository<
             const now = new Date();
             const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 
-            // Attempt to cast gameId to ObjectId if it's a valid hex string, otherwise keep it as a string
-            // This fixes the aggregation bug where Mongoose doesn't auto-cast strings to ObjectIds in $match
-            let matchGameId: any = gameId;
-            if (Types.ObjectId.isValid(gameId)) {
-                matchGameId = new Types.ObjectId(gameId);
-            }
+            // Handle a comma-separated string of possible identifiers
+            const rawIds = gameId.split(',');
+            const matchGameId = { $in: rawIds.map(id => Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id) };
 
             // Check if scores exist for today
             const hasScoresToday = await ScoreModel.exists({
@@ -162,7 +159,10 @@ class ScoreRepository extends GenericRepository<
         await this.ensureDbConnection();
 
         try {
-            const results = await ScoreModel.find({ player: playerId, gameId })
+            const rawIds = gameId.split(',');
+            const matchGameId = { $in: rawIds.map(id => Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id) };
+
+            const results = await ScoreModel.find({ player: playerId, gameId: matchGameId })
                 .sort({ score: -1 })
                 .limit(1)
                 .populate({ path: "player", select: "username" })

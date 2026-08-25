@@ -67,8 +67,8 @@ const create: ServiceSignature<
         player: playerId,
         gameId: data.gameId,
         score: data.score,
-        scoreStr: data.scoreStr,
-        seed: data.seed,
+        scoreStr: data.scoreStr || data.score.toString(),
+        seed: data.seed || "none",
     });
 
     return {

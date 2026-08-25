@@ -1219,7 +1219,12 @@ export default function GameClient({
         createPortal(
           <GamePlayerOverlay
             playingEmbedUrl={playingEmbedUrl}
-            gameId={playingGame?._id ?? ""}
+            gameId={[
+              playingGame?._id,
+              (playingGame as any)?.slug,
+              playingGame?.title,
+              playingGame?.title?.replace(/\s+/g, '')
+            ].filter(Boolean).join(',')}
             title={playingGame?.title ?? currentGame.title}
             embedBlocked={embedBlocked}
             embedLoading={embedLoading}
