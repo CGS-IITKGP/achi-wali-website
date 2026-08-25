@@ -6,8 +6,8 @@ const gameValidator = {
     createScore: z.object({
         gameId: allIbDField.shortString,
         score: z.number().int(),
-        scoreStr: allIbDField.shortString,
-        seed: allIbDField.shortString,
+        scoreStr: allIbDField.shortString.optional().nullable(),
+        seed: allIbDField.shortString.optional().nullable(),
         timestamp: z.number().int().positive(),
         gameToken: allIbDField.longString,
         signature: allIbDField.shortString,
