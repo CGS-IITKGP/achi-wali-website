@@ -17,7 +17,7 @@ export function OPTIONS() {
     });
 }
 
-const POST = createHandler({
+const POST_HANDLER = createHandler({
     requireAuth: false,
     validationSchema: gameValidator.createScore,
     options: {
@@ -25,7 +25,7 @@ const POST = createHandler({
     },
 });
 
-const GET = createHandler({
+const GET_HANDLER = createHandler({
     requireAuth: false,
     validationSchema: gameValidator.getScore,
     dataUnifier: (req) => {
@@ -40,4 +40,18 @@ const GET = createHandler({
     },
 });
 
-export { POST, GET };
+export const POST = async (req: any) => {
+    const res = await POST_HANDLER(req);
+    res.headers.set("Access-Control-Allow-Origin", "*");
+    res.headers.set("Access-Control-Allow-Methods", "GET,OPTIONS,POST");
+    res.headers.set("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With, Authorization");
+    return res;
+};
+
+export const GET = async (req: any) => {
+    const res = await GET_HANDLER(req);
+    res.headers.set("Access-Control-Allow-Origin", "*");
+    res.headers.set("Access-Control-Allow-Methods", "GET,OPTIONS,POST");
+    res.headers.set("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With, Authorization");
+    return res;
+};
