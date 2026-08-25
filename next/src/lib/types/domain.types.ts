@@ -224,6 +224,7 @@ export interface IScoreExportable extends Omit<IScore, "player"> {
     player: {
         _id: Types.ObjectId;
         username: string;
+        profileImgUrl: string | null;
     };
 }
 

@@ -96,7 +96,9 @@ export default function Login() {
     } else {
       toast.success("Signed in successfully!");
       refreshUser();
-      router.push("/dashboard");
+      const searchParams = new URLSearchParams(window.location.search);
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
+      router.push(callbackUrl);
     }
 
     setIsLoading(false);

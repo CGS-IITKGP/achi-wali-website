@@ -104,7 +104,8 @@ function createHandler<
                     cookies,
                     redirectUrl
                 } = (config.onSuccess ?? defaultOnSuccess)(
-                    serviceResponse.data
+                    serviceResponse.data,
+                    req
                 );
 
                 if (cookies) {

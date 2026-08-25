@@ -109,6 +109,7 @@ const get: ServiceSignature<
                 player: {
                     _id: myScore.player._id.toHexString(),
                     username: myScore.player.username,
+                    profileImgUrl: null,
                 },
                 gameId: myScore.gameId,
                 score: myScore.score,
@@ -133,6 +134,7 @@ const get: ServiceSignature<
         player: {
             _id: typeof score.player?._id === "string" ? score.player._id : score.player?._id?.toHexString?.() || String(score.player?._id || ""),
             username: score.player?.username || "Anonymous",
+            profileImgUrl: score.player?.profileImgUrl || null,
         },
         gameId: score.gameId,
         score: score.score,

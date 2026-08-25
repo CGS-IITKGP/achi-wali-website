@@ -37,7 +37,8 @@ export async function proxy(request: NextRequest) {
     }
 
     if (isAuthenticated && isAuthPage) {
-        return NextResponse.redirect(new URL("/dashboard", request.url));
+        // Fix: Removed hardcoded /dashboard redirect trap
+        return NextResponse.redirect(new URL("/", request.url));
     }
 
     if ((!isMember && (isDashboardPage || isAdminPage)) ||

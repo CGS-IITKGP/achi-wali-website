@@ -354,7 +354,7 @@ const Leaderboard: React.FC = () => {
 
                         <div className="col-span-7 flex min-w-0 items-center gap-3">
                           <img
-                            src="/default-fallback-image.png"
+                            src={r.player.profileImgUrl || "/default-fallback-image.png"}
                             alt={r.player.username}
                             className="h-9 w-9 rounded-full object-cover"
                           />

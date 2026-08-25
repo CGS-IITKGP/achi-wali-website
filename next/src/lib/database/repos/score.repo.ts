@@ -27,7 +27,7 @@ class ScoreRepository extends GenericRepository<
      */
     async getTopScores(
         gameId: string,
-        limit: number = 10
+        limit: number = 100
     ): Promise<IScoreExportable[]> {
         await this.ensureDbConnection();
 
@@ -102,6 +102,22 @@ class ScoreRepository extends GenericRepository<
                     },
                 },
 
+                // 6.5 $lookup to join the user's profile picture
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "playerDoc.websiteUserId",
+                        foreignField: "_id",
+                        as: "userDoc",
+                    },
+                },
+                {
+                    $unwind: {
+                        path: "$userDoc",
+                        preserveNullAndEmptyArrays: true,
+                    },
+                },
+
                 // 7. Project into the expected IScoreExportable shape
                 {
                     $project: {
@@ -109,6 +125,7 @@ class ScoreRepository extends GenericRepository<
                         player: {
                             _id: { $ifNull: ["$playerDoc._id", "$_id"] },
                             username: { $ifNull: ["$playerDoc.username", "Anonymous"] },
+                            profileImgUrl: { $ifNull: ["$userDoc.profileImgUrl", null] },
                         },
                         gameId: 1,
                         score: 1,
