@@ -17,7 +17,7 @@ class GameAuthCodeRepository extends GenericRepository<
         super(GameAuthCodeModel);
     }
 
-    /**
+    /***
      * Generate a short-lived, single-use auth code for a game session.
      * Code is 32 random bytes, base64url-encoded (high entropy).
      * Expires in 60 seconds.
