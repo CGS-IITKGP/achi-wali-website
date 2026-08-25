@@ -65,9 +65,6 @@ function GamePlayerOverlay({
   onClose: () => void;
   onIframeLoad: () => void;
 }) {
-  const [leaderboardScores, setLeaderboardScores] = useState<any[]>([]);
-  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
-  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
   let extractedAuthCode: string | null = null;
@@ -83,43 +80,6 @@ function GamePlayerOverlay({
       setTimeout(() => setCopiedCode(false), 2000);
     }
   };
-
-  // Fetch scores when the overlay opens or gameId changes (polls every 5s)
-  useEffect(() => {
-    if (!playingEmbedUrl || !gameId) {
-      setLeaderboardScores([]);
-      setIsLeaderboardOpen(false);
-      return;
-    }
-
-    if (!isLeaderboardOpen) return;
-
-    const fetchScores = async (isInitial = false) => {
-      if (isInitial) setLoadingLeaderboard(true);
-      try {
-        console.log("[InGameLeaderboard] Fetching scores for gameId:", gameId);
-        const response = await api("GET", "/game/score", {
-          query: {
-            target: "leaderboard",
-            gameId: gameId,
-          },
-        });
-        console.log("[InGameLeaderboard] Received scores:", response);
-
-        if (response.action === true) {
-          setLeaderboardScores(response.data as any[]);
-        }
-      } catch (error) {
-      } finally {
-        if (isInitial) setLoadingLeaderboard(false);
-      }
-    };
-
-    fetchScores(true);
-
-    const interval = setInterval(() => fetchScores(false), 5000);
-    return () => clearInterval(interval);
-  }, [playingEmbedUrl, gameId, isLeaderboardOpen]);
 
   return (
     <AnimatePresence>
@@ -143,19 +103,7 @@ function GamePlayerOverlay({
                 <h3 className={`text-lg sm:text-xl font-bold text-white truncate ${righteousFont.className}`}>
                   Playing: {title}
                 </h3>
-                {playingEmbedUrl && !embedBlocked && (
-                  <button
-                    onClick={() => setIsLeaderboardOpen(!isLeaderboardOpen)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-300 ${
-                      isLeaderboardOpen
-                        ? "bg-pink-500 border-pink-500 text-white shadow-lg shadow-pink-500/25"
-                        : "bg-gray-900 border-gray-800 text-gray-300 hover:text-white hover:border-gray-700"
-                    }`}
-                  >
-                    <Trophy className="w-3.5 h-3.5 fill-current" />
-                    Leaderboard
-                  </button>
-                )}
+
                 {extractedAuthCode && !embedBlocked && (
                   <button
                     onClick={handleCopyCode}
@@ -263,94 +211,16 @@ function GamePlayerOverlay({
                 )}
               </div>
 
-              {/* Glassmorphic Slide-out Leaderboard Panel */}
-              <AnimatePresence>
-                {isLeaderboardOpen && !embedBlocked && (
-                  <motion.div
-                    initial={{ x: "100%" }}
-                    animate={{ x: 0 }}
-                    exit={{ x: "100%" }}
-                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                    className="absolute right-0 top-0 bottom-0 w-80 bg-gray-950/80 backdrop-blur-xl border-l border-gray-800 z-20 flex flex-col shadow-2xl"
-                  >
-                    <div className="p-4 border-b border-gray-800 flex justify-between items-center shrink-0">
-                      <h4 className={`text-md font-bold text-white flex items-center gap-2 ${righteousFont.className}`}>
-                        <Trophy className="w-4 h-4 text-pink-500 fill-pink-500" />
-                        Top Scores
-                      </h4>
-                      <button
-                        onClick={() => setIsLeaderboardOpen(false)}
-                        className="text-gray-400 hover:text-white transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                      {loadingLeaderboard ? (
-                        <div className="flex flex-col items-center justify-center h-40 gap-2 text-gray-400">
-                          <div className="w-5 h-5 border-2 border-gray-600 border-t-pink-500 rounded-full animate-spin" />
-                          <span className="text-xs">Loading scores…</span>
-                        </div>
-                      ) : leaderboardScores.length === 0 ? (
-                        <div className="text-center text-gray-500 py-10 text-sm">
-                          No scores submitted yet. Be the first!
-                        </div>
-                      ) : (
-                        leaderboardScores.map((score, index) => (
-                          <div
-                            key={score._id}
-                            className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 ${
-                              index === 0
-                                ? "bg-pink-500/10 border-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.15)]"
-                                : index === 1
-                                ? "bg-purple-500/10 border-purple-500/20"
-                                : index === 2
-                                ? "bg-fuchsia-500/10 border-fuchsia-500/20"
-                                : "bg-white/5 border-white/5"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                                  index === 0
-                                    ? "bg-pink-500 text-white"
-                                    : index === 1
-                                    ? "bg-purple-500 text-white"
-                                    : index === 2
-                                    ? "bg-fuchsia-500 text-white"
-                                    : "bg-gray-800 text-gray-400"
-                                }`}
-                              >
-                                {index + 1}
-                              </span>
-                              <div className="flex items-center gap-2 min-w-0">
-                                <Image
-                                  src={
-                                    score.player?.profileImgUrl
-                                      ? prettySafeImage(score.player.profileImgUrl)
-                                      : DEFAULT_GAME_IMAGE
-                                  }
-                                  alt={score.player?.username || "Player"}
-                                  width={24}
-                                  height={24}
-                                  className="w-6 h-6 rounded-full object-cover shrink-0"
-                                />
-                                <span className="text-sm font-semibold text-white truncate max-w-[100px]">
-                                  {score.player?.username || "Anonymous"}
-                                </span>
-                              </div>
-                            </div>
-                            <span className="text-sm font-bold text-pink-400 shrink-0">
-                              {score.scoreStr}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* Portrait Warning Overlay for Mobile */}
+              <div className="hidden max-md:portrait:flex absolute inset-0 z-[100] bg-gray-900/95 backdrop-blur-md flex-col items-center justify-center text-center p-6">
+                <div className="text-5xl mb-4 animate-bounce">📱</div>
+                <h3 className={`text-xl font-bold text-white mb-2 ${righteousFont.className}`}>
+                  Rotate Your Device
+                </h3>
+                <p className={`text-gray-300 text-sm max-w-xs ${robotoFont.className}`}>
+                  Please rotate your device to landscape mode for the best gaming experience!
+                </p>
+              </div>
             </div>
           </motion.div>
         </motion.div>
