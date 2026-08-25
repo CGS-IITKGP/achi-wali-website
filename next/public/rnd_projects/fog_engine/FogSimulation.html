@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Fog Engine Simulation</title>
+  <style>
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; }
+    #canvas-container { position: relative; width: 100%; height: 100%; background-color: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    canvas.emscripten { display: block; max-width: 100%; max-height: 100%; object-fit: contain; border: 0; outline: none; cursor: crosshair; }
+    .top-bar { position: absolute; top: 14px; right: 14px; z-index: 30; display: flex; align-items: center; gap: 8px; background: rgba(15,15,20,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(236,72,153,0.35); border-radius: 9999px; padding: 5px 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 15px rgba(236,72,153,0.2); transition: all 0.3s; }
+    .top-bar:hover { border-color: rgba(236,72,153,0.6); box-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 0 25px rgba(236,72,153,0.35); }
+    .btn-icon { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #f472b6; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; transition: all 0.2s; outline: none; }
+    .btn-icon:hover { background: rgba(236,72,153,0.25); border-color: rgba(236,72,153,0.6); color: #fff; transform: scale(1.1); box-shadow: 0 0 12px rgba(236,72,153,0.5); }
+    .btn-icon:active { transform: scale(0.95); }
+    .btn-icon svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .modal-backdrop { position: absolute; inset: 0; z-index: 50; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.25s; padding: 16px; }
+    .modal-backdrop.active { opacity: 1; pointer-events: auto; }
+    .modal-card { width: 100%; max-width: 440px; background: linear-gradient(135deg,rgba(24,24,30,0.95),rgba(12,12,16,0.98)); border: 1px solid rgba(236,72,153,0.4); border-radius: 20px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.8),0 0 30px rgba(236,72,153,0.2); transform: scale(0.95) translateY(10px); transition: transform 0.25s cubic-bezier(0.16,1,0.3,1); }
+    .modal-backdrop.active .modal-card { transform: scale(1) translateY(0); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .modal-title { font-size: 17px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .modal-title span { background: linear-gradient(135deg,#ec4899,#a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .close-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+    .close-btn:hover { background: rgba(236,72,153,0.2); color: #fff; border-color: rgba(236,72,153,0.5); }
+    .control-desc { color: #d1d5db; font-weight: 500; }
+    .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #a855f7; padding: 4px 2px 2px; border-bottom: 1px solid rgba(168,85,247,0.2); margin-top: 4px; }
+    .controls-list { display: flex; flex-direction: column; gap: 6px; font-size: 13px; max-height: 55vh; overflow-y: auto; padding-right: 4px; }
+    .controls-list::-webkit-scrollbar { width: 4px; }
+    .controls-list::-webkit-scrollbar-track { background: transparent; }
+    .controls-list::-webkit-scrollbar-thumb { background: rgba(236,72,153,0.4); border-radius: 9999px; }
+    .control-item { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+    .control-keys { display: flex; gap: 4px; align-items: center; }
+    kbd { background: rgba(236,72,153,0.15); border: 1px solid rgba(236,72,153,0.4); color: #f472b6; font-weight: 600; font-size: 11px; padding: 3px 7px; border-radius: 6px; box-shadow: 0 2px 0 rgba(0,0,0,0.5); font-family: inherit; }
+
+    #loading-overlay { position: absolute; inset: 0; z-index: 40; background: radial-gradient(circle at center,#18181b 0%,#09090b 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; transition: opacity 0.6s ease, visibility 0.6s ease; }
+    #loading-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .spinner-ring { width: 54px; height: 54px; border: 3px solid rgba(236,72,153,0.15); border-top-color: #ec4899; border-right-color: #a855f7; border-radius: 50%; animation: spin 0.9s cubic-bezier(0.55,0.15,0.45,0.85) infinite; box-shadow: 0 0 25px rgba(236,72,153,0.3); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 14px; font-weight: 600; letter-spacing: 0.05em; color: #f3f4f6; text-transform: uppercase; }
+    .progress-bar-container { width: 200px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 9999px; overflow: hidden; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg,#ec4899,#a855f7); border-radius: 9999px; animation: pulseWidth 1.5s ease-in-out infinite alternate; }
+    @keyframes pulseWidth { 0% { width: 20%; transform: translateX(0%); } 100% { width: 80%; transform: translateX(25%); } }
+    .hint-toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 20; background: rgba(15,15,20,0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(236,72,153,0.3); border-radius: 9999px; padding: 8px 18px; font-size: 12px; color: #e5e7eb; pointer-events: none; opacity: 0.85; transition: opacity 0.4s ease; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <div id="canvas-container">
+    <div class="top-bar">
+      <button class="btn-icon" id="btn-help" title="Controls and Help" aria-label="Controls and Help">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      </button>
+      <button class="btn-icon" id="btn-fullscreen" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+        <svg id="icon-maximize" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+        <svg id="icon-minimize" viewBox="0 0 24 24" style="display:none;"><path d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 4v6m0 0h6m-6 0l7-7M4 10h6m0 0V4m0 6L3 3"></path></svg>
+      </button>
+    </div>
+    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="1"></canvas>
+    <div class="hint-toast" id="hint-toast">
+      <span>Click canvas to look around &bull; ESC to unlock mouse</span>
+    </div>
+    <div id="loading-overlay">
+      <div class="spinner-ring"></div>
+      <div class="loading-text" id="status-text">Initializing Fog Engine...</div>
+      <div class="progress-bar-container"><div class="progress-bar" id="progress-bar"></div></div>
+    </div>
+    <div class="modal-backdrop" id="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title"><span>Fog Engine</span> Controls</div>
+          <button class="close-btn" id="modal-close" aria-label="Close">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="controls-list">
+          <div class="section-label">Camera</div>
+          <div class="control-item"><span class="control-desc">Move Camera</span><div class="control-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Look Around</span><div class="control-keys"><kbd>Mouse Move</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Lock / Unlock Mouse</span><div class="control-keys"><kbd>Click</kbd> / <kbd>ESC</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Cycle Camera Presets</span><div class="control-keys"><kbd>C</kbd></div></div>
+
+          <div class="section-label">Viewpoints</div>
+          <div class="control-item"><span class="control-desc">Overview — High Angle</span><div class="control-keys"><kbd>1</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Ground Level — Front</span><div class="control-keys"><kbd>2</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Fortress Close-Up</span><div class="control-keys"><kbd>3</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Cinematic / Fly-Through</span><div class="control-keys"><kbd>4</kbd></div></div>
+
+          <div class="section-label">Fog &amp; Scene</div>
+          <div class="control-item"><span class="control-desc">Fog Density Control</span><div class="control-keys"><kbd>]</kbd> / <kbd>[</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Height Falloff Rate</span><div class="control-keys"><kbd>H</kbd> / <kbd>J</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Wind Speed</span><div class="control-keys"><kbd>K</kbd> / <kbd>L</kbd></div></div>
+          <div class="control-item"><span class="control-desc">Map Visualization</span><div class="control-keys"><kbd>M</kbd></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var canvasEl       = document.getElementById('canvas');
+    var loadingOverlay = document.getElementById('loading-overlay');
+    var statusText     = document.getElementById('status-text');
+    var progressBar    = document.getElementById('progress-bar');
+    var btnFullscreen  = document.getElementById('btn-fullscreen');
+    var iconMaximize   = document.getElementById('icon-maximize');
+    var iconMinimize   = document.getElementById('icon-minimize');
+    var btnHelp        = document.getElementById('btn-help');
+    var modalBackdrop  = document.getElementById('modal-backdrop');
+    var modalClose     = document.getElementById('modal-close');
+    var hintToast      = document.getElementById('hint-toast');
+    var _loaderHidden  = false;
+
+    function hideLoader() {
+      if (_loaderHidden) return;
+      _loaderHidden = true;
+      loadingOverlay.classList.add('hidden');
+      canvasEl.focus();
+      setTimeout(function() {
+        if (hintToast) { hintToast.style.opacity = '0'; setTimeout(function(){ if(hintToast) hintToast.remove(); }, 500); }
+      }, 6000);
+    }
+
+    function updateStatus(text) {
+      if (!text) { hideLoader(); return; }
+      if (statusText) statusText.textContent = text;
+      var m = text.match(/\((\d+(?:\.\d+)?)\/(\d+)\)/);
+      if (m && progressBar) {
+        var pct = (parseFloat(m[1]) / parseFloat(m[2])) * 100;
+        progressBar.style.animation = 'none';
+        progressBar.style.width = pct + '%';
+      }
+    }
+
+    btnHelp.addEventListener('click', function(e) { e.stopPropagation(); modalBackdrop.classList.add('active'); });
+    modalClose.addEventListener('click', function(e) { e.stopPropagation(); modalBackdrop.classList.remove('active'); canvasEl.focus(); });
+    modalBackdrop.addEventListener('click', function(e) { if (e.target === modalBackdrop) { modalBackdrop.classList.remove('active'); canvasEl.focus(); } });
+    window.addEventListener('keydown', function(e) { if (e.key === 'Escape' && modalBackdrop.classList.contains('active')) { modalBackdrop.classList.remove('active'); canvasEl.focus(); } });
+
+    function getFullscreenEl() {
+      return document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
+    }
+    function updateFullscreenIcons() {
+      var inFs = !!getFullscreenEl();
+      iconMaximize.style.display = inFs ? 'none' : 'block';
+      iconMinimize.style.display = inFs ? 'block' : 'none';
+    }
+    function enterFullscreen() {
+      var el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen().catch(function(){});
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+      else if (el.msRequestFullscreen) el.msRequestFullscreen();
+    }
+    function exitFullscreen() {
+      if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
+    }
+    function toggleFullscreen() { if (getFullscreenEl()) exitFullscreen(); else enterFullscreen(); }
+    btnFullscreen.addEventListener('click', function(e) { e.stopPropagation(); toggleFullscreen(); });
+    ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(function(evt) {
+      document.addEventListener(evt, updateFullscreenIcons);
+    });
+
+    canvasEl.addEventListener('click', function() { canvasEl.focus(); });
+    canvasEl.addEventListener('webglcontextlost', function(e) { e.preventDefault(); console.warn('[FogEngine] WebGL context lost.'); });
+
+    var Module = {
+      canvas: canvasEl,
+      locateFile: function(path, scriptDir) {
+        if (path.endsWith('.wasm')) return new URL(path, window.location.href).href;
+        return (scriptDir || '') + path;
+      },
+      setStatus: function(text) { updateStatus(text); },
+      onRuntimeInitialized: function() {
+        console.log('[FogEngine] Runtime initialised.');
+        requestAnimationFrame(hideLoader);
+      },
+      postRun: [function() {
+        console.log('[FogEngine] postRun.');
+        requestAnimationFrame(hideLoader);
+      }],
+      print: function(text) {
+        if (typeof text === 'string' && text.length < 512) console.log('[FogEngine]', text);
+      },
+      printErr: function(text) { console.error('[FogEngine]', text); },
+      totalDependencies: 0,
+      monitorRunDependencies: function(left) {
+        this.totalDependencies = Math.max(this.totalDependencies, left);
+        if (left === 0) hideLoader();
+        else updateStatus('Preparing (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')...');
+      }
+    };
+
+    window.addEventListener('error', function(e) { console.error('[FogEngine] Error:', e.message); });
+    window.addEventListener('unhandledrejection', function(e) { console.error('[FogEngine] Rejection:', e.reason); });
+    setTimeout(function() {
+      if (!_loaderHidden && typeof GL !== 'undefined' && GL.contexts && Object.keys(GL.contexts).length > 0) hideLoader();
+    }, 8000);
+  </script>
+
+  <script src="FogSimulation.js"></script>
+</body>
+</html>

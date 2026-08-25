@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { motion /*Variants*/ } from "framer-motion";
 import { righteousFont, robotoFont } from "../../fonts";
-import { ExternalLink, FlaskConical, Github, Play, X } from "lucide-react";
+import { ExternalLink, FlaskConical, Github, Play, X, Maximize, Minimize } from "lucide-react";
 import { Image as GraphicsIcon } from "lucide-react";
 // import { MdArrowBackIos, MdArrowForwardIos } from "react-icons/md";
 import { FiMousePointer } from "react-icons/fi";
@@ -52,6 +52,38 @@ export default function ProjectsClient({
   const portfolioOptions = ["ALL", ...new Set(projects.map(p => p.portfolio))];
 
   const [simulateProject, setSimulateProject] = useState<IProject | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const iframeContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleCloseModal = () => {
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+    if (document.pointerLockElement && document.exitPointerLock) {
+      document.exitPointerLock();
+    }
+    setSimulateProject(null);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      iframeContainerRef.current?.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -558,7 +590,7 @@ export default function ProjectsClient({
     {simulateProject && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center pt-32 px-6 pb-10 bg-black/60 backdrop-blur-sm"
-          onClick={() => setSimulateProject(null)}
+          onClick={handleCloseModal}
         >
           <div
             onClick={(e) => e.stopPropagation()}
@@ -575,23 +607,53 @@ export default function ProjectsClient({
                 {simulateProject.title}
               </h1>
 
-              <button
-                onClick={() => setSimulateProject(null)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-500/40 text-white hover:bg-pink-500/40 hover:scale-110 transition-all"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleCloseModal}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-pink-500/20 border border-pink-500/40 text-white hover:bg-pink-500/40 hover:scale-110 transition-all"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
             </div>
 
             {/* ---------- CONTENT ---------- */}
 
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-6 flex gap-3">
 
-              <div className="h-full rounded-2xl border border-pink-500/20 overflow-hidden bg-black">
+              {/* Left fullscreen button */}
+              <div className="flex flex-col items-center justify-center shrink-0">
+                <button
+                  onClick={toggleFullscreen}
+                  title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                  className="group flex flex-col items-center gap-2 rounded-2xl border border-pink-500/40 bg-pink-500/10 backdrop-blur-sm px-2 py-4 text-white hover:bg-pink-500/30 hover:border-pink-500/70 hover:shadow-[0_0_20px_rgba(236,72,153,0.4)] transition-all duration-300 hover:scale-105"
+                >
+                  {isFullscreen
+                    ? <Minimize className="h-5 w-5 text-pink-300 group-hover:text-white transition-colors" />
+                    : <Maximize className="h-5 w-5 text-pink-300 group-hover:text-white transition-colors" />
+                  }
+                  <span
+                    className={`text-[10px] text-pink-300 group-hover:text-white transition-colors [writing-mode:vertical-rl] rotate-180 tracking-widest uppercase ${righteousFont.className}`}
+                  >
+                    {isFullscreen ? "Exit" : "Fullscreen"}
+                  </span>
+                </button>
+              </div>
+
+              {/* Simulation area */}
+              <div ref={iframeContainerRef} className="flex-1 h-full rounded-2xl border border-pink-500/20 overflow-hidden bg-black relative">
 
                 {simulateProject.title === "Boids Simulation" ? (
                   <BoidsCanvas />
+                ) : simulateProject.title.toLowerCase().includes("fog") ? (
+                  <iframe
+                    src="/rnd_projects/fog_engine/FogSimulation.html"
+                    className="w-full h-full border-none"
+                    allow="autoplay; fullscreen; pointer-lock"
+                    title="Fog Simulation"
+                    onLoad={(e) => (e.target as HTMLIFrameElement).focus()}
+                  />
                 ) : (
                   <div
                     className={`flex h-full w-full items-center justify-center text-gray-300 text-lg ${righteousFont.className}`}
