@@ -396,7 +396,8 @@ const Leaderboard: React.FC = () => {
                   })
                 )}
               </ul>
-            </section>
+            </div>
+          </section>
           </>
         )}
       </div>
