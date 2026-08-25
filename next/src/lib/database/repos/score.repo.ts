@@ -36,9 +36,14 @@ class ScoreRepository extends GenericRepository<
             const now = new Date();
             const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
 
-            // Handle a comma-separated string of possible identifiers
+            // Handle a comma-separated string of possible identifiers or a single clean key
             const rawIds = gameId.split(',');
-            const matchGameId = { $in: rawIds.map(id => Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id) };
+            let matchGameId: any = gameId;
+            if (rawIds.length > 1) {
+                matchGameId = { $in: rawIds.map(id => Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id) };
+            } else if (Types.ObjectId.isValid(gameId)) {
+                matchGameId = new Types.ObjectId(gameId);
+            }
 
             // Check if scores exist for today
             const hasScoresToday = await ScoreModel.exists({
@@ -160,7 +165,12 @@ class ScoreRepository extends GenericRepository<
 
         try {
             const rawIds = gameId.split(',');
-            const matchGameId = { $in: rawIds.map(id => Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id) };
+            let matchGameId: any = gameId;
+            if (rawIds.length > 1) {
+                matchGameId = { $in: rawIds.map(id => Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : id) };
+            } else if (Types.ObjectId.isValid(gameId)) {
+                matchGameId = new Types.ObjectId(gameId);
+            }
 
             const results = await ScoreModel.find({ player: playerId, gameId: matchGameId })
                 .sort({ score: -1 })
