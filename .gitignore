@@ -1,4 +1,23 @@
-.DS_Store
-Thumbs.db
+@"
+node_modules/
+.next/
+dist/
+build/
+out/
 .env
-temp
+.env.*
+!.env.example
+"@ | Set-Content .gitignore
+/served-test.glb
+
+/served-test.glb
+
+/next/public/models/myModel/myLatestFile1.glb
+
+/next\.next\dev\cache\turbopack\ee6e79b1\00000355.blob
+
+/next\.next\dev\cache\turbopack\ee6e79b1\00001360.sst
+
+/next\.next\dev\cache\turbopack\ee6e79b1\00002472.blob
+
+/next\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
