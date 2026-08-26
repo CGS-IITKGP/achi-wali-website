@@ -6,17 +6,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Scene from "./Scene";
 import CameraLogger from "./CameraLogger";
 import * as THREE from "three";
-import Link from "next/link";
-import Image from "next/image";
 
 function clamp01(value: number) {
   return Math.max(0, Math.min(1, value));
-}
-
-const HERO_PROGRESS = 0.556;
-
-function clampPlayableProgress(value: number) {
-  return THREE.MathUtils.clamp(value, HERO_PROGRESS, 1);
 }
 
 function safeSamplePointAt(
@@ -132,7 +124,10 @@ function ScrollPathCameraRig({
   introCanStart: boolean;
 }) {
   const { camera } = useThree();
-  const heroProgress = HERO_PROGRESS;
+  const heroProgress = 0.556;
+  const minProgressAfterIntro = heroProgress;
+  const clampPlayableProgress = (value: number) =>
+    THREE.MathUtils.clamp(value, minProgressAfterIntro, 1);
   const progress = useRef(0);
   const targetProgress = useRef(heroProgress);
   const introElapsed = useRef(0);
@@ -217,7 +212,7 @@ function ScrollPathCameraRig({
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [onFocusChange]);
+  }, []);
 
   useFrame((_, delta) => {
     if (!enabled) return;
@@ -491,39 +486,31 @@ export default function ArcadeClient() {
   return (
     <div className="arcade-scroll-layout">
       {/* Logo — back to main site */}
-
-
-<Link
-  href="/"
-  style={{
-    position: "fixed",
-    top: 14,
-    right: 14,
-    zIndex: 30,
-    display: "block",
-    width: 40,
-    height: 40,
-    borderRadius: "50%",
-    overflow: "hidden",
-    border: "1px solid rgba(82, 243, 255, 0.35)",
-    boxShadow: "0 0 12px rgba(82, 243, 255, 0.2)",
-    background: "rgba(5, 11, 24, 0.7)",
-    transition: "box-shadow 0.2s ease, border-color 0.2s ease",
-  }}
-  title="Back to CGS"
->
-  <Image
-    src="/logo.png"
-    alt="CGS"
-    width={40}
-    height={40}
-    style={{
-      width: "100%",
-      height: "100%",
-      objectFit: "cover",
-    }}
-  />
-</Link>
+      <a
+        href="/"
+        style={{
+          position: "fixed",
+          top: 14,
+          right: 14,
+          zIndex: 30,
+          display: "block",
+          width: 40,
+          height: 40,
+          borderRadius: "50%",
+          overflow: "hidden",
+          border: "1px solid rgba(82, 243, 255, 0.35)",
+          boxShadow: "0 0 12px rgba(82, 243, 255, 0.2)",
+          background: "rgba(5, 11, 24, 0.7)",
+          transition: "box-shadow 0.2s ease, border-color 0.2s ease",
+        }}
+        title="Back to CGS"
+      >
+        <img
+          src="/logo.png"
+          alt="CGS"
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      </a>
 
       {/* "Press L" hint — hidden when logger is open */}
       {!cameraLoggerOn && (
