@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import { IProject } from "../types/domain.types";
 import api from "../axiosApi";
 import ThreeDModeManager from "./components2/ThreeDModeManager";

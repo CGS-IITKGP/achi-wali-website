@@ -14,6 +14,7 @@ const projectValidator = {
         tags: allIbDField.tags,
         links: z.array(allIbDField.link),
         coverImgUrl: allIbDField.mediaKeyNotNullable,
+        isMinigame: z.boolean().optional().default(false),
     }),
     update: z.object({
         _id: allIbDField._id,
@@ -25,6 +26,7 @@ const projectValidator = {
         collaborators: z.array(allIbDField._id).optional(),
         coverImgUrl: allIbDField.mediaKey.optional(),
         media: z.array(allIbDField._id).optional(),
+        isMinigame: z.boolean().optional(),
     }),
     remove: z.object({
         _id: allIbDField._id,

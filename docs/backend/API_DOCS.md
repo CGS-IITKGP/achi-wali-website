@@ -56,7 +56,8 @@
 - **Misc**
   - [GET /api/misc/health](#get-apimischealth)
 - **Game** 
-  - [POST /api/game/login](#post-apigamelogin)
+  - [POST /api/game/session/generate-code](#post-apigamesessiongenerate-code)
+  - [POST /api/game/session/exchange](#post-apigamesessionexchange)
   - [POST /api/game/score](#post-apigamescore)
   - [GET /api/game/score](#get-apigamescore)
   - [GET /api/game/list](#get-apigamelist)
@@ -2272,21 +2273,73 @@ Authentication is session-based using HTTP-only JWT cookies.
 
 ## Game
 
-> For the complete spec including the anti-cheat signature formula, environment variable requirements, and implementation gaps, see [`docs/backend/LEADERBOARD_BACKEND_MAP.md`](file:///c:/Vajraksh%20new/Web_dev/achi-wali-website/docs/backend/LEADERBOARD_BACKEND_MAP.md).
+> For the complete spec including the anti-cheat signature formula, environment variable requirements, and implementation details, see [`docs/backend/LEADERBOARD_BACKEND_MAP.md`](file:///c:/Vajraksh%20new/Web_dev/achi-wali-website/docs/backend/LEADERBOARD_BACKEND_MAP.md).
 
 ---
 
-### `POST` /api/game/login
+### `POST` /api/game/session/generate-code
 
-- **Description:** Authenticates a game player using their `GameUser` credentials (separate model from website `User`). Returns an explicit `gameToken` JWT in the response body. This token must be stored in memory by the game client and passed in score-submission requests. HTTP cookies are intentionally not used (itch.io cross-origin iframe restriction).
-- **Authentication Required:** `False`
-- **Validator Schema:** `gameValidator.login` → `src/lib/validators/game.validator.ts`
+- **Description:** Generates a short-lived, single-use `gameAuthCode` linked to the authenticated website user's `GameUser` profile. This code has a 60-second TTL.
+- **Authentication Required:** `True` — active website session cookie required (`withCredentials: true`).
+- **Validator Schema:** `gameValidator.generateCode` → `src/lib/validators/game.validator.ts`
 - **Expected JSON Body Fields:**
 
   | Field | Type | Rules | Required |
   |-------|------|-------|----------|
-  | `identifier` | `string` | Trimmed, max 255 chars. Matched against `username` OR `email` (both lowercased). | Yes |
-  | `password` | `string` | Max 255 chars. | Yes |
+  | `gameId` | `string` | Trimmed, max 255 chars. | Yes |
+
+- **Expected Responses:**
+
+  - **Success ( `200 OK` ):**
+
+    ```json
+    {
+      "action": true,
+      "data": {
+        "gameAuthCode": "a1b2c3d4e5f6g7h8..."
+      }
+    }
+    ```
+
+  - **Authentication Error ( `401 Unauthorized` ):**
+
+    ```json
+    {
+      "action": false,
+      "message": "Authentication required."
+    }
+    ```
+
+  - **Validation Error ( `400 Bad Request` ):**
+
+    ```json
+    {
+      "action": false,
+      "message": "Bad Request.",
+      "errors": ["gameId$ Required"]
+    }
+    ```
+
+  - **Server Error ( `500 Internal Server Error` ):**
+
+    ```json
+    {
+      "action": null
+    }
+    ```
+
+---
+
+### `POST` /api/game/session/exchange
+
+- **Description:** Exchanges a valid `gameAuthCode` for a persistent `gameToken` JWT. This operation is atomic and marks the code as used immediately. The resulting JWT must be stored in memory by the game client and passed in score-submission requests.
+- **Authentication Required:** `False`
+- **Validator Schema:** `gameValidator.exchangeCode` → `src/lib/validators/game.validator.ts`
+- **Expected JSON Body Fields:**
+
+  | Field | Type | Rules | Required |
+  |-------|------|-------|----------|
+  | `gameAuthCode` | `string` | Trimmed, max 255 chars. | Yes |
 
 - **Expected Responses:**
 
@@ -2309,25 +2362,16 @@ Authentication is session-based using HTTP-only JWT cookies.
     {
       "action": false,
       "message": "Bad Request.",
-      "errors": ["identifier$ Required"]
+      "errors": ["gameAuthCode$ Required"]
     }
     ```
 
-  - **Authentication Error ( `401 Unauthorized` ):** Identifier not found, or password mismatch.
+  - **Authentication Error ( `401 Unauthorized` ):** Invalid, expired, or already-used code.
 
     ```json
     {
       "action": false,
-      "message": "Invalid credentials."
-    }
-    ```
-
-  - **Rate Limit Error ( `429 Too Many Requests` ):** Returned if a login attempt arrives within **3 seconds** of the previous attempt for the same player (`TOO_MANY_REQUESTS`).
-
-    ```json
-    {
-      "action": false,
-      "message": "Please wait a moment before trying again."
+      "message": "Invalid or expired game authentication code."
     }
     ```
 
@@ -2343,7 +2387,7 @@ Authentication is session-based using HTTP-only JWT cookies.
 
 ### `POST` /api/game/score
 
-- **Description:** Submits a game score. The `gameToken` from login is verified server-side. An SHA-256 anti-cheat signature is required (see `docs/backend/LEADERBOARD_BACKEND_MAP.md` for the exact formula). If the submitted score is not higher than the player's existing score for the game, the DB write is silently skipped and `200 OK` is still returned.
+- **Description:** Submits a game score. This endpoint operates as an **append-only ledger**; every score submission is recorded as a new document. High-score derivation and rank mapping are computed dynamically at read time. The `gameToken` is verified server-side. An SHA-256 anti-cheat signature is required.
 - **Authentication Required:** `False` (token verification is manual inside the service, not via the standard session cookie).
 - **Validator Schema:** `gameValidator.createScore` → `src/lib/validators/game.validator.ts`
 - **Expected JSON Body Fields:**
@@ -2353,8 +2397,9 @@ Authentication is session-based using HTTP-only JWT cookies.
   | `gameId` | `string` | Trimmed, max 255 chars. | Yes |
   | `score` | `number` | Integer. Used for numerical ranking. | Yes |
   | `scoreStr` | `string` | Trimmed, max 255 chars. **Free-form** — formatted string to display (e.g. `"1500"`, `"14m 43s"`, `"200pts"`). | Yes |
+  | `seed` | `string` | Trimmed, max 255 chars. Unique seed corresponding to the game playthrough. | Yes |
   | `timestamp` | `number` | Positive integer. Unix epoch ms. Must match value used to compute `signature`. | Yes |
-  | `gameToken` | `string` | Trimmed, max 4095 chars. JWT from login. | Yes |
+  | `gameToken` | `string` | Trimmed, max 4095 chars. JWT from session exchange. | Yes |
   | `signature` | `string` | Trimmed, max 255 chars. Hex SHA-256 of `"userId:score:timestamp:GAME_SECRET"`. | Yes |
 
 - **Expected Responses:**
@@ -2417,7 +2462,7 @@ Authentication is session-based using HTTP-only JWT cookies.
 
 ### `GET` /api/game/score
 
-- **Description:** Fetches leaderboard scores for a given `gameId`. When `target=leaderboard`, returns the top-10 scores sorted descending (served from a 10-second server-side cache). When `target=my_scores`, requires a valid `gameToken` and returns 0 or 1 items — the requesting player's own score for that game.
+- **Description:** Fetches leaderboard scores for a given `gameId`. When `target=leaderboard`, returns the top-10 best scores per player sorted descending (served from a 10-second server-side cache). When `target=my_scores`, requires a valid `gameToken` and returns 0 or 1 items — the requesting player's highest score.
 - **Authentication Required:** `False`
 - **Validator Schema:** `gameValidator.getScore` → `src/lib/validators/game.validator.ts`
 - **Data Unifier:** Extracts `target` and `gameId` from URL query parameters.
@@ -2427,11 +2472,11 @@ Authentication is session-based using HTTP-only JWT cookies.
   |-------|------|----------------|----------|
   | `target` | `string` | `"leaderboard"`, `"my_scores"` | Yes |
   | `gameId` | `string` | Trimmed, max 255 chars. | Yes |
-  | `gameToken` | `string` | Trimmed, max 4095 chars. JWT from login. | Yes if `target=my_scores` |
+  | `gameToken` | `string` | Trimmed, max 4095 chars. JWT from session exchange. | Yes if `target=my_scores` |
 
 - **Expected Responses:**
 
-  - **Success ( `200 OK` ):** Returns an array of up to 10 score entries, sorted by `score` descending.
+  - **Success ( `200 OK` ):** Returns an array of score entries, sorted by `score` descending.
 
     ```json
     {
@@ -2446,6 +2491,7 @@ Authentication is session-based using HTTP-only JWT cookies.
           "gameId": "space-runner",
           "score": 1500,
           "scoreStr": "1500",
+          "seed": "random-seed-123",
           "createdAt": "2026-08-09T01:23:42.000Z",
           "updatedAt": "2026-08-09T01:23:42.000Z"
         }
@@ -2475,7 +2521,7 @@ Authentication is session-based using HTTP-only JWT cookies.
 
 ### `GET` /api/game/list
 
-- **Description:** Returns an array of all distinct `gameId` strings that currently have at least one score record in the `Score` collection. Use this to drive game search bars and selection tabs in the leaderboard UI dynamically — so only games with real data are displayed.
+- **Description:** Returns an array of all distinct `gameId` strings that currently have at least one score record in the `Score` collection. Use this to drive game search bars and selection tabs in the leaderboard UI dynamically.
 - **Authentication Required:** `False`
 - **Validator Schema:** `gameValidator.getGameList` → `z.object({})` *(no query params required)*
 - **Expected Query Params:** *None.*
@@ -2554,7 +2600,7 @@ Authentication is session-based using HTTP-only JWT cookies.
 
 ### `POST` /api/game/profile
 
-- **Description:** Creates a new `GameUser` record linked to the authenticated website account (`websiteUserId`), or updates the username/password if already linked. Email is attached server-side from the session `User` record.
+- **Description:** Creates a new `GameUser` record linked to the authenticated website account (`websiteUserId`), or updates the username if already linked. Email is attached server-side from the session `User` record.
 - **Authentication Required:** `True` — active website session cookie required (`withCredentials: true`).
 - **Validator Schema:** `gameValidator.upsertProfile` → `src/lib/validators/game.validator.ts`
 - **Expected JSON Body Fields:**
@@ -2562,7 +2608,6 @@ Authentication is session-based using HTTP-only JWT cookies.
   | Field | Type | Rules | Required |
   |-------|------|-------|----------|
   | `username` | `string` | Trimmed, max 255 chars. | Yes |
-  | `password` | `string` | Max 255 chars. Plaintext password for game login. | Yes |
 
 - **Expected Responses:**
 

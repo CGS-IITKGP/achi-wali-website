@@ -19,6 +19,7 @@ import { prettyDate } from "@/app/utils/pretty";
 import ShareButton from "../components/ShareButton";
 import MathContent from "../components/MathContent";
 import Footer from "@/app/footer";
+import type { Metadata } from "next";
 
 /**
  * Renders LaTeX math in an HTML string using KaTeX directly.
@@ -105,6 +106,55 @@ const fetchBlog = async (slug: string): Promise<IBlog> => {
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata(
+  props: BlogPostPageProps
+): Promise<Metadata> {
+  const slug = (await props.params).slug;
+
+  try {
+    const blog = await fetchBlog(slug);
+
+    const description =
+      blog.content
+        .replace(/<[^>]*>/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 160) || "CGS Blog";
+
+    return {
+      title: blog.title,
+      description,
+
+      openGraph: {
+        title: blog.title,
+        description,
+        type: "article",
+        images: blog.coverImgUrl
+          ? [
+              {
+                url: blog.coverImgUrl,
+              },
+            ]
+          : [],
+      },
+
+      twitter: {
+        card: "summary_large_image",
+        title: blog.title,
+        description,
+        images: blog.coverImgUrl
+          ? [blog.coverImgUrl]
+          : [],
+      },
+    };
+  } catch {
+    return {
+  title: "CGS Blog",
+  description: "Computer Graphics Society Blog",
+};
+  }
 }
 
 export default async function BlogPostPage(props: BlogPostPageProps) {

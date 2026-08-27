@@ -91,6 +91,7 @@ export interface IProject {
     }[];
     coverImgUrl: string | null;
     media: Types.ObjectId[];
+    isMinigame?: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -199,15 +200,14 @@ export interface IGameUser {
     _id: Types.ObjectId;
     username: string;
     email: string;
-    passwordHash: string;
     websiteUserId: Types.ObjectId;
     lastAttemptAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
 }
 
-export type GameUserCreateType = Pick<IGameUser, "username" | "email" | "passwordHash" | "websiteUserId">;
-export type GameUserUpdateType = Partial<Pick<IGameUser, "username" | "passwordHash" | "lastAttemptAt">>;
+export type GameUserCreateType = Pick<IGameUser, "username" | "email" | "websiteUserId">;
+export type GameUserUpdateType = Partial<Pick<IGameUser, "username" | "lastAttemptAt">>;
 
 export interface IScore {
     _id: Types.ObjectId;
@@ -215,6 +215,7 @@ export interface IScore {
     gameId: string;
     score: number;
     scoreStr: string;
+    seed: string;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -223,10 +224,23 @@ export interface IScoreExportable extends Omit<IScore, "player"> {
     player: {
         _id: Types.ObjectId;
         username: string;
+        profileImgUrl: string | null;
     };
 }
 
-export type ScoreCreateType = Pick<IScore, "player" | "gameId" | "score" | "scoreStr">;
+export type ScoreCreateType = Pick<IScore, "player" | "gameId" | "score" | "scoreStr" | "seed">;
 export type ScoreUpdateType = Partial<ScoreCreateType>;
 
+export interface IGameAuthCode {
+    _id: Types.ObjectId;
+    code: string;
+    gameUserId: Types.ObjectId;
+    gameId: string;
+    used: boolean;
+    expiresAt: Date;
+    createdAt: Date;
+    updatedAt: Date;
+}
 
+export type GameAuthCodeCreateType = Pick<IGameAuthCode, "code" | "gameUserId" | "gameId" | "expiresAt">;
+export type GameAuthCodeUpdateType = Partial<Pick<IGameAuthCode, "used">>;

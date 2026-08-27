@@ -39,7 +39,6 @@ const Leaderboard: React.FC = () => {
           setRecentGames(parsed);
         }
       } catch (err) {
-        console.error("Failed to parse recentGames from localStorage", err);
       }
     }
   }, []);
@@ -48,10 +47,23 @@ const Leaderboard: React.FC = () => {
   useEffect(() => {
     const fetchGameList = async () => {
       const response = await api("GET", "/game/list");
-      if (response.action === true) {
-        setGameIds(response.data as string[]);
+      if (response.action === true && Array.isArray(response.data)) {
+        const fetched = response.data as string[];
+        setGameIds(fetched);
+        if (fetched.length > 0) {
+          // If selectedGameId is not in the list or is default, switch to the first active game with scores
+          setSelectedGameId((current) => {
+            if (!current || !fetched.includes(current)) {
+              return fetched[0];
+            }
+            return current;
+          });
+          setRecentGames((prev) => {
+            const combined = Array.from(new Set([...fetched, ...prev]));
+            return combined.slice(0, 5);
+          });
+        }
       }
-      // On error we fall back to an empty list — UI handles empty state gracefully
       setGamesLoading(false);
     };
 
@@ -68,30 +80,37 @@ const Leaderboard: React.FC = () => {
     localStorage.setItem("recentGames", JSON.stringify(updatedGames));
   };
 
-  // Fetch leaderboard scores (polls every 12 seconds)
+  // Fetch leaderboard scores (live polling every 5 seconds)
   useEffect(() => {
-    const fetchScores = async () => {
-      const response = await api("GET", "/game/score", {
-        query: {
-          target: "leaderboard",
-          gameId: selectedGameId,
-        },
-      });
+    if (!selectedGameId) return;
 
-      if (response.action === true) {
-        setScores(response.data as SDOut.GameScore.Get);
-        setScoresError(null);
-      } else if (response.action === false) {
-        setScoresError(response.message);
-      } else if (response.action === null) {
-        setScoresError("Failed to fetch leaderboard. Please try again.");
+    const fetchScores = async (isInitial = false) => {
+      if (isInitial) setScoresLoading(true);
+      try {
+        const response = await api("GET", "/game/score", {
+          query: {
+            target: "leaderboard",
+            gameId: selectedGameId,
+          },
+        });
+
+        if (response.action === true) {
+          setScores(response.data as SDOut.GameScore.Get);
+          setScoresError(null);
+        } else if (response.action === false) {
+          setScoresError(response.message);
+        } else if (response.action === null) {
+          setScoresError("Failed to fetch leaderboard. Please try again.");
+        }
+      } catch (e) {
+      } finally {
+        if (isInitial) setScoresLoading(false);
       }
-      setScoresLoading(false);
     };
 
-    fetchScores();
+    fetchScores(true);
 
-    const interval = setInterval(fetchScores, 12000);
+    const interval = setInterval(() => fetchScores(false), 5000);
     return () => clearInterval(interval);
   }, [selectedGameId]);
 
@@ -102,9 +121,17 @@ const Leaderboard: React.FC = () => {
     return map;
   }, []);
 
-  // Display name for a game ID — fall back to the ID itself if not in GAMES
-  const gameName = (id: string) => gameMetaById.get(id)?.name ?? id;
-  const gameTag = (id: string) => gameMetaById.get(id)?.tag ?? "";
+  // Display name for a game ID — fall back to a formatted title if not in static GAMES
+  const gameName = (id: string) => {
+    if (!id) return "";
+    const known = gameMetaById.get(id)?.name;
+    if (known) return known;
+    return id
+      .split(/[-_]/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  };
+  const gameTag = (id: string) => gameMetaById.get(id)?.tag ?? "arcade";
 
   // Games visible in the search dropdown — filtered by the search input
   const filteredGameIds = useMemo(() => {
@@ -251,52 +278,75 @@ const Leaderboard: React.FC = () => {
           )}
         </div>
 
-        {/* Podium */}
-        {podium.length > 0 && (
-          <section className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
-            {podium.map((p, idx) => (
-              <PodiumCard
-                key={p._id}
-                player={{ username: p.player.username, score: p.score, scoreStr: p.scoreStr }}
-                place={idx + 1}
-                unit="pts"
-              />
-            ))}
-          </section>
-        )}
-
-        {/* Player Search Bar */}
-        <div className="mb-6 flex justify-end">
-          <div className="relative w-full max-w-xs">
-            <input
-              type="text"
-              placeholder="Search player..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-white placeholder-white/40 backdrop-blur-md transition-all focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
-              >
-                ×
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Scores Table / Loading / Error */}
+        {/* Loading / Error / Content */}
         {scoresLoading ? (
-          <div className="rounded-xl border border-white/10 bg-white/[0.025] px-6 py-14 text-center text-white/50 animate-pulse">
+          <div className="rounded-xl border border-white/10 bg-white/[0.025] px-6 py-24 text-center text-white/50 animate-pulse">
             Loading leaderboard...
           </div>
         ) : scoresError ? (
-          <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-6 py-14 text-center text-red-400">
+          <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-6 py-24 text-center text-red-400">
             {scoresError}
           </div>
         ) : (
-          <section className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.025] backdrop-blur-xl">
+          <>
+            {/* Podium */}
+            {podium.length > 0 && (
+              <section className="mb-10 flex items-end justify-center gap-2 md:gap-4">
+                {podium.length > 1 && (
+                  <div className="w-1/3 order-1 mb-4 md:mb-8">
+                    <PodiumCard
+                      key={podium[1]._id}
+                      player={{ username: podium[1].player.username, score: podium[1].score, scoreStr: podium[1].scoreStr }}
+                      place={2}
+                      unit="pts"
+                    />
+                  </div>
+                )}
+                {podium.length > 0 && (
+                  <div className="w-1/3 order-2 z-10">
+                    <PodiumCard
+                      key={podium[0]._id}
+                      player={{ username: podium[0].player.username, score: podium[0].score, scoreStr: podium[0].scoreStr }}
+                      place={1}
+                      unit="pts"
+                    />
+                  </div>
+                )}
+                {podium.length > 2 && (
+                  <div className="w-1/3 order-3 mb-8 md:mb-16">
+                    <PodiumCard
+                      key={podium[2]._id}
+                      player={{ username: podium[2].player.username, score: podium[2].score, scoreStr: podium[2].scoreStr }}
+                      place={3}
+                      unit="pts"
+                    />
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* Player Search Bar */}
+            <div className="mb-6 flex justify-end">
+              <div className="relative w-full max-w-xs">
+                <input
+                  type="text"
+                  placeholder="Search player..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-white placeholder-white/40 backdrop-blur-md transition-all focus:border-pink-500 focus:outline-none focus:ring-1 focus:ring-pink-500"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <section className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.025] backdrop-blur-xl">
             <div className="grid grid-cols-12 border-b border-white/10 px-5 py-3 text-[11px] uppercase tracking-[0.18em] text-white/45">
               <div className="col-span-2">#</div>
               <div className="col-span-7">Player</div>
@@ -327,7 +377,7 @@ const Leaderboard: React.FC = () => {
 
                         <div className="col-span-7 flex min-w-0 items-center gap-3">
                           <img
-                            src="/default-fallback-image.png"
+                            src={r.player.profileImgUrl || "/default-fallback-image.png"}
                             alt={r.player.username}
                             className="h-9 w-9 rounded-full object-cover"
                           />
@@ -348,6 +398,7 @@ const Leaderboard: React.FC = () => {
               </ul>
             </div>
           </section>
+          </>
         )}
       </div>
     </div>

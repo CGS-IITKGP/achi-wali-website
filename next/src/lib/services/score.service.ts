@@ -62,27 +62,14 @@ const create: ServiceSignature<
         await gameUserRepository.updateById(playerId, { lastAttemptAt: new Date() });
     }
 
-    // Step D: High-score check & Database operation
-    const existingRecord = await scoreRepository.findOne({
+    // Step D: Always insert — append-only history
+    await scoreRepository.insert({
         player: playerId,
         gameId: data.gameId,
+        score: data.score,
+        scoreStr: data.scoreStr || data.score.toString(),
+        seed: data.seed || "none",
     });
-
-    if (existingRecord) {
-        if (data.score > existingRecord.score) {
-            await scoreRepository.updateById(existingRecord._id, {
-                score: data.score,
-                scoreStr: data.scoreStr,
-            });
-        }
-    } else {
-        await scoreRepository.insert({
-            player: playerId,
-            gameId: data.gameId,
-            score: data.score,
-            scoreStr: data.scoreStr,
-        });
-    }
 
     return {
         success: true,
@@ -122,10 +109,12 @@ const get: ServiceSignature<
                 player: {
                     _id: myScore.player._id.toHexString(),
                     username: myScore.player.username,
+                    profileImgUrl: null,
                 },
                 gameId: myScore.gameId,
                 score: myScore.score,
                 scoreStr: myScore.scoreStr,
+                seed: myScore.seed,
                 createdAt: myScore.createdAt,
                 updatedAt: myScore.updatedAt,
             }]
@@ -138,29 +127,22 @@ const get: ServiceSignature<
     }
 
     // target === LEADERBOARD
-    // Format inside the cache so only plain serializable values are cached —
-    // unstable_cache cannot handle BSON ObjectId or Mongoose Date instances.
-    const fetchLeaderboard = unstable_cache(
-        async () => {
-            const scores = await scoreRepository.getTopScores(data.gameId);
-            return scores.map((score) => ({
-                _id: score._id.toHexString(),
-                player: {
-                    _id: score.player._id.toHexString(),
-                    username: score.player.username,
-                },
-                gameId: score.gameId,
-                score: score.score,
-                scoreStr: score.scoreStr,
-                createdAt: score.createdAt,
-                updatedAt: score.updatedAt,
-            }));
+    // Query freshly from repository for real-time live polling
+    const rawScores = await scoreRepository.getTopScores(data.gameId);
+    const formattedScores = rawScores.map((score: any) => ({
+        _id: typeof score._id === "string" ? score._id : score._id?.toHexString?.() || String(score._id),
+        player: {
+            _id: typeof score.player?._id === "string" ? score.player._id : score.player?._id?.toHexString?.() || String(score.player?._id || ""),
+            username: score.player?.username || "Anonymous",
+            profileImgUrl: score.player?.profileImgUrl || null,
         },
-        ["leaderboard", data.gameId],
-        { revalidate: 10 }
-    );
-
-    const formattedScores = await fetchLeaderboard();
+        gameId: score.gameId,
+        score: score.score,
+        scoreStr: score.scoreStr,
+        seed: score.seed,
+        createdAt: score.createdAt,
+        updatedAt: score.updatedAt,
+    }));
 
     return {
         success: true,

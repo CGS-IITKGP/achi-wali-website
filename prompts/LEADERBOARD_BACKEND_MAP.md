@@ -2,7 +2,7 @@
 
 > **Source of truth:** Every claim in this document was verified against the actual implementation files listed in parentheses. Do not edit this document without re-reading those files.
 
-> **Last updated:** 2026-08-10 — Added `GET /api/game/list` endpoint; corrected rate-limit cooldown from 60 s → 3 s; documented `unstable_cache` serialization fix in `score.service.ts`; **reverted `score` to `number` and added `scoreStr` as `string`** for dual payload.
+> **Last updated:** 2026-08-22 — **v2 Migration complete:** Replaced password-based `POST /api/game/login` with redirect-based code-exchange via `POST /api/game/session/exchange`. Removed `passwordHash` from `GameUser` model. Added `/game-auth` website page. Profile endpoint (`POST /api/game/profile`) no longer requires a password.
 
 **Who reads what:**
 - **👤 Profile Developer** — Read if you are building the website UI for users to check, create, or update their Game Profile credentials (`GET` / `POST /api/game/profile`).
@@ -59,7 +59,7 @@ Verified against `src/lib/utils/responseHandler.ts`:
 
 ### Endpoint: Create or Update Game Profile (`POST /api/game/profile`)
 
-- **Description:** Creates a new `GameUser` linked to the active website account (or updates username/password if already linked). Email is pulled from the website session server-side (cannot be spoofed).
+- **Description:** Creates a new `GameUser` linked to the active website account (or updates username if already linked). Email is pulled from the website session server-side (cannot be spoofed). **No password required (v2).**
 - **Authentication Required:** `True` — active website session cookie required (`withCredentials: true`).
 
 **Request Body:**
@@ -67,12 +67,10 @@ Verified against `src/lib/utils/responseHandler.ts`:
 | Field | Type | Rules | Required |
 |-------|------|-------|----------|
 | `username` | `string` | Trimmed, max 255 chars. Unique across all game players. | Yes |
-| `password` | `string` | Max 255 chars. Plaintext password for game login. | Yes |
 
 ```json
 {
-  "username": "playerone",
-  "password": "PlayerPassword123"
+  "username": "playerone"
 }
 ```
 
@@ -197,6 +195,8 @@ Verified against: `src/app/api/game/score/route.ts`, `src/lib/services/score.ser
       },
       "gameId": "space-runner",
       "score": 1500,
+      "scoreStr": "1500",
+      "seed": "seed-2",
       "createdAt": "2026-08-09T01:23:42.000Z",
       "updatedAt": "2026-08-09T01:23:42.000Z"
     }
@@ -241,6 +241,7 @@ type SDOut.GameScore.Get = {
   gameId: string;
   score: number;   // Used for numerical sorting and ranking
   scoreStr: string; // Free-form string matching what the game submitted
+  seed: string;     // Procedural generation seed for this game run
   createdAt: Date;
   updatedAt: Date;
 }[];
@@ -272,38 +273,50 @@ Verified against `src/lib/utils/responseHandler.ts`:
 
 Games on itch.io run inside a cross-origin `<iframe>`. Modern browsers block third-party HTTP-only cookies in iframes. The standard website session cookie cannot reach the game.
 
-**Solution:** `POST /api/game/login` returns an explicit `gameToken` string in the JSON body. Store it in JavaScript memory and attach it to every score-submission request body.
+**Solution (v2 — code-exchange):** The game redirects the player to the website's `/game-auth` page, which handles Google login and username setup. Once complete, the website redirects back to the game with a short-lived, single-use `gameAuthCode` in the URL. The game exchanges this code for a `gameToken` via `POST /api/game/session/exchange`. Store the `gameToken` in JavaScript memory and attach it to every score-submission request body.
 
 ### Environment Variable
 
 The following variable must be set in `.env` (server-side only — never expose it to the client):
 
 ```env
-# Used for BOTH JWT signing/verification (gameAuth.service.ts via getGameSecretKey())
+# Used for BOTH JWT signing/verification (gameSession.service.ts via getGameSecretKey())
 # AND SHA-256 anti-cheat signature calculation (score.service.ts line 29).
 GAME_SECRET="your_shared_secret_key_here"
 ```
 
-Verified: `score.service.ts` reads `process.env.GAME_SECRET` directly (line 29). `gameAuth.service.ts` uses `getGameSecretKey()` from `src/lib/utils/secret.ts`, which also reads `process.env.GAME_SECRET` (line 22 of `secret.ts`). Both use the same variable.
+Verified: `score.service.ts` reads `process.env.GAME_SECRET` directly (line 29). `gameSession.service.ts` uses `getGameSecretKey()` from `src/lib/utils/secret.ts`, which also reads `process.env.GAME_SECRET` (line 22 of `secret.ts`). Both use the same variable.
 
-### Step 1 — Login: `POST /api/game/login`
+### Step 1 — Authenticate: Redirect + Code Exchange
 
-Verified against: `src/app/api/game/login/route.ts`, `src/lib/services/gameAuth.service.ts`
+**How the game receives a `gameAuthCode`:**
 
-- **Authentication Required:** None (`requireAuth: false`).
+1. On game load, check if a `gameAuthCode` query parameter is present in the page URL.
+2. If not present and no stored `gameToken` exists, show a "Login to Play" button.
+3. When clicked, perform a **top-level redirect** (breaking out of the iframe) to:
+   ```
+   https://yourwebsite.com/game-auth?gameId=<your-game-id>&returnTo=<itch.io-game-url>
+   ```
+4. The website handles Google login and username setup automatically.
+5. The player is redirected back to `<returnTo>?gameAuthCode=<code>`.
+6. The game reads `gameAuthCode` from its page URL and exchanges it.
+
+**Exchange the code: `POST /api/game/session/exchange`**
+
+Verified against: `src/app/api/game/session/exchange/route.ts`, `src/lib/services/gameSession.service.ts`
+
+- **Authentication Required:** None (`requireAuth: false`). Security comes from the code's 60-second TTL and single-use property.
 - **Headers:** `Content-Type: application/json`
 
-**Request Body** — validated by `gameValidator.login`:
+**Request Body** — validated by `gameValidator.exchangeCode`:
 
 | Field | Type | Rules | Required |
 |-------|------|-------|----------|
-| `identifier` | `string` | Trimmed, max 255 chars. Matches against `username` OR `email` (both lowercased before lookup). | Yes |
-| `password` | `string` | Max 255 chars. | Yes |
+| `gameAuthCode` | `string` | Trimmed, max 255 chars. The single-use code from the URL. | Yes |
 
 ```json
 {
-  "identifier": "playerone",
-  "password": "PlayerPassword123"
+  "gameAuthCode": "aB3dEf...base64url-encoded-32-bytes"
 }
 ```
 
@@ -322,19 +335,19 @@ Verified against: `src/app/api/game/login/route.ts`, `src/lib/services/gameAuth.
 
 Store `data.userId`, `data.username`, and `data.gameToken` in memory. You will need all three for score submission.
 
-**Error Response — Invalid Credentials (`401 Unauthorized`):**
+**Error Response — Invalid / Expired / Already-Used Code (`401 Unauthorized`):**
 
 ```json
 {
   "action": false,
-  "message": "Invalid credentials."
+  "message": "Invalid, expired, or already-used game auth code."
 }
 ```
 
 Returned when:
-- No `GameUser` record matches the `identifier` (neither `username` nor `email`).
-- A matching record exists but `passwordHash` is missing.
-- The password does not match the stored hash.
+- No code matches the provided `gameAuthCode`.
+- The code has already been used (single-use enforcement).
+- The code has expired (60-second TTL).
 
 **Validation Error (`400 Bad Request`):**
 
@@ -342,7 +355,7 @@ Returned when:
 {
   "action": false,
   "message": "Bad Request.",
-  "errors": ["identifier$ Required"]
+  "errors": ["gameAuthCode$ Required"]
 }
 ```
 
@@ -393,8 +406,9 @@ Verified against: `src/app/api/game/score/route.ts`, `src/lib/services/score.ser
 | Field | Type | Rules | Required |
 |-------|------|-------|----------|
 | `gameId` | `string` | Trimmed, max 255 chars. Must match the `gameId` used for leaderboard queries. | Yes |
-| `score` | `number` | Integer. Used for high-score comparison (`submittedScore > existingScore`). | Yes |
+| `score` | `number` | Integer. The score achieved in this run. | Yes |
 | `scoreStr` | `string` | Trimmed, max 255 chars. **Free-form** — formatted string (e.g. `"1500"`, `"14m 43s"`, `"200pts"`). | Yes |
+| `seed` | `string` | Trimmed, max 255 chars. The procedural generation seed for this game run — stored for reference, not validated. | Yes |
 | `timestamp` | `number` | Positive integer. Unix ms (`Date.now()`). Must match the value used in the signature. | Yes |
 | `gameToken` | `string` | Trimmed, max 4095 chars. The JWT returned from login. | Yes |
 | `signature` | `string` | Trimmed, max 255 chars. The hex SHA-256 computed in Step 2. | Yes |
@@ -404,6 +418,7 @@ Verified against: `src/app/api/game/score/route.ts`, `src/lib/services/score.ser
   "gameId": "space-runner",
   "score": 1500,
   "scoreStr": "1500",
+  "seed": "seed-2",
   "timestamp": 1723165200000,
   "gameToken": "eyJhbGciOiJIUzI1Ni...",
   "signature": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
@@ -415,10 +430,7 @@ Verified against: `src/app/api/game/score/route.ts`, `src/lib/services/score.ser
 2. Reconstructs the signature as `SHA256("${decoded._id}:${score}:${timestamp}:${GAME_SECRET}")`.
 3. Compares reconstructed signature to submitted `signature`. Rejects with `403` if mismatch.
 4. **Rate limit check** — queries `GameUser.lastAttemptAt`. If the last attempt was less than **3 seconds** ago, rejects with `429`. Otherwise stamps `lastAttemptAt = now()`.
-5. Queries the DB for an existing score with `{ player: playerId, gameId }`.
-   - If **no record** exists: inserts a new document.
-   - If a record exists and `submittedScore > existingScore`: updates the record with both the new numeric `score` and formatted `scoreStr`.
-   - If a record exists and `submittedScore <= existingScore`: **no DB write**, returns success silently.
+5. **Always insert (append-only)** — saves the new score permanently as its own document: `{ player: playerId, gameId, score, scoreStr, seed }`. Every submission is saved permanently. The leaderboard shown to players reflects each player's single highest score, computed at query time — the backend keeps full history of every submission regardless of what's displayed.
 
 **Success Response (`200 OK`):**
 
@@ -482,8 +494,24 @@ Cause: The reconstructed SHA-256 does not match the submitted `signature`. Most 
 |-------|------|-------------|
 | `username` | `String` | required, unique, lowercase, trim |
 | `email` | `String` | required, lowercase, trim |
-| `passwordHash` | `String` | required |
 | `websiteUserId` | `ObjectId` | ref: `'User'`, required, unique |
+| `lastAttemptAt` | `Date` | default null (used by rate limiting) |
+| `createdAt` | `Date` | auto (timestamps: true) |
+| `updatedAt` | `Date` | auto (timestamps: true) |
+
+### `GameAuthCode` — `src/lib/database/models/gameAuthCode.model.ts` *(NEW)*
+
+- **Mongoose model name:** `"GameAuthCode"` → collection `gameauthcodes`
+- **Short-lived, single-use codes for redirect-based game authentication.**
+- **TTL index on `expiresAt`** — MongoDB auto-deletes expired documents.
+
+| Field | Type | Constraints |
+|-------|------|-------------|
+| `code` | `String` | required, unique, indexed (32 random bytes, base64url) |
+| `gameUserId` | `ObjectId` | ref: `'GameUser'`, required |
+| `gameId` | `String` | required |
+| `used` | `Boolean` | default false |
+| `expiresAt` | `Date` | required, TTL index |
 | `createdAt` | `Date` | auto (timestamps: true) |
 | `updatedAt` | `Date` | auto (timestamps: true) |
 
@@ -497,10 +525,11 @@ Cause: The reconstructed SHA-256 does not match the submitted `signature`. Most 
 | `gameId` | `String` | required, trim |
 | `score` | `Number` | required |
 | `scoreStr` | `String` | required, trim. Free-form — any value the game submits (e.g. `"1500"`, `"14m 43s"`, `"200pts"`). |
+| `seed` | `String` | required, trim. The procedural generation seed for this game run. |
 | `createdAt` | `Date` | auto |
 | `updatedAt` | `Date` | auto |
 
-**One record per `(player, gameId)` pair** (enforced in service logic). When a new score is submitted for an existing pair, the server checks if the submitted numeric `score` is strictly greater than the existing numeric `score`. If it is, both `score` and `scoreStr` are updated.
+Every score submission is saved as its own document (append-only history). No uniqueness constraints apply on `(player, gameId)` pairs — the full history of all runs is preserved. The player's highest score is calculated on demand during leaderboard and personal score queries.
 
 ---
 
@@ -530,6 +559,8 @@ No known limitations at this time.
 
 | Date | Change | Files |
 |------|--------|-------|
+| 2026-08-23 | **Append-only score submission & seed tracking** — Converted score submission to always insert instead of overwriting/updating (append-only history). Added `seed` field to Score schema, validator, SDIn/SDOut types, and API responses. Updated leaderboard and my_scores query to compute the best score per player at read time using a MongoDB aggregation pipeline. | `score.model.ts`, `domain.types.ts`, `service.types.ts`, `game.validator.ts`, `score.service.ts`, `score.repo.ts` |
+| 2026-08-22 | **v2 Migration: Password → Code-Exchange** — Removed `POST /api/game/login` and `gameAuth.service.ts`. Removed `passwordHash` from `GameUser` model and types. Added `GameAuthCode` model with TTL index. Added `POST /api/game/session/exchange` (code-exchange endpoint). Added `/game-auth` website page for redirect-based login. Updated `POST /api/game/profile` to remove password field. | `gameAuth.service.ts` (deleted), `login/route.ts` (deleted), `gameUser.model.ts`, `domain.types.ts`, `service.types.ts`, `game.validator.ts`, `gameProfile.service.ts`, `gameAuthCode.model.ts` (new), `gameAuthCode.repo.ts` (new), `gameSession.service.ts` (new), `session/exchange/route.ts` (new), `session/generate-code/route.ts` (new), `game-auth/page.tsx` (new) |
 | 2026-08-10 | **New endpoint** `GET /api/game/list` — returns distinct game IDs with scores | `route.ts`, `gameList.service.ts`, `score.repo.ts` |
 | 2026-08-10 | **Rate-limit cooldown reduced** from 60 s → **3 s** for both login and score submission | `gameAuth.service.ts`, `score.service.ts` |
 | 2026-08-10 | **`unstable_cache` serialization fix** — leaderboard GET was returning 500; formatting moved inside cached function | `score.service.ts` |

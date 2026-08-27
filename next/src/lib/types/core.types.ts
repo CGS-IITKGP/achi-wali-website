@@ -58,7 +58,7 @@ export type ControllerConfig<IbD> = {
 export type ServiceConfig<SDIn, SDOut, ObD, RequireAuth extends boolean> = {
     service: ServiceSignature<SDIn, SDOut, RequireAuth>;
     successCode?: SuccessResponseCodesEnum;
-    onSuccess?: (sDOut: SDOut) => {
+    onSuccess?: (sDOut: SDOut, req: NextRequest) => {
         responseData: ObD;
         cookies?: ISetCookie[];
         redirectUrl?: string;

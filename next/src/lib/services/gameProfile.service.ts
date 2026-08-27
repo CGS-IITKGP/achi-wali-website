@@ -2,9 +2,6 @@ import { Types } from "mongoose";
 import gameUserRepository from "@/lib/database/repos/gameUser.repo";
 import userRepository from "@/lib/database/repos/user.repo";
 import {
-    hashString,
-} from "@/lib/services/core/hash.core.service";
-import {
     ESECs,
     ServiceSignature,
     SDIn,
@@ -51,12 +48,9 @@ const upsert: ServiceSignature<
             }
         }
 
-        // Step B2: Hash new password and update.
-        const passwordHash = await hashString(data.password);
-
+        // Step B2: Update username (no password in v2).
         await gameUserRepository.updateById(existingGameUser._id, {
             username: usernameLower,
-            passwordHash,
         });
 
         return {
@@ -79,13 +73,10 @@ const upsert: ServiceSignature<
         };
     }
 
-    // Step D: Hash password and insert new GameUser.
-    const passwordHash = await hashString(data.password);
-
+    // Step D: Insert new GameUser (no password in v2).
     await gameUserRepository.insert({
         username: usernameLower,
         email: websiteUser.email,
-        passwordHash,
         websiteUserId: new Types.ObjectId(websiteUserId),
     });
 

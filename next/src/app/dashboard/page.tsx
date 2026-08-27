@@ -980,6 +980,7 @@ const ProjectsSection = () => {
     tags: string[];
     coverImgUrl: string;
     links: Links[];
+    isMinigame?: boolean;
   }) => {
     const apiResponse = await api("POST", "/project", {
       body: {
@@ -989,6 +990,7 @@ const ProjectsSection = () => {
         tags: data.tags,
         coverImgUrl: data.coverImgUrl,
         links: data.links,
+        isMinigame: data.isMinigame,
       },
     });
 
@@ -1010,6 +1012,7 @@ const ProjectsSection = () => {
     tags: string[];
     coverImgUrl: string;
     links: Links[];
+    isMinigame?: boolean;
   }) => {
     const apiResponse = await api("PATCH", `/project/${data._id}`, {
       body: {
@@ -1019,6 +1022,7 @@ const ProjectsSection = () => {
         tags: data.tags,
         coverImgUrl: data.coverImgUrl,
         links: data.links,
+        isMinigame: data.isMinigame,
       },
     });
 
@@ -1563,6 +1567,7 @@ interface NewProjectModalProps {
     tags: string[];
     coverImgUrl: string;
     links: Links[];
+    isMinigame?: boolean;
   }) => Promise<void>;
 }
 
@@ -1574,6 +1579,7 @@ const NewProjectModal = (props: NewProjectModalProps) => {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [coverImgUrl, setCoverImgUrl] = useState("");
+  const [isMinigame, setIsMinigame] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
 
   const [githubUrl, setGithubUrl] = useState("");
@@ -1588,11 +1594,23 @@ const NewProjectModal = (props: NewProjectModalProps) => {
     }
   }, [props.open]);
 
+  useEffect(() => {
+    if (portfolio === "GAME") {
+      setExtraLinks((prev) => {
+        if (!prev.some((link) => link.text === "live-demo")) {
+          return [...prev, { text: "live-demo", url: "" }];
+        }
+        return prev;
+      });
+    }
+  }, [portfolio]);
+
   const cleanModalData = () => {
     setTitle("");
     setDescription("");
     setTags("");
     setCoverImgUrl("");
+    setIsMinigame(false);
 
     setGithubUrl("");
     setLiveUrl("");
@@ -1661,6 +1679,7 @@ const NewProjectModal = (props: NewProjectModalProps) => {
         .filter(Boolean),
       coverImgUrl,
       links,
+      isMinigame: portfolio === "GAME" ? isMinigame : false,
     });
 
     setLoading(false);
@@ -1748,6 +1767,21 @@ const NewProjectModal = (props: NewProjectModalProps) => {
           />
         </div>
 
+        {portfolio === "GAME" && (
+          <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+            <input
+              type="checkbox"
+              id="new-project-minigame"
+              checked={isMinigame}
+              onChange={(e) => setIsMinigame(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-700 bg-black/50 text-pink-500 focus:ring-pink-500/20 cursor-pointer"
+            />
+            <label htmlFor="new-project-minigame" className="text-sm text-gray-300 cursor-pointer select-none">
+              Is this an interactive Minigame?
+            </label>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm text-gray-300 mb-2">
             Description
@@ -1834,11 +1868,16 @@ const NewProjectModal = (props: NewProjectModalProps) => {
               <div key={`extra-link-blog-${index}`} className="flex gap-2 items-center">
                 <input
                   value={link.text}
+                  disabled={portfolio === "GAME" && link.text === "live-demo"}
                   onChange={(e) =>
                     updateExtraLink(index, "text", e.target.value)
                   }
                   placeholder="type"
-                  className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white"
+                  className={`w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 ${
+                    portfolio === "GAME" && link.text === "live-demo"
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-white"
+                  }`}
                 />
                 <input
                   value={link.url}
@@ -1902,6 +1941,7 @@ interface UpdateProjectModalProps {
     tags: string[];
     coverImgUrl: string;
     links: Links[];
+    isMinigame?: boolean;
   }) => Promise<void>;
 }
 
@@ -1913,6 +1953,7 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
   const [coverImgUrl, setCoverImgUrl] = useState("");
+  const [isMinigame, setIsMinigame] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
 
   const [githubUrl, setGithubUrl] = useState("");
@@ -1930,6 +1971,17 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
     }
   }, [project]);
 
+  useEffect(() => {
+    if (portfolio === "GAME") {
+      setExtraLinks((prev) => {
+        if (!prev.some((link) => link.text === "live-demo")) {
+          return [...prev, { text: "live-demo", url: "" }];
+        }
+        return prev;
+      });
+    }
+  }, [portfolio]);
+
   const resetModalData = () => {
     if (!project) return;
 
@@ -1938,6 +1990,7 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
     setDescription(project.description);
     setTags(project.tags.join(", "));
     setCoverImgUrl(project.coverImgUrl || "");
+    setIsMinigame(project.isMinigame || false);
 
     const github = project.links.find((link) => link.text === "github");
     const live = project.links.find((link) => link.text === "live-link");
@@ -2013,6 +2066,7 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
         .filter(Boolean),
       coverImgUrl,
       links,
+      isMinigame: portfolio === "GAME" ? isMinigame : false,
     });
 
     setLoading(false);
@@ -2100,6 +2154,21 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
           />
         </div>
 
+        {portfolio === "GAME" && (
+          <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+            <input
+              type="checkbox"
+              id="update-project-minigame"
+              checked={isMinigame}
+              onChange={(e) => setIsMinigame(e.target.checked)}
+              className="w-4 h-4 rounded border-gray-700 bg-black/50 text-pink-500 focus:ring-pink-500/20 cursor-pointer"
+            />
+            <label htmlFor="update-project-minigame" className="text-sm text-gray-300 cursor-pointer select-none">
+              Is this an interactive Minigame?
+            </label>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm text-gray-300 mb-2">
             Description
@@ -2186,11 +2255,16 @@ const UpdateProjectModal = (props: UpdateProjectModalProps) => {
               <div key={`extra-link-proj-${index}`} className="flex gap-2 items-center">
                 <input
                   value={link.text}
+                  disabled={portfolio === "GAME" && link.text === "live-demo"}
                   onChange={(e) =>
                     updateExtraLink(index, "text", e.target.value)
                   }
                   placeholder="type"
-                  className="w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white"
+                  className={`w-32 bg-white/5 border border-white/10 rounded-lg px-3 py-2 ${
+                    portfolio === "GAME" && link.text === "live-demo"
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-white"
+                  }`}
                 />
                 <input
                   value={link.url}

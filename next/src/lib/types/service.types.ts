@@ -290,18 +290,15 @@ export namespace SDIn {
         };
     }
 
-    export namespace GameAuth {
-        export type Login = {
-            identifier: string;
-            password: string;
-        };
-    }
+
+
 
     export namespace GameScore {
         export type Create = {
             gameId: string;
             score: number;  // Used for numerical sorting and ranking
             scoreStr: string; // The formatted string to display (e.g. "14m 43s", "1500pts")
+            seed: string; // Procedural generation seed for this game run
             timestamp: number;
             gameToken: string;
             signature: string;
@@ -315,10 +312,9 @@ export namespace SDIn {
     }
 
     export namespace GameProfile {
-        // POST body — username + password only; email is taken from the session server-side
+        // POST body — username only; email is taken from the session server-side
         export type Upsert = {
             username: string;
-            password: string;
         };
 
         // GET — no body needed; session identifies the user
@@ -328,6 +324,12 @@ export namespace SDIn {
     export namespace GameList {
         // No query params required — returns all distinct game IDs with scores
         export type Get = object;
+    }
+
+    export namespace GameSession {
+        export type Exchange = {
+            gameAuthCode: string;
+        };
     }
 }
 
@@ -645,13 +647,8 @@ export namespace SDOut {
         export type Remove = EmptyObject;
     }
 
-    export namespace GameAuth {
-        export type Login = {
-            userId: string;
-            username: string;
-            gameToken: string;
-        };
-    }
+
+
 
     export namespace GameProfile {
         export type Upsert = {
@@ -674,10 +671,12 @@ export namespace SDOut {
             player: {
                 _id: string;
                 username: string;
+                profileImgUrl: string | null;
             };
             gameId: string;
             score: number;
             scoreStr: string;
+            seed: string;
             createdAt: Date;
             updatedAt: Date;
         }[];
@@ -686,6 +685,14 @@ export namespace SDOut {
     export namespace GameList {
         // Array of distinct game ID strings, e.g. ["space-runner", "possessed"]
         export type Get = string[];
+    }
+
+    export namespace GameSession {
+        export type Exchange = {
+            userId: string;
+            username: string;
+            gameToken: string;
+        };
     }
 }
 
