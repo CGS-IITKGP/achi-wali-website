@@ -3,16 +3,19 @@
 import Image from "next/image";
 import Logo from "../assets/logo.png";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/authContext";
 import { EUserRole } from "../types/domain.types";
+import { Gamepad2, Box, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "../axiosApi";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [is3DDropdownOpen, setIs3DDropdownOpen] = useState(false);
+  const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
 
   const { user, refreshUser } = useAuth();
@@ -25,6 +28,32 @@ export default function Navbar() {
     { name: "Team", href: "/team" },
     { name: "Sign In", href: "/auth/sign-in" },
   ]);
+
+  const prefetchAsset = (url: string) => {
+    if (typeof document === "undefined") return;
+    if (!document.querySelector(`link[href="${url}"]`)) {
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.href = url;
+      link.as = "fetch";
+      link.crossOrigin = "anonymous";
+      document.head.appendChild(link);
+    }
+  };
+
+  const handleDropdownEnter = () => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current);
+      dropdownTimeoutRef.current = null;
+    }
+    setIs3DDropdownOpen(true);
+  };
+
+  const handleDropdownLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setIs3DDropdownOpen(false);
+    }, 150);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -109,38 +138,120 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden lg:flex flex-row items-center gap-8 bg-gray-900/30 backdrop-blur-2xl px-8 py-4 rounded-2xl shadow-2xl border border-pink-500/20 hover:border-pink-500/40 transition-all duration-300">
-          {navItems.map((item, index) => (
-            <motion.div
-              key={item.name}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              className="relative group"
-            >
-              <Link
-                href={item.href}
-                className="font-bold text-white hover:text-pink-300 duration-300 transition-all relative overflow-hidden py-2 px-1"
-                onMouseEnter={() => {
-                  if (
-                    item.href === "/3d" &&
-                    typeof document !== "undefined" &&
-                    !document.querySelector('link[href="/models/myModel/myLatestFile.glb"]')
-                  ) {
-                    const link = document.createElement("link");
-                    link.rel = "prefetch";
-                    link.href = "/models/myModel/myLatestFile.glb";
-                    link.as = "fetch";
-                    link.crossOrigin = "anonymous";
-                    document.head.appendChild(link);
-                  }
-                }}
+          {navItems.map((item, index) => {
+            if (item.name === "3D-View") {
+              return (
+                <motion.div
+                  key={item.name}
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1, duration: 0.5 }}
+                  className="relative"
+                  onMouseEnter={handleDropdownEnter}
+                  onMouseLeave={handleDropdownLeave}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setIs3DDropdownOpen((prev) => !prev)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setIs3DDropdownOpen(false);
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setIs3DDropdownOpen((prev) => !prev);
+                      }
+                    }}
+                    aria-haspopup="true"
+                    aria-expanded={is3DDropdownOpen}
+                    className="font-bold text-white hover:text-pink-300 duration-300 transition-all relative overflow-hidden py-2 px-1 flex items-center gap-1.5 cursor-pointer outline-none focus-visible:ring-1 focus-visible:ring-pink-400 rounded-md"
+                  >
+                    <span className="relative z-10">{item.name}</span>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 relative z-10 transition-transform duration-300 ${
+                        is3DDropdownOpen ? "rotate-180 text-pink-400" : "text-gray-400"
+                      }`}
+                    />
+                    <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-pink-500 to-pink-300 group-hover:w-full transition-all duration-300" />
+                    <div className="absolute inset-0 bg-pink-500/10 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300 origin-center" />
+                  </button>
+
+                  <AnimatePresence>
+                    {is3DDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                        transition={{ duration: 0.18, ease: "easeOut" }}
+                        className="absolute top-full left-1/2 -translate-x-1/2 pt-2.5 w-72 z-50"
+                        onMouseEnter={handleDropdownEnter}
+                        onMouseLeave={handleDropdownLeave}
+                      >
+                        <div className="bg-gray-950/95 backdrop-blur-2xl p-2.5 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-pink-500/30 ring-1 ring-white/10 flex flex-col gap-1.5">
+                          {/* Arcade Mode Card */}
+                          <Link
+                            href="/3d?mode=arcade"
+                            onClick={() => setIs3DDropdownOpen(false)}
+                            onMouseEnter={() => prefetchAsset("/models/shop/shop.glb")}
+                            className="group/item flex items-center gap-3.5 p-2.5 rounded-xl hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/40 transition-all duration-200 outline-none focus-visible:ring-1 focus-visible:ring-cyan-400"
+                          >
+                            <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 group-hover/item:bg-cyan-500/20 group-hover/item:border-cyan-400 group-hover/item:text-cyan-300 group-hover/item:shadow-[0_0_16px_rgba(6,182,212,0.4)] transition-all">
+                              <Gamepad2 className="w-5 h-5" />
+                            </div>
+                            <div className="flex flex-col text-left">
+                              <span className="font-bold text-sm text-white group-hover/item:text-cyan-300 transition-colors">
+                                Arcade Mode
+                              </span>
+                              <span className="text-xs text-gray-400 group-hover/item:text-gray-300 transition-colors">
+                                Explore the CGS Arcade
+                              </span>
+                            </div>
+                          </Link>
+
+                          {/* 3D Experience Card */}
+                          <Link
+                            href="/3d?mode=experience"
+                            onClick={() => setIs3DDropdownOpen(false)}
+                            onMouseEnter={() => prefetchAsset("/models/myModel/myLatestFile.glb")}
+                            className="group/item flex items-center gap-3.5 p-2.5 rounded-xl hover:bg-pink-950/40 border border-transparent hover:border-pink-500/40 transition-all duration-200 outline-none focus-visible:ring-1 focus-visible:ring-pink-400"
+                          >
+                            <div className="p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/30 text-pink-400 group-hover/item:bg-pink-500/20 group-hover/item:border-pink-400 group-hover/item:text-pink-300 group-hover/item:shadow-[0_0_16px_rgba(236,72,153,0.4)] transition-all">
+                              <Box className="w-5 h-5" />
+                            </div>
+                            <div className="flex flex-col text-left">
+                              <span className="font-bold text-sm text-white group-hover/item:text-pink-300 transition-colors">
+                                3D Experience
+                              </span>
+                              <span className="text-xs text-gray-400 group-hover/item:text-gray-300 transition-colors">
+                                Explore the CGS Lab
+                              </span>
+                            </div>
+                          </Link>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            }
+
+            return (
+              <motion.div
+                key={item.name}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                className="relative group"
               >
-                <span className="relative z-10">{item.name}</span>
-                <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-pink-500 to-pink-300 group-hover:w-full transition-all duration-300"></div>
-                <div className="absolute inset-0 bg-pink-500/10 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300 origin-center"></div>
-              </Link>
-            </motion.div>
-          ))}
+                <Link
+                  href={item.href}
+                  className="font-bold text-white hover:text-pink-300 duration-300 transition-all relative overflow-hidden py-2 px-1"
+                >
+                  <span className="relative z-10">{item.name}</span>
+                  <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-pink-500 to-pink-300 group-hover:w-full transition-all duration-300"></div>
+                  <div className="absolute inset-0 bg-pink-500/10 rounded-lg scale-0 group-hover:scale-100 transition-transform duration-300 origin-center"></div>
+                </Link>
+              </motion.div>
+            );
+          })}
 
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -266,39 +377,91 @@ export default function Navbar() {
               </div>
 
               <div className="py-6 xs:py-8 px-4 xs:px-6">
-                {navItems.map((item, index) => (
-                  <motion.div
-                    key={item.name}
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 + 0.2, duration: 0.4 }}
-                    className="mb-2"
-                  >
-                    <Link
-                      href={item.href}
-                      onClick={toggleMenu}
-                      className="block w-full p-3 xs:p-4 rounded-xl text-white font-semibold text-base xs:text-lg hover:bg-pink-500/20 hover:text-pink-300 transition-all duration-300 border border-transparent hover:border-pink-500/30 group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span>{item.name}</span>
-                        <motion.svg
-                          className="w-5 h-5 text-pink-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          whileHover={{ x: 5 }}
+                {navItems.map((item, index) => {
+                  if (item.name === "3D-View") {
+                    return (
+                      <motion.div
+                        key={item.name}
+                        initial={{ opacity: 0, x: -50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 + 0.2, duration: 0.4 }}
+                        className="mb-3 p-3 rounded-2xl bg-gray-950/60 border border-pink-500/20 flex flex-col gap-2"
+                      >
+                        <div className="text-pink-400 font-bold text-sm tracking-wider uppercase px-1">
+                          3D-View
+                        </div>
+                        <Link
+                          href="/3d?mode=arcade"
+                          onClick={toggleMenu}
+                          className="flex items-center gap-3 p-2.5 rounded-xl bg-gray-900/60 hover:bg-cyan-950/40 border border-gray-800 hover:border-cyan-500/40 transition-all text-white group"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </motion.svg>
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
+                          <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 group-hover:text-cyan-300">
+                            <Gamepad2 className="w-4 h-4" />
+                          </div>
+                          <div className="flex flex-col text-left">
+                            <span className="font-semibold text-sm group-hover:text-cyan-300 transition-colors">
+                              Arcade Mode
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              Explore the CGS arcade
+                            </span>
+                          </div>
+                        </Link>
+                        <Link
+                          href="/3d?mode=experience"
+                          onClick={toggleMenu}
+                          className="flex items-center gap-3 p-2.5 rounded-xl bg-gray-900/60 hover:bg-pink-950/40 border border-gray-800 hover:border-pink-500/40 transition-all text-white group"
+                        >
+                          <div className="p-2 rounded-lg bg-pink-500/10 border border-pink-500/30 text-pink-400 group-hover:text-pink-300">
+                            <Box className="w-4 h-4" />
+                          </div>
+                          <div className="flex flex-col text-left">
+                            <span className="font-semibold text-sm group-hover:text-pink-300 transition-colors">
+                              3D Experience
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              Explore CGS IIT KGP
+                            </span>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    );
+                  }
+
+                  return (
+                    <motion.div
+                      key={item.name}
+                      initial={{ opacity: 0, x: -50 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 + 0.2, duration: 0.4 }}
+                      className="mb-2"
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={toggleMenu}
+                        className="block w-full p-3 xs:p-4 rounded-xl text-white font-semibold text-base xs:text-lg hover:bg-pink-500/20 hover:text-pink-300 transition-all duration-300 border border-transparent hover:border-pink-500/30 group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>{item.name}</span>
+                          <motion.svg
+                            className="w-5 h-5 text-pink-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            whileHover={{ x: 5 }}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </motion.svg>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
 
                 <motion.div
                   initial={{ opacity: 0, x: -50 }}
