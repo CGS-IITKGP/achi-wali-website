@@ -173,9 +173,8 @@ export default async function Home() {
         <p
           className={`text-gray-400 px-4 sm:px-6 md:px-8 lg:px-0 fade-in-2 text-base sm:text-lg md:text-xl lg:text-2xl max-w-4xl text-center font-bold mb-10 sm:mb-0 mt-4 sm:mt-6 md:mt-8 ${paragraph_font.className} z-10 leading-relaxed`}
         >
-          We, the Computer Graphics Society at IIT Kharagpur, are a passionate
-          group of students dedicated to exploring the world of game development
-          using Unity and Unreal engines.
+We, the Computer Graphics Society at IIT Kharagpur, are a passionate group of students dedicated to exploring the world of computer graphics, game development through Unreal Engine and Unity, and the hottest web technologies.
+
         </p>
 
         <p className="text-gray-500 relative top-16 sm:top-24 md:top-32 z-10">

@@ -198,7 +198,7 @@ export default function Navbar() {
                                 Arcade Mode
                               </span>
                               <span className="text-xs text-gray-400 group-hover/item:text-gray-300 transition-colors">
-                                Explore the CGS arcade
+                                Explore the CGS Arcade
                               </span>
                             </div>
                           </Link>
@@ -218,7 +218,7 @@ export default function Navbar() {
                                 3D Experience
                               </span>
                               <span className="text-xs text-gray-400 group-hover/item:text-gray-300 transition-colors">
-                                Explore the CGS IIT KGP world
+                                Explore the CGS Lab
                               </span>
                             </div>
                           </Link>
