@@ -165,7 +165,7 @@ export default async function Home() {
 
         <Navbar />
         <h1
-          className={`text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl fade-in max-w-6xl text-center ${heading_font.className} bg-gradient-to-tr from-white to-pink-600 bg-clip-text text-transparent z-10 leading-tight mb-25 sm:mb-20 md:mb-6`}
+          className={`text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl fade-in max-w-6xl text-center ${heading_font.className} bg-linear-to-tr from-white to-pink-600 bg-clip-text text-transparent z-10 leading-tight mb-25 sm:mb-20 md:mb-6`}
         >
           Computer Graphics Society
         </h1>
