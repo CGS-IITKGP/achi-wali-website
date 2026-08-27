@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import Image from "next/image";
 import TVVideo from "./TVVideo";
 import { Canvas } from "@react-three/fiber";
 import ChairSpread from "./furniture/ChairSpread";
@@ -118,6 +120,37 @@ export default function NewClient({ games = [] }: NewClientProps) {
 
       {!experienceMode && (
         <>
+          <Link
+            href="/"
+            style={{
+              position: "fixed",
+              top: 14,
+              right: 14,
+              zIndex: 50,
+              display: "block",
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              overflow: "hidden",
+              border: "1px solid rgba(236, 72, 153, 0.4)",
+              boxShadow: "0 0 12px rgba(236, 72, 153, 0.3)",
+              background: "rgba(10, 5, 12, 0.75)",
+              transition: "all 0.2s ease",
+            }}
+            title="Back to CGS"
+          >
+            <Image
+              src="/logo.png"
+              alt="CGS"
+              width={40}
+              height={40}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          </Link>
           <div style={{ position: "absolute", left: "25px", bottom: "25px", zIndex: 50, display: "flex", gap: "12px", pointerEvents: "auto" }}>
             <button type="button" onClick={handlePrev} disabled={step === 0} style={{ ...buttonStyle, opacity: step === 0 ? 0.3 : 1 }}>←</button>
             <button type="button" onClick={handleNext} disabled={step === totalSteps - 1} style={{ ...buttonStyle, opacity: step === totalSteps - 1 ? 0.3 : 1 }}>→</button>

@@ -1,11 +1,8 @@
 export const dynamic = "force-dynamic";
 
-// import Navbar from "../components/navbar";
-// import Footer from "../footer";
 import { IProject } from "../types/domain.types";
 import api from "../axiosApi";
-
-import ArcadeWrapper from "./components2/ArcadeWrapper"; 
+import ThreeDModeManager from "./components2/ThreeDModeManager";
 
 const fetchFeaturedGamesProjects = async () => {
   const apiResponse = await api("GET", "/featured", {
@@ -53,24 +50,30 @@ const getProjectsData = async () => {
   };
 };
 
-export default async function ProjectsPage() {
+interface PageProps {
+  searchParams?: Promise<{ mode?: string }> | { mode?: string };
+}
+
+export default async function ProjectsPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
+  const rawMode = (resolvedSearchParams?.mode || "").toLowerCase();
+  const mode: "arcade" | "experience" = rawMode === "arcade" ? "arcade" : "experience";
+
   const { gamesProject } = await getProjectsData();
 
-  // 1. Process the links on the server!
-  // We map over the games to extract the live-demo link and pass it as a direct property
+  // Process the links on the server
   const processedGames = gamesProject.map((game) => {
     const liveDemoLink = game.links?.find((link) => link.text === "live-demo")?.url;
     
     return {
       ...game,
-      liveDemoUrl: liveDemoLink || null, // Now it's readily available for the client
+      liveDemoUrl: liveDemoLink || null,
     };
   });
 
   return (
     <div className="min-h-screen bg-black relative">
-      {/* 2. Pass the pre-processed array to your wrapper */}
-      <ArcadeWrapper games={processedGames} />
+      <ThreeDModeManager mode={mode} games={processedGames} />
     </div>
   );
 }
