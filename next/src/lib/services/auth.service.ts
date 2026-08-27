@@ -133,9 +133,15 @@ const refreshSession: ServiceSignature<
     };
 };
 
-const __googleOAuthClient = new OAuth2Client(
-    getEnvVariable("GOOGLE_OAUTH_CLIENT_ID", true)
-);
+let __googleOAuthClient: OAuth2Client | null = null;
+const getGoogleOAuthClient = () => {
+    if (!__googleOAuthClient) {
+        __googleOAuthClient = new OAuth2Client(
+            getEnvVariable("GOOGLE_OAUTH_CLIENT_ID", true)
+        );
+    }
+    return __googleOAuthClient;
+};
 
 const googleOAuth: ServiceSignature<
     SDIn.Auth.GoogleOAuth,
@@ -181,7 +187,7 @@ const googleOAuth: ServiceSignature<
             };
         }
 
-        const ticket = await __googleOAuthClient.verifyIdToken({
+        const ticket = await getGoogleOAuthClient().verifyIdToken({
             idToken: apiResponse.data.id_token,
             audience: getEnvVariable("GOOGLE_OAUTH_CLIENT_ID", true),
         });
