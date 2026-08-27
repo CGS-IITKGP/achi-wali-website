@@ -7,10 +7,8 @@ import { Canvas } from "@react-three/fiber";
 import ChairSpread from "./furniture/ChairSpread";
 import React, { Suspense, useEffect, useRef, useState } from "react";
 
-// NEW IMPORTS FOR REALISM
 import * as THREE from "three";
 import { Environment } from "@react-three/drei";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
 
 import Lighting from "./Lighting";
 import NewModel from "./NewModel";
@@ -215,14 +213,6 @@ export default function NewClient({ games = [] }: NewClientProps) {
           {experienceMode && (
             <ExperienceMode enabled={experienceMode} onInteractionChange={setInteractionText} onPointerLockChange={setPointerLocked} />
           )}
-
-          <EffectComposer>
-            <Bloom 
-              luminanceThreshold={1.5} 
-              mipmapBlur 
-              intensity={0.6} 
-            />
-          </EffectComposer>
         </Suspense>
 
         {!experienceMode && <TVVideo step={step} isPlaying={isVideoPlaying} setIsPlaying={setIsVideoPlaying} />}
