@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { IProject } from "../types/domain.types";
 import api from "../axiosApi";
-import ThreeDModeManager from "./components2/ThreeDModeManager";
+import ArcadeWrapper from "./components2/ArcadeWrapper";
 
 const fetchFeaturedGamesProjects = async () => {
   const apiResponse = await api("GET", "/featured", {
@@ -50,15 +50,7 @@ const getProjectsData = async () => {
   };
 };
 
-interface PageProps {
-  searchParams?: Promise<{ mode?: string }> | { mode?: string };
-}
-
-export default async function ProjectsPage({ searchParams }: PageProps) {
-  const resolvedSearchParams = await searchParams;
-  const rawMode = (resolvedSearchParams?.mode || "").toLowerCase();
-  const mode: "arcade" | "experience" = rawMode === "arcade" ? "arcade" : "experience";
-
+export default async function ProjectsPage() {
   const { gamesProject } = await getProjectsData();
 
   // Process the links on the server
@@ -73,7 +65,7 @@ export default async function ProjectsPage({ searchParams }: PageProps) {
 
   return (
     <div className="min-h-screen bg-black relative">
-      <ThreeDModeManager mode={mode} games={processedGames} />
+      <ArcadeWrapper games={processedGames} />
     </div>
   );
 }
