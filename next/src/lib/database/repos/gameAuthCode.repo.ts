@@ -29,7 +29,7 @@ class GameAuthCodeRepository extends GenericRepository<
         await this.ensureDbConnection();
 
         const code = crypto.randomBytes(32).toString("base64url");
-        const expiresAt = new Date(Date.now() + 60 * 1000); // 60 seconds from now
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
 
         return await this.insert({
             code,

@@ -13,6 +13,7 @@ import {
   Gamepad2,
   X,
   Trophy,
+  ExternalLink,
 } from "lucide-react";
 import { IProject } from "@/app/types/index.types";
 import { prettySafeImage } from "@/app/utils/pretty";
@@ -299,6 +300,178 @@ interface GameClientProps {
   featuredGames?: IProject[];
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// All-Time High Scores — permanent section on the games page (Vishal's request)
+// Fetches active game IDs from GET /api/game/list and shows top-10 per game.
+// ─────────────────────────────────────────────────────────────────────────────
+function AllTimeLeaderboard() {
+  const [gameIds, setGameIds] = useState<string[]>([]);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const [scores, setScores] = useState<any[]>([]);
+  const [loadingGames, setLoadingGames] = useState(true);
+  const [loadingScores, setLoadingScores] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch available game IDs on mount
+  useEffect(() => {
+    const fetchGameList = async () => {
+      setLoadingGames(true);
+      try {
+        const res = await api("GET", "/game/list");
+        if (res.action === true) {
+          const ids = (res.data as string[]) || [];
+          setGameIds(ids);
+          if (ids.length > 0) setSelectedGameId(ids[0]);
+        } else {
+          setError("Failed to load game list.");
+        }
+      } catch {
+        setError("Failed to load game list.");
+      } finally {
+        setLoadingGames(false);
+      }
+    };
+    fetchGameList();
+  }, []);
+
+  // Fetch leaderboard whenever selected game changes
+  useEffect(() => {
+    if (!selectedGameId) return;
+    const fetchScores = async () => {
+      setLoadingScores(true);
+      setScores([]);
+      try {
+        const res = await api("GET", "/game/score", {
+          query: { target: "leaderboard", gameId: selectedGameId },
+        });
+        if (res.action === true) {
+          setScores((res.data as any[]) || []);
+        }
+      } catch {
+        // silently ignore
+      } finally {
+        setLoadingScores(false);
+      }
+    };
+    fetchScores();
+  }, [selectedGameId]);
+
+  // Don't render if no games have any scores yet
+  if (!loadingGames && gameIds.length === 0) return null;
+
+  return (
+    <div id="leaderboard" className="flex flex-col pt-16 px-0 relative">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+        className="mb-10"
+      >
+        <h2
+          className={`text-4xl lg:text-5xl font-bold bg-gradient-to-r from-pink-400 via-pink-300 to-white bg-clip-text text-transparent ${righteousFont.className} mb-2 flex items-center gap-3`}
+        >
+          <Trophy className="w-9 h-9 text-pink-400 fill-pink-400 shrink-0" />
+          All-Time High Scores
+        </h2>
+        <p className={`text-gray-400 text-lg ${robotoFont.className} max-w-2xl`}>
+          Top players across all CGS games — updated live
+        </p>
+      </motion.div>
+
+      {loadingGames ? (
+        <div className="flex items-center justify-center p-16">
+          <div className="w-6 h-6 border-2 border-gray-600 border-t-pink-500 rounded-full animate-spin" />
+        </div>
+      ) : error ? (
+        <p className="text-gray-500 text-sm">{error}</p>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="bg-gray-900/50 backdrop-blur-xl border border-gray-800 rounded-3xl overflow-hidden mb-16"
+        >
+          {/* Game Tab Switcher */}
+          <div className="flex overflow-x-auto border-b border-gray-800 px-4 pt-4 gap-2 pb-0">
+            {gameIds.map((id) => (
+              <button
+                key={id}
+                onClick={() => setSelectedGameId(id)}
+                className={`px-4 py-2 text-sm font-semibold rounded-t-xl whitespace-nowrap transition-all duration-200 border-b-2 ${
+                  selectedGameId === id
+                    ? "border-pink-500 text-pink-400 bg-pink-500/10"
+                    : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {id}
+              </button>
+            ))}
+          </div>
+
+          {/* Scores */}
+          <div className="p-6">
+            {loadingScores ? (
+              <div className="flex items-center justify-center py-12 gap-3 text-gray-400">
+                <div className="w-5 h-5 border-2 border-gray-600 border-t-pink-500 rounded-full animate-spin" />
+                <span className={`text-sm ${robotoFont.className}`}>Loading scores…</span>
+              </div>
+            ) : scores.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 text-sm">
+                No scores submitted yet. Be the first to play!
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {scores.map((score, index) => (
+                  <motion.div
+                    key={score._id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${
+                      index === 0
+                        ? "bg-pink-500/10 border-pink-500/30 shadow-[0_0_20px_rgba(236,72,153,0.15)]"
+                        : index === 1
+                        ? "bg-purple-500/10 border-purple-500/20"
+                        : index === 2
+                        ? "bg-fuchsia-500/10 border-fuchsia-500/20"
+                        : "bg-white/5 border-white/5"
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      {/* Rank Badge */}
+                      <span
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                          index === 0
+                            ? "bg-pink-500 text-white shadow-lg shadow-pink-500/40"
+                            : index === 1
+                            ? "bg-purple-500 text-white"
+                            : index === 2
+                            ? "bg-fuchsia-500 text-white"
+                            : "bg-gray-800 text-gray-400"
+                        }`}
+                      >
+                        {index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1}
+                      </span>
+                      <span className={`font-semibold text-white ${robotoFont.className}`}>
+                        {score.player?.username || "Anonymous"}
+                      </span>
+                    </div>
+                    <span className={`font-bold text-pink-400 text-lg ${righteousFont.className}`}>
+                      {score.scoreStr ?? score.score}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
 export default function GameClient({
   games = [],
   featuredGames = [],
@@ -341,7 +514,7 @@ export default function GameClient({
     if (playId && code) {
       const targetGame = games.find((g) => g._id === playId);
       if (targetGame) {
-        const liveDemoLinkObj = targetGame.links?.find((link) => link.text === "live-demo" || link.text === "live-link");
+        const liveDemoLinkObj = targetGame.links?.find((link) => link.text === "live-demo");
         if (liveDemoLinkObj && liveDemoLinkObj.url && liveDemoLinkObj.url.trim() !== "") {
           let originalUrl = liveDemoLinkObj.url;
           let finalUrl = originalUrl;
@@ -475,10 +648,12 @@ export default function GameClient({
 
   // ⭐️ SYSTEMIC FIX 1: Ensure helper strictly checks for non-empty string URLs.
   // This helper is now robust against the DB returning "".
+  // NOTE: live-demo → iframe embed only. live-link → new tab only. No fallback between them
+  // to avoid itch.io redirect games being incorrectly embedded in an iframe.
   const getSelectedGameLinkUrl = (linkText: string): string | null => {
     if (selectedGame >= 0 && selectedGame < numFeatured) {
       const linkFound = featuredGames[selectedGame].links?.find((link) => {
-        return link.text === linkText || (linkText === "live-demo" && link.text === "live-link");
+        return link.text === linkText;
       });
       // Explicitly check that url exists AND is not an empty string after trimming.
       if (linkFound && linkFound.url && linkFound.url.trim() !== "") {
@@ -535,7 +710,9 @@ export default function GameClient({
   }
 
   // Pre-calculate URLs to keep rendering clean
+  // live-demo → iframe embed; live-link → open in new tab. Strictly separate.
   const liveDemoUrl = getSelectedGameLinkUrl("live-demo");
+  const liveUrl = getSelectedGameLinkUrl("live-link");
   const githubUrl = getSelectedGameLinkUrl("github");
 
   // Helper for rendering image src safely with fallback
@@ -660,9 +837,9 @@ export default function GameClient({
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.7 }}
-                        className="flex gap-4 mt-6"
+                        className="flex gap-4 mt-6 flex-wrap"
                       >
-                        {/* FEATURED PLAY BUTTON - ONLY WORKS WITH VALID URL */}
+                        {/* FEATURED PLAY BUTTON - only shows when live-demo (iframe) URL exists */}
                         {liveDemoUrl ? (
                           <button
                             onClick={() => handlePlayGame(liveDemoUrl, currentGame)}
@@ -671,7 +848,23 @@ export default function GameClient({
                             <Play className="w-5 h-5" />
                             Play Now
                           </button>
-                        ) : (
+                        ) : null}
+
+                        {/* LIVE LINK BUTTON - opens in new tab (for itch.io / external games) */}
+                        {liveUrl ? (
+                          <a
+                            href={liveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-purple-500/25"
+                          >
+                            <ExternalLink className="w-5 h-5" />
+                            Visit Game
+                          </a>
+                        ) : null}
+
+                        {/* If neither demo nor live-link, show disabled state */}
+                        {!liveDemoUrl && !liveUrl && (
                           <span className="flex items-center gap-2 px-6 py-3 bg-gray-700/50 text-gray-400 font-semibold rounded-xl cursor-not-allowed shadow-lg">
                             <Play className="w-5 h-5" />
                             Live Demo N/A
@@ -835,8 +1028,12 @@ export default function GameClient({
         {miniGames.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-16">
             {miniGames.map((game, index) => {
-              const liveDemoLinkObj = game.links?.find((link) => link.text === "live-demo" || link.text === "live-link");
+              // live-demo → iframe embed (via handlePlayGame auth flow)
+              const liveDemoLinkObj = game.links?.find((link) => link.text === "live-demo");
               const isLiveDemoValid = liveDemoLinkObj && liveDemoLinkObj.url && liveDemoLinkObj.url.trim() !== "";
+              // live-link → open in new tab
+              const liveLinkObj = game.links?.find((link) => link.text === "live-link");
+              const isLiveLinkValid = liveLinkObj && liveLinkObj.url && liveLinkObj.url.trim() !== "";
               const githubLinkObj = game.links?.find((link) => link.text === "github");
               const isGithubValid = githubLinkObj && githubLinkObj.url && githubLinkObj.url.trim() !== "";
 
@@ -939,6 +1136,21 @@ export default function GameClient({
                       </div>
 
                       <div className="flex items-center gap-2">
+                        {/* Live link → open in new tab */}
+                        {isLiveLinkValid && (
+                          <motion.a
+                            href={liveLinkObj.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            className="w-8 h-8 bg-gray-800/60 hover:bg-purple-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-purple-300 transition-all duration-300"
+                            title="Open in new tab"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </motion.a>
+                        )}
                         {isGithubValid && (
                           <motion.a
                             href={githubLinkObj.url}
@@ -971,6 +1183,9 @@ export default function GameClient({
         )}
       </div>
 
+      {/* ALL-TIME HIGH SCORES SECTION */}
+      <AllTimeLeaderboard />
+
       {/* COMPLETE COLLECTION SECTION */}
       <div className="min-h-screen flex flex-col pt-24 px-0 relative">
         <motion.div
@@ -999,10 +1214,12 @@ export default function GameClient({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-16 sm:mb-20">
           {regularGames.map((game, index) => {
-            // Find url object. Link is safe if url itself exists and isn't empty.
-            const liveDemoLinkObj = game.links?.find((link) => link.text === "live-demo" || link.text === "live-link");
-            // Check existence, non-emptiness, and valid string implicitly.
+            // live-demo → iframe embed via handlePlayGame
+            const liveDemoLinkObj = game.links?.find((link) => link.text === "live-demo");
             const isLiveDemoValid = liveDemoLinkObj && liveDemoLinkObj.url && liveDemoLinkObj.url.trim() !== "";
+            // live-link → open in new tab (itch.io redirects, etc.)
+            const liveLinkObj = game.links?.find((link) => link.text === "live-link");
+            const isLiveLinkValid = liveLinkObj && liveLinkObj.url && liveLinkObj.url.trim() !== "";
 
             const githubLinkObj = game.links?.find((link) => link.text === "github");
             const isGithubValid = githubLinkObj && githubLinkObj.url && githubLinkObj.url.trim() !== "";
@@ -1016,16 +1233,18 @@ export default function GameClient({
                 viewport={{ once: true }}
                 whileHover={{ y: -10, scale: 1.02 }}
                 onClick={() => {
-                  // Clicking the card plays the game directly in the
-                  // embedded on-site player instead of navigating away.
+                  // live-demo → open in iframe player on site
                   if (isLiveDemoValid) {
                     handlePlayGame(liveDemoLinkObj.url, game);
+                  // live-link → open in new tab
+                  } else if (isLiveLinkValid) {
+                    window.open(liveLinkObj.url, "_blank", "noopener,noreferrer");
                   }
                 }}
-                role={isLiveDemoValid ? "button" : undefined}
-                aria-label={isLiveDemoValid ? `Play ${game.title}` : undefined}
+                role={isLiveDemoValid || isLiveLinkValid ? "button" : undefined}
+                aria-label={isLiveDemoValid ? `Play ${game.title}` : isLiveLinkValid ? `Open ${game.title}` : undefined}
                 className={`group relative bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-700/30 hover:border-pink-500/40 shadow-xl hover:shadow-2xl hover:shadow-pink-500/10 transition-all duration-500 flex flex-col h-full ${
-                  isLiveDemoValid ? "cursor-pointer" : "cursor-default"
+                  isLiveDemoValid || isLiveLinkValid ? "cursor-pointer" : "cursor-default"
                 }`}
               >
                 <div className="relative h-48 lg:h-56 overflow-hidden">
@@ -1043,7 +1262,7 @@ export default function GameClient({
                   ></div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                   
-                  {/* Hover Play Button */}
+                  {/* Hover Play / Visit Button overlay */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">
                     <div className="flex gap-3">
                       {isLiveDemoValid && (
@@ -1055,16 +1274,31 @@ export default function GameClient({
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           className="w-12 h-12 bg-pink-500/90 hover:bg-pink-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-pink-500/25 transition-all duration-300"
+                          title="Play in-browser"
                         >
                           <Play className="w-5 h-5 fill-white" />
                         </motion.button>
                       )}
+                      {isLiveLinkValid && (
+                        <motion.a
+                          href={liveLinkObj.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="w-12 h-12 bg-purple-500/90 hover:bg-purple-500 backdrop-blur-sm rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-purple-500/25 transition-all duration-300"
+                          title="Open in new tab"
+                        >
+                          <ExternalLink className="w-5 h-5" />
+                        </motion.a>
+                      )}
                     </div>
-                    {isLiveDemoValid && (
+                    {(isLiveDemoValid || isLiveLinkValid) && (
                       <span
                         className={`text-white text-xs font-semibold tracking-wide drop-shadow ${robotoFont.className}`}
                       >
-                        Click to Play
+                        {isLiveDemoValid ? "Click to Play" : "Click to Visit"}
                       </span>
                     )}
                   </div>
@@ -1120,6 +1354,21 @@ export default function GameClient({
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {/* Live link → permanent footer icon, opens new tab */}
+                      {isLiveLinkValid && (
+                        <motion.a
+                          href={liveLinkObj.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="w-8 h-8 bg-gray-800/60 hover:bg-purple-500/20 rounded-lg flex items-center justify-center text-gray-400 hover:text-purple-300 transition-all duration-300"
+                          title="Open in new tab"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </motion.a>
+                      )}
                       {isGithubValid && (
                         <motion.a
                           href={githubLinkObj.url}
