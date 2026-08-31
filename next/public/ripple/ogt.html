@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ripple Simulation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    canvas#canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      flex: 1;
+    }
+
+    /* Loading overlay */
+    #status {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.85);
+      color: #aaa;
+      padding: 20px 40px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: 'Segoe UI', sans-serif;
+      letter-spacing: 0.05em;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    #status.hidden { opacity: 0; pointer-events: none; }
+
+    #progress {
+      width: 200px;
+      height: 4px;
+      background: #222;
+      border-radius: 2px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #4a90d9, #7bb8f5);
+      width: 0%;
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+
+  <div id="status">
+    Loading...
+    <div id="progress"><div id="progress-bar"></div></div>
+  </div>
+
+  <script type="text/javascript">
+    var statusEl    = document.getElementById('status');
+    var progressBar = document.getElementById('progress-bar');
+
+    var Module = {
+      canvas: document.getElementById('canvas'),
+
+      setStatus: function(text) {
+        if (text) {
+          statusEl.classList.remove('hidden');
+          statusEl.firstChild.textContent = text;
+        } else {
+          // Empty status = loading done → hide overlay
+          statusEl.classList.add('hidden');
+        }
+      },
+
+      totalDependencies: 0,
+      monitorRunDependencies: function(left) {
+        this.totalDependencies = Math.max(this.totalDependencies, left);
+        var pct = this.totalDependencies
+          ? ((this.totalDependencies - left) / this.totalDependencies * 100)
+          : 100;
+        progressBar.style.width = pct + '%';
+        Module.setStatus(left ? 'Loading... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : '');
+      }
+    };
+
+    window.onerror = function(msg) {
+      Module.setStatus('Error: ' + msg);
+    };
+  </script>
+  <script async type="text/javascript" src="ogt.js"></script>
+</body>
+</html>

@@ -20,6 +20,7 @@ import {
 import { IProject } from "@/app/types/index.types";
 import { prettySafeImage } from "@/app/utils/pretty";
 import api from "../../axiosApi";
+import Leaderboard from "./Leaderboard";
 
 // Defined constants for fallback URLs to keep logic clean.
 // ⭐️ CHANGE: Added a default image path. MAKE SURE THIS FILE EXISTS IN /public
@@ -65,35 +66,21 @@ function GamePlayerOverlay({
   onClose: () => void;
   onIframeLoad: () => void;
 }) {
-  const [leaderboardScores, setLeaderboardScores] = useState<any[]>([]);
-  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
-  const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
-  // Fetch scores when the overlay opens or gameId changes
-  useEffect(() => {
-    if (!playingEmbedUrl || !gameId) {
-      setLeaderboardScores([]);
-      setIsLeaderboardOpen(false);
-      return;
+  let extractedAuthCode: string | null = null;
+  if (playingEmbedUrl) {
+    const match = playingEmbedUrl.match(/[?&]gameAuthCode=([^&#]+)/);
+    if (match) extractedAuthCode = decodeURIComponent(match[1]);
+  }
+
+  const handleCopyCode = () => {
+    if (extractedAuthCode) {
+      navigator.clipboard.writeText(extractedAuthCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
     }
-
-    const fetchScores = async () => {
-      setLoadingLeaderboard(true);
-      try {
-        const response = await api("GET", "/game/score", {
-          query: { target: "leaderboard", gameId },
-        });
-        if (response.action === true) {
-          setLeaderboardScores((response.data as any[]) || []);
-        }
-      } catch (error) {
-      } finally {
-        setLoadingLeaderboard(false);
-      }
-    };
-
-    fetchScores();
-  }, [playingEmbedUrl, gameId]);
+  };
 
   return (
     <AnimatePresence>
@@ -113,21 +100,32 @@ function GamePlayerOverlay({
             className="relative w-full max-w-[1600px] aspect-video max-h-[88vh] rounded-2xl overflow-hidden shadow-2xl border border-pink-500/20 bg-black flex flex-col"
           >
             <div className="px-4 py-3 bg-gray-950 border-b border-gray-800 flex justify-between items-center shrink-0">
-              <div className="flex items-center gap-3 truncate pr-4">
+              <div className="flex items-center gap-2 sm:gap-3 truncate pr-4">
                 <h3 className={`text-lg sm:text-xl font-bold text-white truncate ${righteousFont.className}`}>
                   Playing: {title}
                 </h3>
-                {playingEmbedUrl && !embedBlocked && (
+
+                {extractedAuthCode && !embedBlocked && (
                   <button
-                    onClick={() => setIsLeaderboardOpen(!isLeaderboardOpen)}
+                    onClick={handleCopyCode}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border transition-all duration-300 ${
-                      isLeaderboardOpen
-                        ? "bg-pink-500 border-pink-500 text-white shadow-lg shadow-pink-500/25"
-                        : "bg-gray-900 border-gray-800 text-gray-300 hover:text-white hover:border-gray-700"
+                      copiedCode
+                        ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                        : "bg-purple-900/30 border-purple-500/30 text-purple-200 hover:text-white hover:border-purple-400 hover:bg-purple-800/40"
                     }`}
+                    title={`Game Auth Code: ${extractedAuthCode}`}
                   >
-                    <Trophy className="w-3.5 h-3.5 fill-current" />
-                    Leaderboard
+                    {copiedCode ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        Code Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-purple-400" />
+                        Copy Login Code
+                      </>
+                    )}
                   </button>
                 )}
               </div>
@@ -214,81 +212,16 @@ function GamePlayerOverlay({
                 )}
               </div>
 
-              {/* Glassmorphic Slide-out Leaderboard Panel */}
-              <AnimatePresence>
-                {isLeaderboardOpen && !embedBlocked && (
-                  <motion.div
-                    initial={{ x: "100%" }}
-                    animate={{ x: 0 }}
-                    exit={{ x: "100%" }}
-                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                    className="absolute right-0 top-0 bottom-0 w-80 bg-gray-950/80 backdrop-blur-xl border-l border-gray-800 z-20 flex flex-col shadow-2xl"
-                  >
-                    <div className="p-4 border-b border-gray-800 flex justify-between items-center shrink-0">
-                      <h4 className={`text-md font-bold text-white flex items-center gap-2 ${righteousFont.className}`}>
-                        <Trophy className="w-4 h-4 text-pink-500 fill-pink-500" />
-                        Top Scores
-                      </h4>
-                      <button
-                        onClick={() => setIsLeaderboardOpen(false)}
-                        className="text-gray-400 hover:text-white transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                      {loadingLeaderboard ? (
-                        <div className="flex flex-col items-center justify-center h-40 gap-2 text-gray-400">
-                          <div className="w-5 h-5 border-2 border-gray-600 border-t-pink-500 rounded-full animate-spin" />
-                          <span className="text-xs">Loading scores…</span>
-                        </div>
-                      ) : leaderboardScores.length === 0 ? (
-                        <div className="text-center text-gray-500 py-10 text-sm">
-                          No scores submitted yet. Be the first!
-                        </div>
-                      ) : (
-                        leaderboardScores.map((score, index) => (
-                          <div
-                            key={score._id}
-                            className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 ${
-                              index === 0
-                                ? "bg-pink-500/10 border-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.15)]"
-                                : index === 1
-                                ? "bg-purple-500/10 border-purple-500/20"
-                                : index === 2
-                                ? "bg-fuchsia-500/10 border-fuchsia-500/20"
-                                : "bg-white/5 border-white/5"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span
-                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                                  index === 0
-                                    ? "bg-pink-500 text-white"
-                                    : index === 1
-                                    ? "bg-purple-500 text-white"
-                                    : index === 2
-                                    ? "bg-fuchsia-500 text-white"
-                                    : "bg-gray-800 text-gray-400"
-                                }`}
-                              >
-                                {index + 1}
-                              </span>
-                              <span className="text-sm font-semibold text-white truncate max-w-[120px]">
-                                {score.player?.username || "Anonymous"}
-                              </span>
-                            </div>
-                            <span className="text-sm font-bold text-pink-400">
-                              {score.scoreStr}
-                            </span>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* Portrait Warning Overlay for Mobile */}
+              <div className="hidden max-md:portrait:flex absolute inset-0 z-[100] bg-gray-900/95 backdrop-blur-md flex-col items-center justify-center text-center p-6">
+                <div className="text-5xl mb-4 animate-bounce">📱</div>
+                <h3 className={`text-xl font-bold text-white mb-2 ${righteousFont.className}`}>
+                  Rotate Your Device
+                </h3>
+                <p className={`text-gray-300 text-sm max-w-xs ${robotoFont.className}`}>
+                  Please rotate your device to landscape mode for the best gaming experience!
+                </p>
+              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -502,6 +435,7 @@ export default function GameClient({
   const [embedRetryCount, setEmbedRetryCount] = useState(0);
   // React Portals need `document` to exist, which isn't available during
   const [isMounted, setIsMounted] = useState(false);
+  const [isGlobalLeaderboardOpen, setIsGlobalLeaderboardOpen] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -1015,11 +949,18 @@ export default function GameClient({
           viewport={{ once: true }}
           className="mb-10"
         >
-          <h2
-            className={`text-4xl lg:text-5xl font-bold bg-gradient-to-r from-pink-400 via-pink-300 to-white bg-clip-text text-transparent ${righteousFont.className} mb-4`}
-          >
-            Mini Games
-          </h2>
+          <div className="flex items-center justify-between sm:justify-start gap-4 mb-4">
+            <h2 className={`text-4xl lg:text-5xl font-bold bg-gradient-to-r from-pink-400 via-pink-300 to-white bg-clip-text text-transparent ${righteousFont.className}`}>
+              Mini Games
+            </h2>
+            <button 
+              onClick={() => setIsGlobalLeaderboardOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 bg-gray-900/80 backdrop-blur-md border border-gray-700 hover:border-pink-500 rounded-xl text-white transition-all shadow-lg hover:shadow-pink-500/20"
+            >
+              <Trophy className="w-5 h-5 text-pink-500"/>
+              <span className="text-sm sm:text-base font-semibold">Global Ranks</span>
+            </button>
+          </div>
           <p
             className={`text-gray-400 text-lg ${robotoFont.className} max-w-2xl`}
           >
@@ -1405,7 +1346,7 @@ export default function GameClient({
         createPortal(
           <GamePlayerOverlay
             playingEmbedUrl={playingEmbedUrl}
-            gameId={playingGame?._id ?? ""}
+            gameId={playingGame?.title ?? ""}
             title={playingGame?.title ?? currentGame.title}
             embedBlocked={embedBlocked}
             embedLoading={embedLoading}
@@ -1425,6 +1366,49 @@ export default function GameClient({
               setEmbedSlow(false);
             }}
           />,
+          document.body
+        )}
+
+      {/* FULL-SCREEN GLOBAL LEADERBOARD MODAL */}
+      {isMounted &&
+        createPortal(
+          <AnimatePresence>
+            {isGlobalLeaderboardOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="fixed inset-0 z-[999] bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6"
+                onClick={() => setIsGlobalLeaderboardOpen(false)}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  transition={{ duration: 0.25 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-950/95 border border-pink-500/30 rounded-3xl shadow-2xl p-4 sm:p-6"
+                >
+                  <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-800">
+                    <div className="flex items-center gap-2">
+                      <Trophy className="w-6 h-6 text-pink-500" />
+                      <h3 className={`text-xl sm:text-2xl font-bold text-white ${righteousFont.className}`}>
+                        Global Leaderboards
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setIsGlobalLeaderboardOpen(false)}
+                      className="p-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white hover:border-pink-500/40 transition-all"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <Leaderboard />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
           document.body
         )}
     </div>

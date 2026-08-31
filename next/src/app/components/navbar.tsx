@@ -7,12 +7,15 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/authContext";
 import { EUserRole } from "../types/domain.types";
+import { useRouter } from "next/navigation";
+import api from "../axiosApi";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const router = useRouter();
 
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [navItems, setNavItems] = useState([
     { name: "Home", href: "/" },
@@ -52,7 +55,6 @@ export default function Navbar() {
     ];
 
     if (user) {
-      baseItems.push({ name: "Profile", href: "/profile" });
 
       const hasDashboardAccess = user.roles?.some((role) =>
         [EUserRole.ADMIN, EUserRole.MEMBER, EUserRole.ROOT].includes(role)
@@ -159,6 +161,28 @@ export default function Navbar() {
               <span className="text-white font-semibold">GitHub</span>
             </Link>
           </motion.div>
+
+          {/* New Sign Out Button */}
+          {user && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <button
+                onClick={async () => {
+                  await api("POST", "/auth/sign-out", {});
+                  refreshUser();
+                  router.push("/");
+                }}
+                className="text-sm font-medium text-gray-300 hover:text-white px-4 py-2 rounded-full hover:bg-white/10 transition-all duration-300"
+              >
+                Sign Out
+              </button>
+            </motion.div>
+          )}
         </div>
         <motion.button
           initial={{ opacity: 0 }}

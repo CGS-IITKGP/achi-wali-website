@@ -592,6 +592,13 @@ export default function ProjectsClient({
 
                 {simulateProject.title === "Boids Simulation" ? (
                   <BoidsCanvas />
+                ) : simulateProject.title === "Ripple Simulation" ? (
+                  <iframe
+                    src="/ripple/ogt.html"
+                    className="w-full h-full border-none"
+                    title="Ripple Simulation"
+                    allow="fullscreen"
+                  />
                 ) : (
                   <div
                     className={`flex h-full w-full items-center justify-center text-gray-300 text-lg ${righteousFont.className}`}

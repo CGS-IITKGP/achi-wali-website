@@ -1,8 +1,9 @@
 "use client";
 
 import { Suspense, useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import api from "../axiosApi";
+import { useAuth } from "../context/authContext";
 
 /**
  * /game-auth page — handles the full redirect-based game login flow:
@@ -35,6 +36,10 @@ function GameAuthFlow() {
     const [usernameError, setUsernameError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string>("");
+
+    const { user, isLoading } = useAuth();
+    const router = useRouter();
+
 
     // Helper: set a short-lived cookie storing gameId/returnTo
     const setGameAuthCookie = useCallback((gId: string, rTo: string) => {

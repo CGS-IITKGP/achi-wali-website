@@ -3,12 +3,26 @@ import createHandler from "@/lib/handler";
 import gameValidator from "@/lib/validators/game.validator";
 import gameAuthCodeRepository from "@/lib/database/repos/gameAuthCode.repo";
 import gameUserRepository from "@/lib/database/repos/gameUser.repo";
+import { NextResponse } from "next/server";
 import {
     ESECs,
     ServiceSignature,
     SDIn,
     SDOut,
 } from "@/lib/types/index.types";
+
+// OPTIONS preflight handler.
+export function OPTIONS() {
+    return new NextResponse(null, {
+        status: 204,
+        headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "OPTIONS,POST",
+            "Access-Control-Allow-Headers": "Content-Type, Accept, X-Requested-With",
+            "Access-Control-Max-Age": "86400",
+        },
+    });
+}
 
 type GenerateCodeInput = {
     gameId: string;
