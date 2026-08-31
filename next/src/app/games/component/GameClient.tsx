@@ -14,6 +14,8 @@ import {
   X,
   Trophy,
   ExternalLink,
+  Copy,
+  Check,
 } from "lucide-react";
 import { IProject } from "@/app/types/index.types";
 import { prettySafeImage } from "@/app/utils/pretty";
