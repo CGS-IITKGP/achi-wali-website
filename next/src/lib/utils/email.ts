@@ -5,15 +5,22 @@ import log, { ELogLevel } from './logger';
 import { IEmail } from '@/lib/types/index.types';
 
 
-const transporter = nodemailer.createTransport({
-    host: getEnvVariable("SMTP_HOST", true),
-    port: Number(getEnvVariable("SMTP_PORT", true)),
-    secure: true,
-    auth: {
-        user: getEnvVariable("SMTP_USERNAME", true),
-        pass: getEnvVariable("SMTP_PASSWORD", true),
-    },
-} as SendMailOptions);
+let transporter: nodemailer.Transporter | null = null;
+
+const getTransporter = () => {
+    if (!transporter) {
+        transporter = nodemailer.createTransport({
+            host: getEnvVariable("SMTP_HOST", true),
+            port: Number(getEnvVariable("SMTP_PORT", true)),
+            secure: true,
+            auth: {
+                user: getEnvVariable("SMTP_USERNAME", true),
+                pass: getEnvVariable("SMTP_PASSWORD", true),
+            },
+        } as SendMailOptions);
+    }
+    return transporter;
+};
 
 
 const sendEmail = async (data: IEmail): Promise<true> => {
@@ -26,7 +33,7 @@ const sendEmail = async (data: IEmail): Promise<true> => {
             html: data.html
         };
 
-        await transporter.sendMail(mailOptions);
+        await getTransporter().sendMail(mailOptions);
     } catch (error) {
         throw new AppError("Failed to send email.", {
             data,
@@ -39,7 +46,7 @@ const sendEmail = async (data: IEmail): Promise<true> => {
 
 const verifySMTPConnection = async (): Promise<boolean> => {
     try {
-        await transporter.verify();
+        await getTransporter().verify();
     } catch (error) {
         log(ELogLevel.FATAL, "SMTP: Couldn't connect to SMTP server.", {
             error
